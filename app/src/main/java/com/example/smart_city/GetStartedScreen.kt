@@ -1,5 +1,4 @@
 package com.example.smart_city
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -10,7 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -19,7 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -32,7 +30,7 @@ class GetStartedScreen : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            SmartCityTheme() {
+            SmartCityTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     GetStartedContent(modifier = Modifier.padding(innerPadding))
                 }
@@ -43,7 +41,6 @@ class GetStartedScreen : ComponentActivity() {
 
 @Composable
 fun GetStartedContent(modifier: Modifier = Modifier) {
-    val context = LocalContext.current
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -118,8 +115,7 @@ fun GetStartedContent(modifier: Modifier = Modifier) {
 
         Button(
             onClick = {
-                val intent = Intent(context, CreateAccount::class.java)
-                context.startActivity(intent)
+
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -130,7 +126,7 @@ fun GetStartedContent(modifier: Modifier = Modifier) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(text = "Get Started", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(modifier = Modifier.width(8.dp))
-                Icon(imageVector = Icons.Default.ArrowForward, contentDescription = null)
+                Icon(imageVector = Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
             }
         }
     }
@@ -139,7 +135,7 @@ fun GetStartedContent(modifier: Modifier = Modifier) {
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview2() {
-    SmartCityTheme() {
+    SmartCityTheme {
         GetStartedContent()
     }
 }
