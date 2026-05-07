@@ -1,4 +1,5 @@
 package com.example.smart_city
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -26,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.example.smart_city.ui.theme.SmartCityTheme
 import kotlinx.coroutines.delay
 
+@SuppressLint("CustomSplashScreen")
 class Splashscreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -100,7 +102,7 @@ fun SplashScreenContent() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             LinearProgressIndicator(
-                progress = 0.4f,
+                progress = {0.4f},
                 modifier = Modifier
                     .width(180.dp)
                     .height(2.dp),
@@ -138,7 +140,8 @@ fun SplashScreenContent() {
 @Preview(showBackground = true)
 @Composable
 fun SplashScreenPreview() {
-    SmartCityTheme() {
+
+    SmartCityTheme {
         SplashScreenContent()
     }
 }
