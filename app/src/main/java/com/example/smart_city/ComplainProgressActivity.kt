@@ -97,7 +97,7 @@ fun ComplainProgressScreen() {
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(5.dp))
 
             Text(
                 text = "Broken Pavement",
@@ -119,7 +119,7 @@ fun ComplainProgressScreen() {
                 trackColor = Color(0xFFF1F5F9),
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(5.dp))
 
             // Status History Section
             Card(
@@ -129,7 +129,7 @@ fun ComplainProgressScreen() {
                 shape = RoundedCornerShape(12.dp),
                 border = BorderStroke(1.dp, Color(0xFFF3F4F6))
             ) {
-                Column(modifier = Modifier.padding(20.dp)) {
+                Column(modifier = Modifier.padding(5.dp)) {
                     Text(
                         text = "Status History",
                         fontSize = 20.sp,
@@ -157,7 +157,7 @@ fun ComplainProgressScreen() {
                 }
             }
 
-            Spacer(modifier = Modifier.height(5.dp))
+            Spacer(modifier = Modifier.height(3.dp))
 
             // Latest Updates Header
             Row(
@@ -179,7 +179,7 @@ fun ComplainProgressScreen() {
                 }
             }
 
-            Spacer(modifier = Modifier.height(5.dp))
+            Spacer(modifier = Modifier.height(2.dp))
 
             // Admin Update Card
             Card(
@@ -232,7 +232,7 @@ fun ComplainProgressScreen() {
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(3.dp))
 
             // Photo Log Section
             Text(
@@ -322,7 +322,7 @@ fun StatusTimelineItem(
                 )
             }
         }
-        Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(3.dp))
         Column(modifier = Modifier.padding(bottom = if (isLast) 0.dp else 24.dp)) {
             Text(
                 text = status,
@@ -332,7 +332,7 @@ fun StatusTimelineItem(
             )
             Text(text = date, fontSize = 13.sp, color = Color(0xFF94A3B8))
             if (description != null) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(3.dp))
                 Surface(
                     shape = RoundedCornerShape(8.dp),
                     color = Color(0xFFF1F5F9),
