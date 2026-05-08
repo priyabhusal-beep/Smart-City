@@ -91,7 +91,7 @@ fun LoginScreen() {
                     color = Color.Gray
                 )
             }
-
+            Spacer(modifier = Modifier.height(1.dp))
 
             Card(
                 modifier = Modifier
@@ -127,7 +127,7 @@ fun LoginScreen() {
                         singleLine = true
                     )
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     // Password Field
                     OutlinedTextField(
@@ -144,7 +144,9 @@ fun LoginScreen() {
                         trailingIcon = {
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
                                 Icon(
-                                    imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    painter = painterResource(
+                                        id = if (passwordVisible) R.drawable.baseline_visibility_24 else R.drawable.baseline_visibility_off_24
+                                    ),
                                     contentDescription = null,
                                     tint = Color.Gray
                                 )
@@ -189,7 +191,7 @@ fun LoginScreen() {
                         Text("Sign In", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
                     }
 
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(25.dp))
 
                     // Divider "OR CONTINUE WITH"
                     Row(
