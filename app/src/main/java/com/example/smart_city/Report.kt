@@ -18,13 +18,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+
 import androidx.compose.material.icons.Icons
 //import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedButton
@@ -68,12 +71,15 @@ class Report : ComponentActivity() {
 fun Reportbody() {
 
     var search by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    val scrollState = rememberScrollState()
 
     Column(
 
         modifier = Modifier.fillMaxSize()
             .background(color = Color.White)
-            .padding(top = 90.dp) // Moves the content down
+            .padding(top = 20.dp)
+            .verticalScroll(scrollState)
     )
     {
         // --- EXISTING CODE ---
@@ -84,11 +90,11 @@ fun Reportbody() {
         ) {
             Text(
                 text = "SmartCity",
-                modifier = Modifier.align(Alignment.CenterStart), // Positions SmartCity in the middle
+                modifier = Modifier.align(Alignment.CenterStart),
                 style = TextStyle(
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
-                    color = Color(0xFF1A237E) // Navy blue to match image
+                    color = Color(0xFF1A237E)
                 )
             )
 
@@ -184,7 +190,7 @@ fun Reportbody() {
                 Text("123 Urban Ave ,Metro City")
             },
             colors = TextFieldDefaults.colors(
-                unfocusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color(0xFFE0E0E0),
                 unfocusedContainerColor = Color.Blue.copy(alpha = 0.1f),
                 focusedContainerColor = Color.Blue.copy(alpha = 0.1f),
                 focusedIndicatorColor = Color.Blue,
@@ -204,10 +210,10 @@ fun Reportbody() {
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(10.dp)
+                .padding(16.dp)
                 .height(200.dp),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.Gray)
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = Color(0xFFE0E0E0))
 
 
         ) {
@@ -219,7 +225,7 @@ fun Reportbody() {
             ) {
                 Text(
                     text = "Map placeholder", style = TextStyle(
-                        fontSize = 22.sp,
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
                     )
@@ -237,36 +243,35 @@ fun Reportbody() {
             ) {
             Text(
                 text = "Visual Evidence", style = TextStyle(
-                    fontSize = 15.sp,
+                    fontSize = 13.sp,
                     color = Color.Gray,
                     fontWeight = FontWeight.Bold,
                 )
             )
         }
-        Spacer(modifier = Modifier.height(16.dp))
-        Row() {
+        Spacer(modifier = Modifier.height(12.dp))
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),) {
             Card(
-                modifier = Modifier.width(width = 150.dp)
-                    .padding(horizontal = 10.dp)
-                    .height(150.dp)
+                modifier = Modifier.size(110.dp)
                     .drawBehind {
                         val strokeWidth = 4f
                         drawRoundRect(
-                            color = Color.Gray,
+                            color = Color.LightGray,
                             style = Stroke(
-                                width = strokeWidth,
+                                width = 2F,
                                 pathEffect = PathEffect.dashPathEffect(
-                                    floatArrayOf(20f, 10f), 0f
+                                    floatArrayOf(10f, 10f), 0f
                                 )
                             )
                         )
                     },
 
 
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.Transparent)
 
 
-                ) {
+            ) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.Center,
@@ -288,12 +293,11 @@ fun Reportbody() {
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.width(12.dp))
             Card(
-                modifier = Modifier.width(width = 150.dp)
-                    .padding(horizontal = 10.dp)
-                    .height(150.dp)
-
+                modifier = Modifier.size(110.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFE0E0E0))
             ) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
@@ -311,88 +315,130 @@ fun Reportbody() {
         Spacer(modifier = Modifier.height(16.dp))
         Column(
             modifier = Modifier.fillMaxWidth()
-                .padding(horizontal = 18.dp),
-            horizontalAlignment = Alignment.Start,
-            verticalArrangement = Arrangement.Center
-        ) {
+                .padding(horizontal = 16.dp),
+
+            ) {
             Text(
                 text = " ISSUE DESCRIPTION", style = TextStyle(
-                    fontSize = 15.sp,
+                    fontSize = 12.sp,
                     color = Color.Gray,
                     fontWeight = FontWeight.Bold,
                 )
             )
-            Spacer(modifier = Modifier.height(10.dp))
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape=RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
-            ) {
-                OutlinedTextField(
-                    value = search,
-                    onValueChange = {
-                        search = it
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                        .padding(horizontal = 8.dp)
-                        .height(120.dp),
-                    placeholder = {
-                        Text(text = "Describe the issue in detail...")
-                    },
-                    colors = TextFieldDefaults.colors(
-                        unfocusedIndicatorColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Blue.copy(alpha = 0.1f),
-                        focusedContainerColor = Color.Blue.copy(alpha = 0.1f),
-                        focusedIndicatorColor = Color.Blue,
+            Spacer(modifier = Modifier.height(8.dp))
 
-                        )
+            OutlinedTextField(
+                value = description,
+                onValueChange = {
+                    description = it
+                },
+                modifier = Modifier.fillMaxWidth()
+                    .height(120.dp),
+                placeholder = {
+                    Text(text = "Describe the issue in detail...")
+                },
+                shape = RoundedCornerShape(8.dp),
+                colors = TextFieldDefaults.colors(
+                    unfocusedContainerColor = Color.White,
+                    focusedContainerColor = Color.White
+
 
                 )
 
+            )
 
-            }
+
         }
-        Spacer(modifier = Modifier.height(16.dp))
+
+        Spacer(modifier = Modifier.height(32.dp))
         ElevatedButton(
-            onClick = { /* Handle button click */ },
+            onClick = {  },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
-                .height(48.dp),
-        ){
-            Text("Submit Report")
+                .height(56.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.elevatedButtonColors(
+                containerColor = Color(0xFF0D2A77),
+                contentColor = Color.White
+            )
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Submit Report", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(
+                    painter = painterResource(R.drawable.baseline_arrow_forward_24),
+                    contentDescription = null
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(24.dp))
+
+
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    painter = painterResource(R.drawable.baseline_home_24),
+                    contentDescription = null,
+                    tint = Color.Gray
+                )
+                Text(text = "Home", fontSize = 10.sp, color = Color.Gray)
+            }
+
+
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    painter = painterResource(R.drawable.baseline_report_24),
+                    contentDescription = null,
+                    tint = Color(0xFF1A237E)
+                )
+                Text(
+                    text = "Reports", 
+                    fontSize = 10.sp, 
+                    color = Color(0xFF1A237E),
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    painter = painterResource(R.drawable.baseline_person_outline_24),
+                    contentDescription = null,
+                    tint = Color.Gray
+                )
+                Text(text = "Profile", fontSize = 10.sp, color = Color.Gray)
+            }
         }
     }
 }
 
-
-
-
-
-
-
-
-
-        @Composable
-        fun StepCircle(number: String, isSelected: Boolean) {
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .background(
-                        color = if (isSelected) Color(0xFF1A237E) else Color(0xFFF5F5F5),
-                        shape = CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = number,
-                    color = if (isSelected) Color.White else Color.Gray,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-
+@Composable
+fun StepCircle(number: String, isSelected: Boolean) {
+    Box(
+        modifier = Modifier
+            .size(32.dp)
+            .background(
+                color = if (isSelected) Color(0xFF1A237E) else Color(0xFFF5F5F5),
+                shape = CircleShape
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = number,
+            color = if (isSelected) Color.White else Color.Gray,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
 
 @Preview(showBackground = true)
 @Composable
