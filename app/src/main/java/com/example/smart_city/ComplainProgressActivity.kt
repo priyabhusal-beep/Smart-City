@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -21,6 +22,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -45,17 +48,19 @@ fun ComplainProgressScreen() {
     Scaffold(
         bottomBar = {
             BottomNavigationBar()
-        }
+        },
+        containerColor = Color.White
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(Color(0xFFFBFBFE))
                 .verticalScroll(rememberScrollState())
-                .padding(20.dp)
+                .padding(horizontal = 20.dp)
         ) {
-            // Case ID and Status Badge
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // CASE ID and Status Badge
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -64,7 +69,7 @@ fun ComplainProgressScreen() {
                 Text(
                     text = "CASE ID: #SC-4502",
                     fontSize = 13.sp,
-                    color = Color.Gray,
+                    color = Color(0xFF94A3B8),
                     fontWeight = FontWeight.Medium
                 )
                 Surface(
@@ -92,33 +97,36 @@ fun ComplainProgressScreen() {
                 }
             }
 
+            Spacer(modifier = Modifier.height(8.dp))
+
             Text(
                 text = "Broken Pavement",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E3A8A),
-                modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
+                color = Color(0xFF1E3A8A)
             )
+
+            Spacer(modifier = Modifier.height(3.dp))
 
             // Progress Bar
             LinearProgressIndicator(
                 progress = { 0.6f },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp)),
+                    .height(6.dp)
+                    .clip(RoundedCornerShape(3.dp)),
                 color = Color(0xFF4A67E4),
-                trackColor = Color(0xFFE5E7EB),
+                trackColor = Color(0xFFF1F5F9),
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Status History Section
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(12.dp),
                 border = BorderStroke(1.dp, Color(0xFFF3F4F6))
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
@@ -149,11 +157,123 @@ fun ComplainProgressScreen() {
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(5.dp))
 
             // Latest Updates Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Latest Updates",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+                TextButton(
+                    onClick = { },
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Text("VIEW ALL", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4A67E4))
+                }
+            }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(5.dp))
+
+            // Admin Update Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+            ) {
+                Row(modifier = Modifier.padding(16.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .background(Color(0xFF3F51B5), RoundedCornerShape(10.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SupervisorAccount,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Admin Update",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = Color(0xFF1E293B)
+                            )
+                            Text(
+                                text = "2h ago",
+                                fontSize = 12.sp,
+                                color = Color(0xFF94A3B8)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "The repair team is currently addressing the foundation issues. Road access remains partially restricted.",
+                            fontSize = 14.sp,
+                            color = Color(0xFF475569),
+                            lineHeight = 20.sp
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Photo Log Section
+            Text(
+                text = "Photo Log",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                PhotoItem(
+                    label = "ISSUE REPORTED",
+                    imageRes = R.drawable.brokenroad,
+                    modifier = Modifier.weight(1f),
+                    labelBackgroundColor = Color.Black.copy(alpha = 0.5f)
+                )
+                PhotoItem(
+                    label = "CREW AT WORK",
+                    imageRes = R.drawable.crewwork,
+                    modifier = Modifier.weight(1f),
+                    labelBackgroundColor = Color(0xFF4A67E4).copy(alpha = 0.8f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Add Comment Button
+            Button(
+                onClick = { },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A237E))
+            ) {
+                Icon(Icons.Default.AddComment, contentDescription = null, modifier = Modifier.size(20.dp))
+                Spacer(modifier = Modifier.width(10.dp))
+                Text("Add Comment", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
+            
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
@@ -167,14 +287,14 @@ fun StatusTimelineItem(
     isCurrent: Boolean = false,
     isLast: Boolean = false
 ) {
-    Row(modifier = Modifier.fillMaxWidth()) {
+    Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Box(
                 modifier = Modifier
                     .size(28.dp)
                     .background(
                         color = when {
-                            isCompleted -> Color(0xFF22C55E)
+                            isCompleted -> Color(0xFF4CAF50)
                             isCurrent -> Color(0xFFDBEAFE)
                             else -> Color(0xFFF1F5F9)
                         },
@@ -189,70 +309,74 @@ fun StatusTimelineItem(
             ) {
                 when {
                     isCompleted -> Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(16.dp))
-                    isCurrent -> Icon(Icons.Default.Build, null, tint = Color(0xFF3B82F6), modifier = Modifier.size(16.dp))
+                    isCurrent -> Icon(Icons.Default.Engineering, null, tint = Color(0xFF3B82F6), modifier = Modifier.size(16.dp))
                     else -> Box(modifier = Modifier.size(8.dp).background(Color(0xFFCBD5E1), CircleShape))
                 }
             }
             if (!isLast) {
                 Box(
                     modifier = Modifier
-                        .width(2.dp)
-                        .height(if (description != null) 100.dp else 40.dp)
-                        .background(Color(0xFFF1F5F9))
+                        .width(1.dp)
+                        .fillMaxHeight()
+                        .background(Color(0xFFE2E8F0))
                 )
             }
         }
         Spacer(modifier = Modifier.width(16.dp))
-        Column {
+        Column(modifier = Modifier.padding(bottom = if (isLast) 0.dp else 24.dp)) {
             Text(
                 text = status,
                 fontWeight = FontWeight.Bold,
                 fontSize = 17.sp,
                 color = if (isCompleted || isCurrent) Color(0xFF1E293B) else Color(0xFF94A3B8)
             )
-            Text(text = date, fontSize = 13.sp, color = Color.Gray)
+            Text(text = date, fontSize = 13.sp, color = Color(0xFF94A3B8))
             if (description != null) {
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = Color(0xFFF8FAFC),
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color(0xFFF1F5F9),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
                         text = "\"$description\"",
                         modifier = Modifier.padding(12.dp),
-                        fontSize = 14.sp,
+                        fontSize = 13.sp,
                         color = Color(0xFF475569),
                         fontStyle = FontStyle.Italic,
-                        lineHeight = 20.sp
+                        lineHeight = 18.sp
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }
 
 @Composable
-fun PhotoItem(label: String, modifier: Modifier = Modifier, color: Color) {
+fun PhotoItem(label: String, imageRes: Int, modifier: Modifier = Modifier, labelBackgroundColor: Color) {
     Box(
         modifier = modifier
             .height(140.dp)
-            .background(color, RoundedCornerShape(16.dp))
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(12.dp))
     ) {
-        // Label at bottom
+        Image(
+            painter = painterResource(id = imageRes),
+            contentDescription = label,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+        // Label overlay
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .background(Color.Black.copy(alpha = 0.5f))
+                .background(labelBackgroundColor)
                 .padding(vertical = 8.dp, horizontal = 12.dp)
         ) {
             Text(
                 text = label,
                 color = Color.White,
-                fontSize = 11.sp,
+                fontSize = 10.sp,
                 fontWeight = FontWeight.Bold
             )
         }
@@ -281,8 +405,8 @@ fun BottomNavigationBar() {
             selected = true,
             onClick = { },
             colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Color(0xFF1E3A8A),
-                selectedTextColor = Color(0xFF1E3A8A),
+                selectedIconColor = Color(0xFF1A237E),
+                selectedTextColor = Color(0xFF1A237E),
                 indicatorColor = Color(0xFFEBF2FF)
             )
         )
