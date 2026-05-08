@@ -12,6 +12,16 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SmartCity">
         <activity
+            android:name=".ComplainProgressActivity"
+            android:exported="false"
+            android:label="@string/title_activity_complain_progress"
+            android:theme="@style/Theme.SmartCity" />
+        <activity
+            android:name=".ComplainReportIssueActivity"
+            android:exported="false"
+            android:label="@string/title_activity_complain_report_issue"
+            android:theme="@style/Theme.SmartCity" />
+        <activity
             android:name=".LoginActivity"
             android:exported="false"
             android:label="@string/title_activity_login"
