@@ -5,12 +5,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocationCity
-import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -20,6 +18,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -69,11 +69,11 @@ fun SplashScreenContent() {
                 shape = RoundedCornerShape(24.dp),
                 color = Color.White.copy(alpha = 0.2f)
             ) {
-                Icon(
-                    imageVector = Icons.Default.LocationCity,
-                    contentDescription = "Logo",
-                    tint = Color.White,
-                    modifier = Modifier.padding(20.dp)
+                Image(
+                    painter = painterResource(id = R.drawable.smartcity),
+                    contentDescription = "Smart City Logo",
+                    modifier = Modifier.size(100.dp),
+                    contentScale = ContentScale.Fit
                 )
             }
 

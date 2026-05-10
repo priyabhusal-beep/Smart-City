@@ -11,7 +11,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.LocationCity
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -75,10 +74,10 @@ fun CreateAccountScreen() {
                 border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.LocationCity,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.padding(all = 14.dp)
+                    painter = painterResource(id = R.drawable.smartcity),
+                    contentDescription = "Smart City Logo",
+                    modifier = Modifier.size(100.dp),
+                    tint = Color.Unspecified
                 )
             }
 
@@ -111,7 +110,7 @@ fun CreateAccountScreen() {
                     CustomInputField("EMAIL", email, { email = it }, Icons.Default.Email, "diyaadhikari027@gmail.com", KeyboardType.Email)
                     CustomInputField("PHONE NUMBER", phone, { phone = it }, Icons.Default.Phone, "+977 9762214863", KeyboardType.Phone)
                     CustomInputField("PASSWORD", password, { password = it }, Icons.Default.Lock, "••••••••", isPassword = true)
-                    CustomInputField("CONFIRM", confirmPassword, { confirmPassword = it },Icons.Default.LockReset, "••••••••", isPassword = true)
+                    CustomInputField("CONFIRM", confirmPassword, { confirmPassword = it },Icons.Default.Lock, "••••••••", isPassword = true)
 
                     Spacer(modifier = Modifier.height(24.dp))
 
