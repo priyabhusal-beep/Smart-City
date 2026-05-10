@@ -1,5 +1,3 @@
 <resources>
     <string name="app_name">Smart-City</string>
-    <string name="title_activity_report_issue">ReportIssue</string>
-    <string name="title_activity_report">Report</string>
 </resources>
