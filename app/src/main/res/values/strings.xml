@@ -3,4 +3,5 @@
     <string name="title_activity_login">LoginActivity</string>
     <string name="title_activity_complain_report_issue">ComplainReportIssueActivity</string>
     <string name="title_activity_complain_progress">ComplainProgressActivity</string>
+    <string name="title_activity_admin_manage_screen">AdminManageScreen</string>
 </resources>
