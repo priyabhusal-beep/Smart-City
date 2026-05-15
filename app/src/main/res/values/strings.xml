@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Smart-City</string>
+    <string name="title_activity_admin_login_screen">AdminLoginScreen</string>
+    <string name="title_activity_complaint_details">ComplaintDetails</string>
 </resources>

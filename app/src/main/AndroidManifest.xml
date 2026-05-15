@@ -11,6 +11,39 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.SmartCity">
+<<<<<<< Updated upstream
+=======
+        <activity
+            android:name=".ComplaintDetails"
+            android:exported="false"
+            android:label="@string/title_activity_complaint_details"
+            android:theme="@style/Theme.SmartCity" />
+        <activity
+            android:name=".AdminLoginScreen"
+            android:exported="false"
+            android:label="@string/title_activity_admin_login_screen"
+            android:theme="@style/Theme.SmartCity" />
+        <activity
+            android:name=".Report"
+            android:exported="false"
+            android:label="@string/title_activity_report"
+            android:theme="@style/Theme.SmartCity" />
+        <activity
+            android:name=".ComplainProgressActivity"
+            android:exported="false"
+            android:label="@string/title_activity_complain_progress"
+            android:theme="@style/Theme.SmartCity" />
+        <activity
+            android:name=".ComplainReportIssueActivity"
+            android:exported="false"
+            android:label="@string/title_activity_complain_report_issue"
+            android:theme="@style/Theme.SmartCity" />
+        <activity
+            android:name=".LoginActivity"
+            android:exported="false"
+            android:label="@string/title_activity_login"
+            android:theme="@style/Theme.SmartCity" />
+>>>>>>> Stashed changes
         <activity
             android:name=".MainActivity"
             android:exported="true"
