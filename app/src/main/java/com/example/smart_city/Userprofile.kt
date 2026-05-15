@@ -6,27 +6,29 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.AccountBox
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -47,169 +49,346 @@ class Userprofile : ComponentActivity() {
 
 @Composable
 fun Userprofilebody() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(color = Color.White)
-            .padding(20.dp)
-    ) {
-        // Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Smart City",
-                style = TextStyle(
-                    fontSize = 20.sp,
-                    color = Color(0xFF1A237E),
-                    fontWeight = FontWeight.Bold
-                )
-            )
+    var isDarkMode by remember { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
 
-            Icon(
-                painter = painterResource(R.drawable.baseline_notifications_none_24),
-                contentDescription = null,
-                tint = Color(0xFF1A237E)
-            )
+    Scaffold(
+        bottomBar = {
+
+            Surface(
+                shadowElevation = 8.dp,
+                color = Color.White
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    NavItem(painterResource(R.drawable.baseline_home_24), "Home", isSelected = false)
+
+
+                    NavItem(painterResource(R.drawable.baseline_report_24), "Reports", isSelected = false)
+
+
+                    NavItem(Icons.Default.Person, "Profile", isSelected = true)
+                }
+            }
         }
-
-        Spacer(modifier = Modifier.height(40.dp))
-
-        // Profile Section
+    ) { innerPadding ->
         Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .background(color = Color(0xFFF8F9FA))
+                .verticalScroll(scrollState)
+                .padding(horizontal = 20.dp)
         ) {
-            Image(
-                painter = painterResource(R.drawable.user),
-                contentDescription = "Profile Picture",
+
+            Row(
                 modifier = Modifier
-                    .size(100.dp)
-                    .clip(CircleShape)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "John Doe",
-                style = TextStyle(
-                    fontSize = 28.sp,
-                    color = Color.Black,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // The "Top Contributor" badge card
-            Card(
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = blue // Light red background
-                )
+                    .fillMaxWidth()
+                    .padding(top = 24.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Top Contributor",
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                    text = "SmartCity",
                     style = TextStyle(
-                        fontSize = 12.sp,
-                        color = Color.Blue,
+                        fontSize = 20.sp,
+                        color = Color(0xFF1A237E),
                         fontWeight = FontWeight.Bold
                     )
                 )
+
+                Icon(
+                    painter = painterResource(R.drawable.baseline_notifications_none_24),
+                    contentDescription = null,
+                    tint = Color(0xFF1A237E)
+                )
             }
-        }
-        Spacer(modifier = Modifier.height(40.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+
+            Spacer(modifier = Modifier.height(30.dp))
 
 
-        ) {
             Column(
-
-            ) {
-                Text(
-                    text = "12",
-                    style = TextStyle(
-                        fontSize = 30.sp,
-                        color = Color.Blue,
-                        fontWeight = FontWeight.Bold
-                    )
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Reports",
-                    style = TextStyle(
-                        fontSize = 18.sp,
-                        color = Color.DarkGray
-                    )
-                )
-
-
-            }
-            Column() {
-                Text(
-                    text = "10",
-                    style = TextStyle(
-                        fontSize = 30.sp,
-                        color = Color.Blue,
-                        fontWeight = FontWeight.Bold
-                    )
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Votes",
-                    style = TextStyle(
-                        fontSize = 18.sp,
-                        color = Color.DarkGray
-                    )
-                )
-
-
-            }
-            Column(
-                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Box(contentAlignment = Alignment.BottomEnd) {
+
+                    Box(
+                        modifier = Modifier
+                            .size(115.dp)
+                            .border(width = 3.dp, color = Color(0xFF00B8D4), shape = CircleShape) // Cyan border
+                            .padding(6.dp)
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.user),
+                            contentDescription = "Profile Picture",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape)
+                        )
+                    }
+
+
+                    Box(
+                        modifier = Modifier
+                            .size(30.dp)
+                            .background(Color(0xFF4CAF50), CircleShape) // Green circle
+                            .border(width = 3.dp, color = Color.White, shape = CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 Text(
-                    text = "8",
+                    text = "Alex Johnson",
                     style = TextStyle(
-                        fontSize = 30.sp,
-                        color = Color.Green,
+                        fontSize = 24.sp,
+                        color = Color.Black,
                         fontWeight = FontWeight.Bold
                     )
                 )
+
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Resolved",
-                    style = TextStyle(
-                        fontSize = 18.sp,
-                        color = Color.DarkGray
+
+                Card(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFE8EAF6)
                     )
+                ) {
+                    Text(
+                        text = "Top Contributor",
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                        style = TextStyle(
+                            fontSize = 12.sp,
+                            color = Color(0xFF3F51B5),
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            // Statistics Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                StatItem("12", "REPORTS", Color.Blue)
+                StatItem("45", "UPVOTES", Color.Blue)
+                StatItem("8", "RESOLVED", Color(0xFF4CAF50))
+            }
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column {
+                    MenuRow(
+                        icon = painterResource(R.drawable.outline_assignment_24),
+                        title = "My Complaints",
+                        iconContainerColor = Color(0xFFF5F5F5),
+                        iconColor = Color.Gray
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        thickness = 1.dp,
+                        color = Color(0xFFEEEEEE)
+                    )
+
+                    MenuRow(
+                        icon = Icons.Default.Settings,
+                        title = "Settings & Privacy",
+                        iconContainerColor = Color(0xFFF5F5F5),
+                        iconColor = Color.Gray
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        thickness = 1.dp,
+                        color = Color(0xFFEEEEEE)
+                    )
+
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(Color(0xFFF5F5F5), RoundedCornerShape(10.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.outline_dark_mode_24),
+                                contentDescription = null,
+                                tint = Color.Gray,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(
+                            text = "Dark Mode",
+                            modifier = Modifier.weight(1f),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Switch(
+                            checked = isDarkMode,
+                            onCheckedChange = { isDarkMode = it }
+                        )
+                    }
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        thickness = 0.5.dp,
+                        color = Color(0xFFEEEEEE)
+                    )
+
+                    MenuRow(
+                        icon = Icons.Default.Info,
+                        title = "Help & Support",
+                        iconContainerColor = Color(0xFFF5F5F5),
+                        iconColor = Color.Gray
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = null,
+                        tint = Color.Red,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Logout",
+                        color = Color.Red,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(40.dp))
+        }
+    }
+}
+
+@Composable
+fun NavItem(icon: Any, label: String, isSelected: Boolean) {
+    val color = if (isSelected) Color(0xFF1A237E) else Color.Gray
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        when (icon) {
+            is ImageVector -> Icon(icon, null, tint = color, modifier = Modifier.size(24.dp))
+            is Painter -> Icon(icon, null, tint = color, modifier = Modifier.size(24.dp))
+        }
+        Text(label, fontSize = 10.sp, color = color, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)
+    }
+}
+
+@Composable
+fun StatItem(count: String, label: String, countColor: Color) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = count,
+            style = TextStyle(
+                fontSize = 24.sp,
+                color = countColor,
+                fontWeight = FontWeight.ExtraBold
+            )
+        )
+        Text(
+            text = label,
+            style = TextStyle(
+                fontSize = 11.sp,
+                color = Color.Gray,
+                fontWeight = FontWeight.Bold
+            )
+        )
+    }
+}
+
+@Composable
+fun MenuRow(icon: Any, title: String, iconContainerColor: Color, iconColor: Color) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .background(iconContainerColor, RoundedCornerShape(10.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            when (icon) {
+                is ImageVector -> Icon(
+                    icon,
+                    contentDescription = null,
+                    tint = iconColor,
+                    modifier = Modifier.size(20.dp)
+                )
+
+                is Painter -> Icon(
+                    icon,
+                    contentDescription = null,
+                    tint = iconColor,
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
-        Spacer(modifier = Modifier.height(40.dp))
-//        Card(
-//            modifier = Modifier.width(300.dp)
-//                .fillMaxWidth()
-//                .height(80.dp),
-//            shape = RoundedCornerShape(12.dp),
-//            colors = CardDefaults.cardColors(
-//                containerColor = Color.DarkGray
-//            )
-//        ) {
-//            Row(
-//                modifier = Modifier.padding(16.dp),
-//                verticalAlignment = Alignment.CenterVertically
-//
-//            ) { }
-//        }
-
+        Spacer(modifier = Modifier.width(16.dp))
+        Text(
+            text = title,
+            modifier = Modifier.weight(1f),
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium
+        )
+        Icon(
+            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = Color.LightGray
+        )
     }
 }
 
