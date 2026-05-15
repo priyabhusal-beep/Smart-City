@@ -9,7 +9,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -77,7 +76,7 @@ fun ManageComplaintsScreen() {
             }
         },
         bottomBar = {
-            AdminBottomNavigation()
+            AdminBottomBarNav()
         },
         containerColor = Color(0xFFFBFBFE)
     ) { innerPadding ->
@@ -101,14 +100,14 @@ fun ManageComplaintsScreen() {
                 modifier = Modifier.padding(bottom = 20.dp)
             )
 
-            // Spinners Row
+            // Filter Spinners Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                ManageFilterSpinner(label = "CATEGORY", options = listOf("All Services", "Road", "Water"), modifier = Modifier.weight(1f))
-                ManageFilterSpinner(label = "STATUS", options = listOf("All Status", "Pending", "In Progress"), modifier = Modifier.weight(1f))
-                ManageFilterSpinner(label = "WARD", options = listOf("Global", "Ward 1", "Ward 2"), modifier = Modifier.weight(1f))
+                FilterSpinnerMenu(label = "CATEGORY", options = listOf("All Services", "Road", "Water", "Waste"), modifier = Modifier.weight(1f))
+                FilterSpinnerMenu(label = "STATUS", options = listOf("All Status", "Pending", "In Progress", "Resolved"), modifier = Modifier.weight(1f))
+                FilterSpinnerMenu(label = "WARD", options = listOf("Global", "Ward 1", "Ward 2"), modifier = Modifier.weight(1f))
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -132,13 +131,46 @@ fun ManageComplaintsScreen() {
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Complaints List
+            // Complaints List with explicit items using separate drawable resources
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(bottom = 80.dp)
             ) {
-                items(complaintDataItems) { complaint ->
-                    ComplaintListItemView(complaint)
+                item {
+                    ComplaintItemRow(
+                        title = "Broken Road & Po",
+                        location = "42nd Avenue, Sector 5",
+                        ticketId = "#SMT-9021",
+                        status = "PENDING",
+                        imageRes = R.drawable.road
+                    )
+                }
+                item {
+                    ComplaintItemRow(
+                        title = "Street Light Malt",
+                        location = "Maple Street Park",
+                        ticketId = "#SMT-8842",
+                        status = "IN PROGRESS",
+                        imageRes = R.drawable.streetlight
+                    )
+                }
+                item {
+                    ComplaintItemRow(
+                        title = "Main Water Line",
+                        location = "East Commercial Zone",
+                        ticketId = "#SMT-7155",
+                        status = "RESOLVED",
+                        imageRes = R.drawable.waterline
+                    )
+                }
+                item {
+                    ComplaintRowItem(
+                        title = "Garbage Collectio",
+                        location = "Residential Area B-12",
+                        ticketId = "#SMT-9210",
+                        status = "PENDING",
+                        imageRes = R.drawable.garbagecollection
+                    )
                 }
             }
         }
@@ -147,7 +179,7 @@ fun ManageComplaintsScreen() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ManageFilterSpinner(label: String, options: List<String>, modifier: Modifier = Modifier) {
+fun FilterSpinnerMenu(label: String, options: List<String>, modifier: Modifier = Modifier) {
     var expanded by remember { mutableStateOf(false) }
     var selectedOption by remember { mutableStateOf(options[0]) }
 
@@ -173,7 +205,7 @@ fun ManageFilterSpinner(label: String, options: List<String>, modifier: Modifier
                 ) {
                     Text(text = selectedOption, fontSize = 12.sp, color = Color.DarkGray, maxLines = 1)
                     Icon(
-                        imageVector = if (expanded) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
+                        imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                         contentDescription = null,
                         tint = Color.Gray,
                         modifier = Modifier.size(18.dp)
@@ -200,7 +232,7 @@ fun ManageFilterSpinner(label: String, options: List<String>, modifier: Modifier
 }
 
 @Composable
-fun ComplaintListItemView(complaint: ManageComplaintData) {
+fun ComplaintItemRow(title: String, location: String, ticketId: String, status: String, imageRes: Int) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
@@ -212,7 +244,7 @@ fun ComplaintListItemView(complaint: ManageComplaintData) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
-                painter = painterResource(id = complaint.imageRes),
+                painter = painterResource(id = imageRes),
                 contentDescription = null,
                 modifier = Modifier
                     .size(64.dp)
@@ -226,14 +258,14 @@ fun ComplaintListItemView(complaint: ManageComplaintData) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = complaint.title, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color(0xFF1E293B))
-                    ManageStatusBadgeView(complaint.status)
+                    Text(text = title, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color(0xFF1E293B))
+                    StatusBadgeChip(status)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 2.dp)) {
                     Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(14.dp))
-                    Text(text = complaint.location, fontSize = 12.sp, color = Color.Gray)
+                    Text(text = location, fontSize = 12.sp, color = Color.Gray)
                 }
-                Text(text = "Ticket: ${complaint.ticketId}", fontSize = 12.sp, color = Color.Gray)
+                Text(text = "Ticket: $ticketId", fontSize = 12.sp, color = Color.Gray)
             }
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
@@ -245,8 +277,14 @@ fun ComplaintListItemView(complaint: ManageComplaintData) {
     }
 }
 
+// Keeping your original function name but fixing the hardcoded image
 @Composable
-fun ManageStatusBadgeView(status: String) {
+fun ComplaintRowItem(title: String, location: String, ticketId: String, status: String, imageRes: Int) {
+    ComplaintItemRow(title, location, ticketId, status, imageRes)
+}
+
+@Composable
+fun StatusBadgeChip(status: String) {
     val (bgColor, textColor) = when (status) {
         "PENDING" -> Color(0xFFFFE4E6) to Color(0xFFEF4444)
         "IN PROGRESS" -> Color(0xFFEBF2FF) to Color(0xFF3B82F6)
@@ -268,17 +306,17 @@ fun ManageStatusBadgeView(status: String) {
 }
 
 @Composable
-fun AdminBottomNavigation() {
+fun AdminBottomBarNav() {
     NavigationBar(
         containerColor = Color.White,
         tonalElevation = 8.dp
     ) {
         NavigationBarItem(
-            icon = {
+            icon = { 
                 Icon(
-                    painter = painterResource(id = R.drawable.baseline_home_24),
+                    painter = painterResource(id = R.drawable.baseline_home_24), 
                     contentDescription = "Home"
-                )
+                ) 
             },
             label = { Text("HOME", fontSize = 10.sp) },
             selected = false,
@@ -311,21 +349,6 @@ fun AdminBottomNavigation() {
         )
     }
 }
-
-data class ManageComplaintData(
-    val title: String,
-    val location: String,
-    val ticketId: String,
-    val status: String,
-    val imageRes: Int
-)
-
-val complaintDataItems = listOf(
-    ManageComplaintData("Broken Road & Po", "42nd Avenue, Sector 5", "#SMT-9021", "PENDING", R.drawable.road),
-    ManageComplaintData("Street Light Malt", "Maple Street Park", "#SMT-8842", "IN PROGRESS", R.drawable.streetlight),
-    ManageComplaintData("Main Water Line", "East Commercial Zone", "#SMT-7155", "RESOLVED", R.drawable.waterline),
-    ManageComplaintData("Garbage Collectio", "Residential Area B-12", "#SMT-9210", "PENDING", R.drawable.garbagecollection)
-)
 
 @Preview(showBackground = true)
 @Composable
