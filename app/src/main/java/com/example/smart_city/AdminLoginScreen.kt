@@ -7,27 +7,17 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -54,247 +44,445 @@ class AdminLoginScreen : ComponentActivity() {
 @Composable
 fun AdminScreen() {
 
-    var email by remember { mutableStateOf("admin@citysmart.gov") }
-    var password by remember { mutableStateOf("password123") }
-    var rememberMe by remember { mutableStateOf(false) }
-    var passwordVisible by remember { mutableStateOf(false) }
+    var email by remember {
+        mutableStateOf("admin@citysmart.gov")
+    }
+
+    var password by remember {
+        mutableStateOf("shh_secret_pass")
+    }
+
+    var rememberMe by remember {
+        mutableStateOf(false)
+    }
+
+    var passwordVisible by remember {
+        mutableStateOf(false)
+    }
 
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF002561),
+                        Color(0xFF003988),
+                        Color(0xFF001E50)
+                    )
+                )
+            )
     ) {
 
-        // Background Image
-        Image(
-            painter = painterResource(id = R.drawable.backgroundimage), // add your image
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
-
-        // Dark overlay
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xAA001133))
-        )
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp),
 
-        // Login Card
-        Box(
-            modifier = Modifier
-                .fillMaxSize(),
-            contentAlignment = Alignment.Center
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
 
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .padding(horizontal = 28.dp)
-                    .clip(RoundedCornerShape(28.dp))
-                    .background(color = Color.White)
-                    .padding(24.dp)
+            Spacer(modifier = Modifier.height(30.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+
+                shape = RoundedCornerShape(36.dp),
+
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFE2E7EE)
+                ),
+
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 0.dp
+                )
             ) {
 
-                // Top Icon Box
-                Box(
-                    modifier = Modifier
-                        .size(54.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(Color(0xFF1E90FF)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Lock,
-                        contentDescription = null,
-                        tint = Color.Black
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "CitySmart Admin",
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Text(
-                    text = "Secure Control Center Access",
-                    fontSize = 13.sp,
-                    color = Color(0xFF001B44)
-                )
-
-                Spacer(modifier = Modifier.height(28.dp))
-
-                // Email Label
-                Text(
-                    text = "EMAIL ADDRESS",
-                    modifier = Modifier.fillMaxWidth(),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Email Field
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Email,
-                            contentDescription = null
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color(0x332BA7FF),
-                        unfocusedContainerColor = Color(0x332BA7FF),
-                        focusedBorderColor = Color(0xFF002B7A),
-                        unfocusedBorderColor = Color(0xFF002B7A),
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(18.dp))
-
-                // Password Label
-                Text(
-                    text = "PASSWORD",
-                    modifier = Modifier.fillMaxWidth(),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Password Field
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Lock,
-                            contentDescription = null
-                        )
-                    },
-                    trailingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Visibility,
-                            contentDescription = null
-                        )
-                    },
-                    visualTransformation =
-                        if (passwordVisible)
-                            VisualTransformation.None
-                        else
-                            PasswordVisualTransformation(),
-
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Password
+                Column(
+                    modifier = Modifier.padding(
+                        horizontal = 24.dp,
+                        vertical = 32.dp
                     ),
 
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                    singleLine = true,
-
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color(0x332BA7FF),
-                        unfocusedContainerColor = Color(0x332BA7FF),
-                        focusedBorderColor = Color(0xFF002B7A),
-                        unfocusedBorderColor = Color(0xFF002B7A),
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Remember + Forgot
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Checkbox(
-                            checked = rememberMe,
-                            onCheckedChange = {
-                                rememberMe = it
-                            }
-                        )
+                    // HEADER LOGO
+                    Box(
+                        modifier = Modifier
+                            .size(60.dp)
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(Color(0xFF1E3A6B)),
 
-                        Text(
-                            text = "Remember me",
-                            fontSize = 12.sp,
-                            color = Color.Black
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(
+                                id = R.drawable.smartcity
+                            ),
+                            contentDescription = "Smart City Logo",
+
+                            modifier = Modifier.size(36.dp)
                         )
                     }
 
+                    Spacer(modifier = Modifier.height(16.dp))
+
                     Text(
-                        text = "Forgot Access?",
-                        fontSize = 12.sp,
-                        color = Color(0xFF001B88),
-                        fontWeight = FontWeight.SemiBold
+                        text = "CitySmart Admin",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1F2937)
                     )
-                }
 
-                Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
-                // Sign In Button
-                Button(
-                    onClick = { },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(55.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF001A8F)
-                    )
-                ) {
                     Text(
-                        text = "Sign In",
-                        fontSize = 18.sp,
-                        color = Color.White
+                        text = "Secure Control Center Access",
+                        color = Color(0xFF4B5563),
+                        fontSize = 13.sp
                     )
-                }
 
-                Spacer(modifier = Modifier.height(28.dp))
+                    Spacer(modifier = Modifier.height(28.dp))
+
+                    // EMAIL TITLE
+                    Text(
+                        text = "EMAIL ADDRESS",
+                        modifier = Modifier.fillMaxWidth(),
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF6B7280),
+                        fontSize = 11.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // EMAIL FIELD
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = {
+                            email = it
+                        },
+
+                        modifier = Modifier.fillMaxWidth(),
+
+                        singleLine = true,
+
+                        shape = RoundedCornerShape(12.dp),
+
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(
+                                    id = R.drawable.baseline_mail_24
+                                ),
+                                contentDescription = "Email Icon",
+                                tint = Color(0xFF9CA3AF)
+                            )
+                        },
+
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+
+                            focusedBorderColor = Color(0xFFD1D5DB),
+                            unfocusedBorderColor = Color(0xFFD1D5DB),
+
+                            focusedTextColor = Color(0xFF1F2937),
+                            unfocusedTextColor = Color(0xFF4B5563)
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(18.dp))
+
+                    // PASSWORD TITLE
+                    Text(
+                        text = "PASSWORD",
+                        modifier = Modifier.fillMaxWidth(),
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF6B7280),
+                        fontSize = 11.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    // PASSWORD FIELD
+                    OutlinedTextField(
+                        value = password,
+
+                        onValueChange = {
+                            password = it
+                        },
+
+                        modifier = Modifier.fillMaxWidth(),
+
+                        singleLine = true,
+
+                        shape = RoundedCornerShape(12.dp),
+
+                        leadingIcon = {
+                            Icon(
+                                painter = painterResource(
+                                    id = R.drawable.baseline_lock_24
+                                ),
+                                contentDescription = "Lock Icon",
+                                tint = Color(0xFF9CA3AF)
+                            )
+                        },
+
+                        trailingIcon = {
+                            IconButton(
+                                onClick = {
+                                    passwordVisible =
+                                        !passwordVisible
+                                }
+                            ) {
+
+                                Icon(
+                                    painter = painterResource(
+                                        id =
+                                            if (passwordVisible)
+                                                R.drawable.baseline_visibility_off_24
+                                            else
+                                                R.drawable.baseline_visibility_24
+                                    ),
+
+                                    contentDescription =
+                                        "Visibility Toggle",
+
+                                    tint = Color(0xFF9CA3AF)
+                                )
+                            }
+                        },
+
+                        visualTransformation =
+                            if (passwordVisible)
+                                VisualTransformation.None
+                            else
+                                PasswordVisualTransformation(),
+
+                        keyboardOptions =
+                            KeyboardOptions(
+                                keyboardType =
+                                    KeyboardType.Password
+                            ),
+
+                        colors =
+                            OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor =
+                                    Color.White,
+
+                                unfocusedContainerColor =
+                                    Color.White,
+
+                                focusedBorderColor =
+                                    Color(0xFFD1D5DB),
+
+                                unfocusedBorderColor =
+                                    Color(0xFFD1D5DB),
+
+                                focusedTextColor =
+                                    Color(0xFF1F2937),
+
+                                unfocusedTextColor =
+                                    Color(0xFF4B5563)
+                            )
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // OPTIONS
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+
+                        verticalAlignment =
+                            Alignment.CenterVertically
+                    ) {
+
+                        Row(
+                            modifier =
+                                Modifier.weight(1f),
+
+                            verticalAlignment =
+                                Alignment.CenterVertically
+                        ) {
+
+                            Checkbox(
+                                checked = rememberMe,
+
+                                onCheckedChange = {
+                                    rememberMe = it
+                                },
+
+                                colors =
+                                    CheckboxDefaults.colors(
+                                        checkedColor =
+                                            Color(0xFF0056C6),
+
+                                        uncheckedColor =
+                                            Color(0xFF6B7280)
+                                    )
+                            )
+
+                            Text(
+                                text = "Remember device",
+                                color = Color(0xFF4B5563),
+                                fontSize = 13.sp
+                            )
+                        }
+
+                        TextButton(
+                            onClick = {},
+                            contentPadding =
+                                PaddingValues(0.dp)
+                        ) {
+                            Text(
+                                text = "Forgot Access?",
+                                color = Color(0xFF0056C6),
+                                fontWeight =
+                                    FontWeight.SemiBold,
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // SIGN IN BUTTON
+                    Button(
+                        onClick = {},
+
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+
+                        shape =
+                            RoundedCornerShape(12.dp),
+
+                        colors =
+                            ButtonDefaults.buttonColors(
+                                containerColor =
+                                    Color(0xFF0056C6)
+                            )
+                    ) {
+
+                        Text(
+                            text = "Sign In",
+                            fontSize = 16.sp,
+                            fontWeight =
+                                FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // SECURITY INDICATOR
+                    Row(
+                        verticalAlignment =
+                            Alignment.CenterVertically,
+
+                        horizontalArrangement =
+                            Arrangement.Center
+                    ) {
+
+                        Icon(
+                            painter = painterResource(
+                                id = R.drawable.baseline_lock_24
+                            ),
+
+                            contentDescription =
+                                "Shield",
+
+                            tint = Color(0xFF6B7280),
+
+                            modifier =
+                                Modifier.size(14.dp)
+                        )
+
+                        Spacer(
+                            modifier =
+                                Modifier.width(4.dp)
+                        )
+
+                        Text(
+                            text =
+                                "ADMIN ACCESS ONLY",
+
+                            color =
+                                Color(0xFF6B7280),
+
+                            fontWeight =
+                                FontWeight.Bold,
+
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+            }
+
+            Spacer(
+                modifier =
+                    Modifier.height(24.dp)
+            )
+
+            // FOOTER
+            Row(
+                modifier =
+                    Modifier.padding(bottom = 8.dp),
+
+                horizontalArrangement =
+                    Arrangement.Center,
+
+                verticalAlignment =
+                    Alignment.CenterVertically
+            ) {
 
                 Text(
-                    text = "© ADMIN ACCESS ONLY",
-                    fontSize = 11.sp,
-                    color = Color(0xFF001B44)
+                    text =
+                        "Already have an account? ",
+
+                    color =
+                        Color.White.copy(
+                            alpha = 0.7f
+                        ),
+
+                    fontSize = 14.sp
                 )
+
+                TextButton(
+                    onClick = {},
+                    contentPadding =
+                        PaddingValues(0.dp)
+                ) {
+
+                    Text(
+                        text = "Login",
+
+                        color = Color.White,
+
+                        fontWeight =
+                            FontWeight.Bold,
+
+                        fontSize = 14.sp
+                    )
+                }
             }
         }
-
-        // Bottom Footer
-        Text(
-            text = "© 2026 Urban Systems Authority. All rights reserved.",
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 20.dp),
-            color = Color(0xFF80BFFF),
-            fontSize = 11.sp
-        )
     }
 }
 
-@Preview(showBackground = true)
+@Preview(
+    showBackground = true,
+    showSystemUi = true
+)
 @Composable
 fun AdminScreenPreview() {
     SmartCityTheme {
-        AdminScreen()
+        Surface(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            AdminScreen()
+        }
     }
 }

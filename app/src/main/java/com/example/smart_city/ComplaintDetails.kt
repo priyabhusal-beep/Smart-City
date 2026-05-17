@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -52,7 +53,7 @@ fun ComplaintDetailsActivity() {
 
     Scaffold(
         bottomBar = {
-            ComplaintBottomNavigationBar()
+            CDBottomNavigationBar()
         }
 
     ) { paddingValues ->
@@ -119,7 +120,7 @@ fun ComplaintImage() {
     Box {
 
         Image(
-            painter = painterResource(id = R.drawable.road),
+            painter = painterResource(id = R.drawable.brokenroad),
             contentDescription = "Utility Pole",
             modifier = Modifier
                 .fillMaxWidth()
@@ -239,7 +240,7 @@ fun LocationSection() {
                 tint = Color(0xFF0B2E83)
             )
 
-            Spacer(modifier = Modifier.width(5.dp))
+            Spacer(modifier = Modifier.width(10.dp))
 
             Text(
                 text = "Incident\nLocation",
@@ -275,7 +276,7 @@ fun MapSection() {
 }
 
 @Composable
-fun ComplaintBottomNavigationBar() {
+fun CDBottomNavigationBar() {
 
     NavigationBar(
         containerColor = Color.White
