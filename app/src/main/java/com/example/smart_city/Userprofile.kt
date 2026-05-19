@@ -104,7 +104,7 @@ fun Userprofilebody() {
                 )
 
                 Icon(
-                    painter = painterResource(R.drawable.baseline_notifications_none_24),
+                    painter = painterResource(R.drawable.baseline_notifications_24),
                     contentDescription = null,
                     tint = Color(0xFF1A237E)
                 )

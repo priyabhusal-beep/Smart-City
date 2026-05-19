@@ -1,4 +1,5 @@
 package com.example.smart_city
+
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -26,7 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
+import com.example.smart_city.R
 class Report : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -98,7 +99,7 @@ fun Reportbody() {
                     style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Color(0xFF1A237E))
                 )
                 Icon(
-                    painter = painterResource(R.drawable.baseline_notifications_none_24),
+                    painter = painterResource(R.drawable.baseline_notifications_24),
                     contentDescription = null,
                     modifier = Modifier.align(Alignment.CenterEnd),
                     tint = Color(0xFF1A237E)
