@@ -142,7 +142,7 @@ fun ManageComplaintsScreen() {
                         location = "42nd Avenue, Sector 5",
                         ticketId = "#SMT-9021",
                         status = "PENDING",
-                        imageRes = R.drawable.road
+                        imageRes = R.drawable.roadddd
                     )
                 }
                 item {
