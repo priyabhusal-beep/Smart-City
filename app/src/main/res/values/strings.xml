@@ -1,9 +1,10 @@
 <resources>
     <string name="app_name">Smart-City</string>
-<<<<<<< HEAD
-=======
-    <string name="title_activity_report_issue">ReportIssue</string>
-    <string name="title_activity_report">Report</string>
-    <string name="title_activity_userprofile">Userprofile</string>
->>>>>>> shrina
+    <string name="title_activity_complaint_details">Complaint Details</string>
+    <string name="title_activity_admin_login_screen">Admin Login</string>
+    <string name="title_activity_report">Report Issue</string>
+    <string name="title_activity_complain_progress">Complaint Progress</string>
+    <string name="title_activity_complain_report_issue">Report New Issue</string>
+    <string name="title_activity_login">User Login</string>
+    <string name="title_activity_userprofile">User Profile</string>
 </resources>
