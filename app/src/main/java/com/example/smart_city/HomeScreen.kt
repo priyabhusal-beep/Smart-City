@@ -6,32 +6,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,40 +28,51 @@ val PrimaryBlue = Color(0xFF0046B1)
 val AccentTeal = Color(0xFF00A389)
 val LightBlueBg = Color(0xFFF0F5FF)
 val BackgroundGray = Color(0xFFF8F9FA)
+
 class HomeScreen : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
+
         setContent {
             SmartCityTheme {
                 HomeActivity()
-
             }
         }
     }
 }
+
 data class RecentReportData(
-    val image : Int,
-    val title : String,
+    val image: Int,
+    val title: String,
     val location: String,
     val time: String,
     val status: String,
-    val color : Color
+    val color: Color
 )
+
 @Composable
-fun HomeActivity(){
-    var search by remember { mutableStateOf("") }
+fun HomeActivity() {
+
+    var search by remember {
+        mutableStateOf("")
+    }
+
     val recentReport = listOf(
+
         RecentReportData(
             image = R.drawable.road,
-            "Broken Pavement",
+            title = "Broken Pavement",
             location = "12th Ave, North Block",
             time = "2h ago",
             status = "In Progress",
             color = PrimaryBlue
         ),
+
         RecentReportData(
-            image = R.drawable.garbage, // replace with your image
+            image = R.drawable.garbage,
             title = "Overflowing Bin",
             location = "Central Park East",
             time = "3h ago",
@@ -89,222 +80,417 @@ fun HomeActivity(){
             color = PrimaryBlue
         )
     )
-    LazyColumn(
-        modifier = Modifier.fillMaxSize()
-            .background(Color.White)
-            .padding(35.dp)
-    ) {
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.lana),
-                    contentDescription = null,
-                    modifier = Modifier.size(60.dp)
-                        .clip(RoundedCornerShape(50.dp))
-                )
-                Spacer(modifier = Modifier.width(12.dp))
 
-                Column(
-                    modifier = Modifier.weight(1f)
+    Scaffold(
+
+        bottomBar = {
+
+            Surface(
+                shadowElevation = 8.dp,
+                color = Color.White
+            ) {
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp),
+
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Good Morning",
-                        fontSize = 16.sp,
-                        color = Color.Gray
-                    )
-                    Text(
-                        text = "Lana del",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = PrimaryBlue
-                    )
-                }
 
-                Icon(
-                    painter = painterResource(R.drawable.baseline_notifications_24),
-                    contentDescription = null,
-                    tint = PrimaryBlue
-                )
-            }
-            Spacer(modifier = Modifier.height(15.dp))
-
-            // ================= SEARCH BAR =================
-
-            OutlinedTextField(
-                value = search,
-                onValueChange = { search = it },
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Search complaints..", color = Color.Gray) },
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = Color.LightGray,
-                    focusedBorderColor = PrimaryBlue
-                ),
-                leadingIcon = { Icon(painter = painterResource(R.drawable.baseline_search_24),
-                        contentDescription = null
-                    )
-                },
-                shape = RoundedCornerShape(20.dp)
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // ================= QUICK ACTIONS =================
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-
-            ) {
-                ReportCard(
-                    modifier = Modifier.weight(1f),
-                    image = R.drawable.others,
-                    label = "Report issue"
-                )
-                ReportCard(
-                    modifier = Modifier.weight(1f),
-                    image = R.drawable.track,
-                    label = "Track Issue"
-                )
-
-                ReportCard(
-                    modifier = Modifier.weight(1f),
-                    image = R.drawable.map,
-                    label = "Nearby"
-                )
-            }
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Text(
-                text = "Categories",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color = PrimaryBlue
-            )
-            Spacer(modifier = Modifier.height(15.dp))
-
-// ================= CATEGORY TITLE =================
-
-            Row(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-
-                ReportCard(
-                    modifier = Modifier.weight(1f),
-                    image = R.drawable.road,
-                    label = "Road"
-                )
-
-                ReportCard(
-                    modifier = Modifier.weight(1f),
-                    image = R.drawable.garbage,
-                    label = "Garbage"
-                )
-
-                ReportCard(
-                    modifier = Modifier.weight(1f),
-                    image = R.drawable.traffic,
-                    label = "Traffic"
-                )
-
-                ReportCard(
-                    modifier = Modifier.weight(1f),
-                    image = R.drawable.map,
-                    label = "Others"
-                )
-            }
-
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            //==================== MAP SECTION ====================
-            Card(
-                modifier = Modifier.fillMaxWidth().height(160.dp),
-                shape = RoundedCornerShape(18.dp)
-            ) {
-                Box {
-                    Image(
-                        painter = painterResource(R.drawable.mapp), // Add a map screenshot to drawable
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                    Button(
-                        onClick = {},
-                        modifier = Modifier.align(Alignment.BottomEnd).padding(10.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-                        shape = RoundedCornerShape(20.dp)
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text("View Full Map", fontSize = 12.sp)
+
+                        Icon(
+                            painter = painterResource(
+                                R.drawable.baseline_home_24
+                            ),
+                            contentDescription = null,
+                            tint = Color.Gray,
+                            modifier = Modifier.size(24.dp)
+                        )
+
+                        Text(
+                            text = "Home",
+                            fontSize = 10.sp,
+                            color = Color.Gray
+                        )
+                    }
+
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+
+                        Icon(
+                            painter = painterResource(
+                                R.drawable.baseline_report_24
+                            ),
+                            contentDescription = null,
+                            tint = Color(0xFF1A237E),
+                            modifier = Modifier.size(24.dp)
+                        )
+
+                        Text(
+                            text = "Reports",
+                            fontSize = 10.sp,
+                            color = Color(0xFF1A237E),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+
+                        Icon(
+                            painter = painterResource(
+                                R.drawable.baseline_person_outline_24
+                            ),
+                            contentDescription = null,
+                            tint = Color.Gray,
+                            modifier = Modifier.size(24.dp)
+                        )
+
+                        Text(
+                            text = "Profile",
+                            fontSize = 10.sp,
+                            color = Color.Gray
+                        )
                     }
                 }
             }
+        }
 
-            Spacer(modifier = Modifier.height(20.dp))
+    ) { innerPadding ->
 
 
-            //==================== RECENT REPORT TITLE ====================
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White)
+                .padding(innerPadding)
+                .padding(horizontal = 20.dp)
+        ) {
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
+            // Header
+            item {
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    Image(
+                        painter = painterResource(
+                            R.drawable.lana
+                        ),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(60.dp)
+                            .clip(
+                                RoundedCornerShape(50.dp)
+                            )
+                    )
+
+                    Spacer(
+                        modifier = Modifier.width(12.dp)
+                    )
+
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+
+                        Text(
+                            text = "Good Morning",
+                            color = Color.Gray
+                        )
+
+                        Text(
+                            text = "Lana Del",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = PrimaryBlue
+                        )
+                    }
+
+                    Icon(
+                        painter = painterResource(
+                            R.drawable.baseline_notifications_24
+                        ),
+                        contentDescription = null,
+                        tint = PrimaryBlue
+                    )
+                }
+
+                Spacer(
+                    modifier = Modifier.height(20.dp)
+                )
+            }
+
+
+            // Search
+            item {
+
+                OutlinedTextField(
+                    value = search,
+
+                    onValueChange = {
+                        search = it
+                    },
+
+                    modifier = Modifier.fillMaxWidth(),
+
+                    placeholder = {
+                        Text("Search complaints...")
+                    },
+
+                    leadingIcon = {
+
+                        Icon(
+                            painter = painterResource(
+                                R.drawable.baseline_search_24
+                            ),
+                            contentDescription = null
+                        )
+                    },
+
+                    shape = RoundedCornerShape(20.dp),
+
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = PrimaryBlue,
+                        unfocusedBorderColor = Color.LightGray
+                    )
+                )
+
+                Spacer(
+                    modifier = Modifier.height(20.dp)
+                )
+            }
+
+
+            // Quick Actions
+            item {
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement =
+                        Arrangement.SpaceBetween
+                ) {
+
+                    ReportCard(
+                        modifier = Modifier.weight(1f),
+                        image = R.drawable.others,
+                        label = "Report"
+                    )
+
+                    ReportCard(
+                        modifier = Modifier.weight(1f),
+                        image = R.drawable.track,
+                        label = "Track"
+                    )
+
+                    ReportCard(
+                        modifier = Modifier.weight(1f),
+                        image = R.drawable.map,
+                        label = "Nearby"
+                    )
+                }
+
+                Spacer(
+                    modifier = Modifier.height(20.dp)
+                )
+            }
+
+
+            // Categories
+            item {
 
                 Text(
-                    text = "Recent Reports",
+                    text = "Categories",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                     color = PrimaryBlue
                 )
 
-                Text(
-                    text = "View All",
-                    color = Color.Gray
+                Spacer(
+                    modifier = Modifier.height(15.dp)
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+
+                    ReportCard(
+                        Modifier.weight(1f),
+                        R.drawable.road,
+                        "Road"
+                    )
+
+                    ReportCard(
+                        Modifier.weight(1f),
+                        R.drawable.garbage,
+                        "Garbage"
+                    )
+
+                    ReportCard(
+                        Modifier.weight(1f),
+                        R.drawable.traffic,
+                        "Traffic"
+                    )
+
+                    ReportCard(
+                        Modifier.weight(1f),
+                        R.drawable.map,
+                        "Others"
+                    )
+                }
+
+                Spacer(
+                    modifier = Modifier.height(20.dp)
                 )
             }
 
 
-            Spacer(modifier = Modifier.height(12.dp))
+            // Map
+            item {
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(160.dp),
+
+                    shape = RoundedCornerShape(18.dp)
+                ) {
+
+                    Box {
+
+                        Image(
+                            painter = painterResource(
+                                R.drawable.mapp
+                            ),
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+
+                        Button(
+                            onClick = {},
+
+                            modifier = Modifier
+                                .align(
+                                    Alignment.BottomEnd
+                                )
+                                .padding(10.dp),
+
+                            colors =
+                                ButtonDefaults.buttonColors(
+                                    containerColor =
+                                        PrimaryBlue
+                                )
+                        ) {
+
+                            Text(
+                                "View Full Map"
+                            )
+                        }
+                    }
+                }
+
+                Spacer(
+                    modifier = Modifier.height(20.dp)
+                )
+            }
 
 
-            //==================== RECENT REPORT ITEMS ====================
+            // Recent Report Title
+            item {
 
-            recentReport.forEach {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
 
-                RecentReportCard(it)
+                    horizontalArrangement =
+                        Arrangement.SpaceBetween
+                ) {
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "Recent Reports",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = PrimaryBlue
+                    )
 
+                    Text(
+                        text = "View All",
+                        color = Color.Gray
+                    )
+                }
+
+                Spacer(
+                    modifier = Modifier.height(12.dp)
+                )
+            }
+
+
+            // Dynamic items
+            items(recentReport) { report ->
+
+                RecentReportCard(report)
+
+                Spacer(
+                    modifier = Modifier.height(10.dp)
+                )
+            }
+
+            item {
+                Spacer(
+                    modifier = Modifier.height(20.dp)
+                )
             }
         }
     }
 }
+
+
 @Composable
 fun ReportCard(
     modifier: Modifier,
     image: Int,
     label: String
 ) {
+
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
-    ) {Card(
-        modifier = Modifier.size(70.dp),
-        shape = RoundedCornerShape(18.dp),
-        elevation = CardDefaults.cardElevation(4.dp)
     ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ){
-            Image(
-                painter = painterResource(image),
-                contentDescription = null,
-                modifier = Modifier.size(45.dp)
-            )
+
+        Card(
+            modifier = Modifier.size(70.dp),
+            shape = RoundedCornerShape(18.dp),
+            elevation = CardDefaults.cardElevation(4.dp)
+        ) {
+
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+
+                Image(
+                    painter = painterResource(image),
+                    contentDescription = null,
+                    modifier = Modifier.size(70.dp)
+                )
+            }
         }
-    }
-        Spacer(modifier = Modifier.height(8.dp))
+
+        Spacer(
+            modifier = Modifier.height(8.dp)
+        )
 
         Text(
             text = label,
@@ -317,36 +503,45 @@ fun ReportCard(
 
 @Composable
 fun RecentReportCard(
-    report : RecentReportData
+    report: RecentReportData
 ) {
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(12.dp),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+            .padding(vertical = 6.dp),
 
+        shape = RoundedCornerShape(16.dp),
+
+        elevation =
+            CardDefaults.cardElevation(3.dp)
     ) {
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(12.dp),
 
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment =
+                Alignment.CenterVertically
         ) {
 
             Image(
-                painter = painterResource(report.image),
+                painter =
+                    painterResource(report.image),
+
                 contentDescription = null,
 
                 modifier = Modifier
                     .size(60.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(
+                        RoundedCornerShape(12.dp)
+                    )
             )
 
-
-            Spacer(modifier = Modifier.width(12.dp))
-
+            Spacer(
+                modifier = Modifier.width(12.dp)
+            )
 
             Column(
                 modifier = Modifier.weight(1f)
@@ -371,22 +566,23 @@ fun RecentReportCard(
                 )
             }
 
-
             Text(
                 text = report.status,
-                color = Color.Blue,
+                color = report.color,
                 fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold
+                fontWeight =
+                    FontWeight.SemiBold
             )
         }
     }
 }
 
-@Preview(showBackground = true )
+
+@Preview(showBackground = true)
 @Composable
-fun HomePreview(){
+fun HomePreview() {
+
     SmartCityTheme {
         HomeActivity()
     }
-
 }
