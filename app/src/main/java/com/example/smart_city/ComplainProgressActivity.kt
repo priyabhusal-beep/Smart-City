@@ -9,10 +9,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.*
@@ -36,9 +35,9 @@ class ComplainProgressActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            SmartCityTheme {
+
                 ComplainProgressScreen()
-            }
+
         }
     }
 }
@@ -51,229 +50,231 @@ fun ComplainProgressScreen() {
         },
         containerColor = Color.White
     ) { innerPadding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp)
+                .padding(horizontal = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(top = 48.dp, bottom = 32.dp)
         ) {
-            Spacer(modifier = Modifier.height(20.dp))
 
-            // CASE ID and Status Badge
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "CASE ID: #SC-4502",
-                    fontSize = 13.sp,
-                    color = Color(0xFF94A3B8),
-                    fontWeight = FontWeight.Medium
-                )
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = Color(0xFFEBF2FF),
-                    modifier = Modifier.height(26.dp)
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    Text(
+                        text = "CASE ID: #SC-4502",
+                        fontSize = 13.sp,
+                        color = Color(0xFF94A3B8),
+                        fontWeight = FontWeight.Medium
+                    )
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0xFFEBF2FF),
+                        modifier = Modifier.height(26.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(6.dp)
-                                .background(Color(0xFF3B82F6), CircleShape)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .background(Color(0xFF3B82F6), CircleShape)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "In Progress",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF3B82F6)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Item 2: Title
+            item {
+                Text(
+                    text = "Broken Pavement",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1E3A8A)
+                )
+            }
+
+            // Item 3: Progress Bar
+            item {
+                LinearProgressIndicator(
+                    progress = { 0.6f },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(3.dp)),
+                    color = Color(0xFF4A67E4),
+                    trackColor = Color(0xFFF1F5F9),
+                )
+            }
+
+            // Item 4: Status History Section
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Column(modifier = Modifier.padding(20.dp)) {
                         Text(
-                            text = "In Progress",
-                            fontSize = 12.sp,
+                            text = "Status History",
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF3B82F6)
+                            color = Color.Black
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        StatusTimelineItem(
+                            status = "Reported",
+                            date = "Oct 10, 2023 • 09:15 AM",
+                            isCompleted = true
+                        )
+                        StatusTimelineItem(
+                            status = "In Progress",
+                            date = "Oct 12, 2023 • 02:45 PM",
+                            description = "Crew dispatched to location. Work started on main structural repair.",
+                            isCurrent = true
+                        )
+                        StatusTimelineItem(
+                            status = "Resolved",
+                            date = "Estimated Oct 15, 2023",
+                            isLast = true
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(5.dp))
-
-            Text(
-                text = "Broken Pavement",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E3A8A)
-            )
-
-            Spacer(modifier = Modifier.height(3.dp))
-
-            // Progress Bar
-            LinearProgressIndicator(
-                progress = { 0.6f },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp)
-                    .clip(RoundedCornerShape(3.dp)),
-                color = Color(0xFF4A67E4),
-                trackColor = Color(0xFFF1F5F9),
-            )
-
-            Spacer(modifier = Modifier.height(5.dp))
-
-            // Status History Section
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, Color(0xFFF3F4F6))
-            ) {
-                Column(modifier = Modifier.padding(5.dp)) {
+            // Item 5: Latest Updates Header
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
-                        text = "Status History",
+                        text = "Latest Updates",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
                     )
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    StatusTimelineItem(
-                        status = "Reported",
-                        date = "Oct 10, 2023 • 09:15 AM",
-                        isCompleted = true
-                    )
-                    StatusTimelineItem(
-                        status = "In Progress",
-                        date = "Oct 12, 2023 • 02:45 PM",
-                        description = "Crew dispatched to location. Work started on main structural repair.",
-                        isCurrent = true
-                    )
-                    StatusTimelineItem(
-                        status = "Resolved",
-                        date = "Estimated Oct 15, 2023",
-                        isLast = true
-                    )
+                    TextButton(
+                        onClick = { },
+                        contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Text("VIEW ALL", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4A67E4))
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(3.dp))
+            // Item 6: Admin Update Card
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                ) {
+                    Row(modifier = Modifier.padding(16.dp)) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .background(Color(0xFF3F51B5), RoundedCornerShape(10.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.SupervisorAccount,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Admin Update",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp,
+                                    color = Color(0xFF1E293B)
+                                )
+                                Text(
+                                    text = "2h ago",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF94A3B8)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "The repair team is currently addressing the foundation issues. Road access remains partially restricted.",
+                                fontSize = 14.sp,
+                                color = Color(0xFF475569),
+                                lineHeight = 20.sp
+                            )
+                        }
+                    }
+                }
+            }
 
-            // Latest Updates Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            // Item 7: Photo Log Section
+            item {
                 Text(
-                    text = "Latest Updates",
+                    text = "Photo Log",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black
                 )
-                TextButton(
+            }
+
+
+            item {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    PhotoItem(
+                        label = "ISSUE REPORTED",
+                        imageRes = R.drawable.brokenroad,
+                        modifier = Modifier.weight(1f),
+                        labelBackgroundColor = Color.Black.copy(alpha = 0.5f)
+                    )
+                    PhotoItem(
+                        label = "CREW AT WORK",
+                        imageRes = R.drawable.crewwork,
+                        modifier = Modifier.weight(1f),
+                        labelBackgroundColor = Color(0xFF4A67E4).copy(alpha = 0.8f)
+                    )
+                }
+            }
+
+
+            item {
+                Button(
                     onClick = { },
-                    contentPadding = PaddingValues(0.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A237E))
                 ) {
-                    Text("VIEW ALL", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4A67E4))
+                    Icon(Icons.Default.AddComment, contentDescription = null, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text("Add Comment", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
             }
-
-            Spacer(modifier = Modifier.height(2.dp))
-
-            // Admin Update Card
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
-                shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, Color(0xFFE2E8F0))
-            ) {
-                Row(modifier = Modifier.padding(16.dp)) {
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .background(Color(0xFF3F51B5), RoundedCornerShape(10.dp)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.SupervisorAccount,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "Admin Update",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp,
-                                color = Color(0xFF1E293B)
-                            )
-                            Text(
-                                text = "2h ago",
-                                fontSize = 12.sp,
-                                color = Color(0xFF94A3B8)
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "The repair team is currently addressing the foundation issues. Road access remains partially restricted.",
-                            fontSize = 14.sp,
-                            color = Color(0xFF475569),
-                            lineHeight = 20.sp
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(3.dp))
-
-            // Photo Log Section
-            Text(
-                text = "Photo Log",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                PhotoItem(
-                    label = "ISSUE REPORTED",
-                    imageRes = R.drawable.brokenroad,
-                    modifier = Modifier.weight(1f),
-                    labelBackgroundColor = Color.Black.copy(alpha = 0.5f)
-                )
-                PhotoItem(
-                    label = "CREW AT WORK",
-                    imageRes = R.drawable.crewwork,
-                    modifier = Modifier.weight(1f),
-                    labelBackgroundColor = Color(0xFF4A67E4).copy(alpha = 0.8f)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Add Comment Button
-            Button(
-                onClick = { },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A237E))
-            ) {
-                Icon(Icons.Default.AddComment, contentDescription = null, modifier = Modifier.size(20.dp))
-                Spacer(modifier = Modifier.width(10.dp))
-                Text("Add Comment", fontSize = 16.sp, fontWeight = FontWeight.Bold)
-            }
-            
-            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
@@ -322,7 +323,7 @@ fun StatusTimelineItem(
                 )
             }
         }
-        Spacer(modifier = Modifier.width(3.dp))
+        Spacer(modifier = Modifier.width(16.dp))
         Column(modifier = Modifier.padding(bottom = if (isLast) 0.dp else 24.dp)) {
             Text(
                 text = status,
@@ -332,7 +333,7 @@ fun StatusTimelineItem(
             )
             Text(text = date, fontSize = 13.sp, color = Color(0xFF94A3B8))
             if (description != null) {
-                Spacer(modifier = Modifier.height(3.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 Surface(
                     shape = RoundedCornerShape(8.dp),
                     color = Color(0xFFF1F5F9),
@@ -426,7 +427,7 @@ fun BottomNavigationBar() {
 @Preview(showBackground = true)
 @Composable
 fun ComplainProgressPreview() {
-    SmartCityTheme {
+
         ComplainProgressScreen()
-    }
+
 }

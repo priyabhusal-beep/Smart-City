@@ -21,12 +21,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.example.smart_city.ui.theme.SmartCityTheme
 
 class AdminDashboard : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
+
+        val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
+        windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        windowInsetsController.hide(WindowInsetsCompat.Type.statusBars())
+
         setContent {
             SmartCityTheme {
                 AdminDashboardScreen()
@@ -37,29 +46,32 @@ class AdminDashboard : ComponentActivity() {
 
 @Composable
 fun AdminDashboardScreen() {
-    Box(modifier = Modifier.fillMaxSize().background(Color(0xFFF8F9FA))) {
-        Scaffold(
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = Color(0xFFF8F9FA),
+        bottomBar = { CustomBottomNavigation() }
+    ) { innerPadding ->
+        DashboardContent(
             modifier = Modifier.fillMaxSize(),
-            containerColor = Color.Transparent
-        ) { innerPadding ->
-            DashboardContent(Modifier.padding(innerPadding))
-        }
-
-        Box(modifier = Modifier.align(Alignment.BottomCenter)) {
-            CustomBottomNavigation()
-        }
+            contentPadding = innerPadding
+        )
     }
 }
 
 @Composable
-fun DashboardContent(modifier: Modifier = Modifier) {
+fun DashboardContent(
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues()
+) {
     LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp)
+        modifier = modifier.padding(horizontal = 16.dp),
+        contentPadding = PaddingValues(
+            top = 24.dp,
+            bottom = contentPadding.calculateBottomPadding() + 24.dp
+        )
     ) {
         item {
-            Column(modifier = Modifier.padding(top = 48.dp, bottom = 16.dp)) {
+            Column(modifier = Modifier.padding(bottom = 16.dp)) {
                 Text("Admin Dashboard", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFF0D236D))
                 Text("Real-time infrastructure oversight", color = Color.Gray, fontSize = 14.sp)
             }
@@ -104,7 +116,7 @@ fun DashboardContent(modifier: Modifier = Modifier) {
                         Text("47", color = Color(0xFF2E7D32), fontSize = 26.sp, fontWeight = FontWeight.Bold)
                     }
                     Surface(shape = CircleShape, color = Color(0xFFE8F5E9), modifier = Modifier.size(44.dp)) {
-                        Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.padding(10.dp))
+                        Icon(Icons.Default.Check, contentDescription = null, tint = Color(0xFF2E7D32), modifier = Modifier.padding(10.dp))
                     }
                 }
             }
@@ -154,7 +166,6 @@ fun DashboardContent(modifier: Modifier = Modifier) {
                     }
                 }
             }
-            Spacer(Modifier.height(140.dp))
         }
     }
 }
@@ -186,7 +197,7 @@ fun CustomBottomNavigation() {
     ) {
         NavigationBar(
             containerColor = Color.Transparent,
-            modifier = Modifier.height(90.dp).padding(bottom = 8.dp)
+            modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)
         ) {
             NavigationBarItem(
                 selected = true,
@@ -217,7 +228,7 @@ fun CustomBottomNavigation() {
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true)
+@Preview(showBackground = true, showSystemUi = false)
 @Composable
 fun FullPreview() {
     SmartCityTheme {
