@@ -32,9 +32,9 @@ class AdminManageScreen : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            SmartCityTheme {
+
                 ManageComplaintsScreen()
-            }
+
         }
     }
 }
@@ -80,98 +80,100 @@ fun ManageComplaintsScreen() {
         },
         containerColor = Color(0xFFFBFBFE)
     ) { innerPadding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(top = 12.dp, bottom = 80.dp)
         ) {
-            Text(
-                text = "Manage Complaints",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E3A8A),
-                modifier = Modifier.padding(top = 12.dp)
-            )
-            Text(
-                text = "Review and action citizen service requests",
-                fontSize = 14.sp,
-                color = Color.Gray,
-                modifier = Modifier.padding(bottom = 20.dp)
-            )
-
-            // Filter Spinners Row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                FilterSpinnerMenu(label = "CATEGORY", options = listOf("All Services", "Road", "Water", "Waste"), modifier = Modifier.weight(1f))
-                FilterSpinnerMenu(label = "STATUS", options = listOf("All Status", "Pending", "In Progress", "Resolved"), modifier = Modifier.weight(1f))
-                FilterSpinnerMenu(label = "WARD", options = listOf("Global", "Ward 1", "Ward 2"), modifier = Modifier.weight(1f))
+            // Item 1: Title and Subtitle
+            item {
+                Column {
+                    Text(
+                        text = "Manage Complaints",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E3A8A),
+                        modifier = Modifier.padding(top = 12.dp)
+                    )
+                    Text(
+                        text = "Review and action citizen service requests",
+                        fontSize = 14.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(bottom = 20.dp)
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
 
-            // Search Bar
-            OutlinedTextField(
-                value = "",
-                onValueChange = {},
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Search by ticket ID or keyword...", color = Color.Gray, fontSize = 14.sp) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray) },
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedBorderColor = Color(0xFFE2E8F0),
-                    focusedBorderColor = Color(0xFF1E3A8A),
-                    unfocusedContainerColor = Color.White,
-                    focusedContainerColor = Color.White
-                ),
-                singleLine = true
-            )
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterSpinnerMenu(label = "CATEGORY", options = listOf("All Services", "Road", "Water"), modifier = Modifier.weight(1f))
+                    FilterSpinnerMenu(label = "STATUS", options = listOf("All Status", "Pending", "In Progress"), modifier = Modifier.weight(1f))
+                    FilterSpinnerMenu(label = "WARD", options = listOf("Global", "Ward 1", "Ward 2"), modifier = Modifier.weight(1f))
+                }
+            }
 
-            Spacer(modifier = Modifier.height(20.dp))
 
-            // Complaints List with explicit items using separate drawable resources
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(bottom = 80.dp)
-            ) {
-                item {
-                    ComplaintItemRow(
-                        title = "Broken Road & Po",
-                        location = "42nd Avenue, Sector 5",
-                        ticketId = "#SMT-9021",
-                        status = "PENDING",
-                        imageRes = R.drawable.roadddd
-                    )
-                }
-                item {
-                    ComplaintItemRow(
-                        title = "Street Light Malt",
-                        location = "Maple Street Park",
-                        ticketId = "#SMT-8842",
-                        status = "IN PROGRESS",
-                        imageRes = R.drawable.streetlight
-                    )
-                }
-                item {
-                    ComplaintItemRow(
-                        title = "Main Water Line",
-                        location = "East Commercial Zone",
-                        ticketId = "#SMT-7155",
-                        status = "RESOLVED",
-                        imageRes = R.drawable.waterline
-                    )
-                }
-                item {
-                    ComplaintRowItem(
-                        title = "Garbage Collectio",
-                        location = "Residential Area B-12",
-                        ticketId = "#SMT-9210",
-                        status = "PENDING",
-                        imageRes = R.drawable.garbagecollection
-                    )
-                }
+            item {
+                OutlinedTextField(
+                    value = "",
+                    onValueChange = {},
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Search by ticket ID or keyword...", color = Color.Gray, fontSize = 14.sp) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray) },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = Color(0xFFE2E8F0),
+                        focusedBorderColor = Color(0xFF1E3A8A),
+                        unfocusedContainerColor = Color.White,
+                        focusedContainerColor = Color.White
+                    ),
+                    singleLine = true
+                )
+            }
+
+
+            item {
+                ComplaintItemRow(
+                    title = "Broken Road & Po",
+                    location = "42nd Avenue, Sector 5",
+                    ticketId = "#SMT-9021",
+                    status = "PENDING",
+                    imageRes = R.drawable.roadddd
+                )
+            }
+            item {
+                ComplaintItemRow(
+                    title = "Street Light Malt",
+                    location = "Maple Street Park",
+                    ticketId = "#SMT-8842",
+                    status = "IN PROGRESS",
+                    imageRes = R.drawable.streetlight
+                )
+            }
+            item {
+                ComplaintItemRow(
+                    title = "Main Water Line",
+                    location = "East Commercial Zone",
+                    ticketId = "#SMT-7155",
+                    status = "RESOLVED",
+                    imageRes = R.drawable.waterline
+                )
+            }
+            item {
+                ComplaintItemRow(
+                    title = "Garbage Collectio",
+                    location = "Residential Area B-12",
+                    ticketId = "#SMT-9210",
+                    status = "PENDING",
+                    imageRes = R.drawable.garbagecollection
+                )
             }
         }
     }
@@ -197,9 +199,7 @@ fun FilterSpinnerMenu(label: String, options: List<String>, modifier: Modifier =
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
                 Row(
-                    modifier = Modifier
-                        .padding(horizontal = 8.dp, vertical = 10.dp)
-                        .fillMaxWidth(),
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp).fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -259,7 +259,7 @@ fun ComplaintItemRow(title: String, location: String, ticketId: String, status: 
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(text = title, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color(0xFF1E293B))
-                    StatusBadgeChip(status)
+                    BadgeStatusView(status)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 2.dp)) {
                     Icon(Icons.Default.LocationOn, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(14.dp))
@@ -277,14 +277,8 @@ fun ComplaintItemRow(title: String, location: String, ticketId: String, status: 
     }
 }
 
-// Keeping your original function name but fixing the hardcoded image
 @Composable
-fun ComplaintRowItem(title: String, location: String, ticketId: String, status: String, imageRes: Int) {
-    ComplaintItemRow(title, location, ticketId, status, imageRes)
-}
-
-@Composable
-fun StatusBadgeChip(status: String) {
+fun BadgeStatusView(status: String) {
     val (bgColor, textColor) = when (status) {
         "PENDING" -> Color(0xFFFFE4E6) to Color(0xFFEF4444)
         "IN PROGRESS" -> Color(0xFFEBF2FF) to Color(0xFF3B82F6)
@@ -353,7 +347,7 @@ fun AdminBottomBarNav() {
 @Preview(showBackground = true)
 @Composable
 fun AdminManagePreview() {
-    SmartCityTheme {
+
         ManageComplaintsScreen()
-    }
+
 }
