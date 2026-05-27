@@ -161,6 +161,7 @@ fun CreateAccountScreen() {
 
                     Spacer(modifier = Modifier.height(9.dp))
 
+                    val context = androidx.compose.ui.platform.LocalContext.current
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.Center,
@@ -171,13 +172,25 @@ fun CreateAccountScreen() {
                             color = Color.White.copy(alpha = 0.9f),
                             fontSize = 15.sp
                         )
-                        Text(
-                            text = "Login",
-                            color = Color.White,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            textDecoration = TextDecoration.Underline
-                        )
+                        TextButton(
+                            onClick = {
+                                // 3. Fire the Intent to go to LoginActivity
+                                val intent = android.content.Intent(context, LoginActivity::class.java)
+                                context.startActivity(intent)
+
+                                // 4. Close the CreateAccount activity completely
+                                (context as? android.app.Activity)?.finish()
+                            },
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Text(
+                                text = "Login",
+                                color = Color.White,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                textDecoration = TextDecoration.Underline
+                            )
+                        }
                     }
                 }
             }

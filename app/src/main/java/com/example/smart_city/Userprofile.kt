@@ -53,30 +53,30 @@ fun Userprofilebody() {
     val scrollState = rememberScrollState()
 
     Scaffold(
-        bottomBar = {
-
-            Surface(
-                shadowElevation = 8.dp,
-                color = Color.White
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-
-                    NavItem(painterResource(R.drawable.baseline_home_24), "Home", isSelected = false)
-
-
-                    NavItem(painterResource(R.drawable.baseline_report_24), "Reports", isSelected = false)
-
-
-                    NavItem(Icons.Default.Person, "Profile", isSelected = true)
-                }
-            }
-        }
+//        bottomBar = {
+//
+//            Surface(
+//                shadowElevation = 8.dp,
+//                color = Color.White
+//            ) {
+//                Row(
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .padding(vertical = 12.dp),
+//                    horizontalArrangement = Arrangement.SpaceEvenly,
+//                    verticalAlignment = Alignment.CenterVertically
+//                ) {
+//
+//                    NavItem(painterResource(R.drawable.baseline_home_24), "Home", isSelected = false)
+//
+//
+//                    NavItem(painterResource(R.drawable.baseline_report_24), "Reports", isSelected = false)
+//
+//
+//                    NavItem(Icons.Default.Person, "Profile", isSelected = true)
+//                }
+//            }
+//        }
     ) { innerPadding ->
         Column(
             modifier = Modifier

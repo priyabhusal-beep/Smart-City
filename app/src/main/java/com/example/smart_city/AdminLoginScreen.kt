@@ -325,7 +325,7 @@ fun AdminScreen() {
                             )
 
                             Text(
-                                text = "Remember device",
+                                text = "Remember me",
                                 color = Color(0xFF4B5563),
                                 fontSize = 13.sp
                             )
@@ -337,7 +337,7 @@ fun AdminScreen() {
                                 PaddingValues(0.dp)
                         ) {
                             Text(
-                                text = "Forgot Access?",
+                                text = "Forgot Password?",
                                 color = Color(0xFF0056C6),
                                 fontWeight =
                                     FontWeight.SemiBold,

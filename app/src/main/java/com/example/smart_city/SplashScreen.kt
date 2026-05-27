@@ -28,7 +28,7 @@ import com.example.smart_city.ui.theme.SmartCityTheme
 import kotlinx.coroutines.delay
 
 @SuppressLint("CustomSplashScreen")
-class Splashscreen : ComponentActivity() {
+class SplashScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -37,7 +37,7 @@ class Splashscreen : ComponentActivity() {
                 SplashScreenContent()
                 LaunchedEffect (Unit) {
                     delay(3000)
-                    val intent = Intent(this@Splashscreen, GetStartedScreen::class.java)
+                    val intent = Intent(this@SplashScreen, GetStartedScreen::class.java)
                     startActivity(intent)
                     finish()
                 }

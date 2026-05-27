@@ -40,6 +40,7 @@ class LoginActivity : ComponentActivity() {
 
 @Composable
 fun LoginScreen() {
+    val context = androidx.compose.ui.platform.LocalContext.current
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -178,14 +179,21 @@ fun LoginScreen() {
 
                         // Sign In Button
                         Button(
-                            onClick = { /* Handle sign in */ },
+                            onClick = {
+                                // Change 'HomeScreenActivity::class.java' to your exact Home Screen Activity class name
+                                val intent = android.content.Intent(context, HomeScreen::class.java)
+                                context.startActivity(intent)
+
+                                // Close LoginActivity so they can't back-button back into it
+                                (context as? android.app.Activity)?.finish()
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(56.dp),
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E3A8A))
                         ) {
-                            Text("Sign In", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text("Login", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         }
 
                         Spacer(modifier = Modifier.height(32.dp))
@@ -237,8 +245,17 @@ fun LoginScreen() {
                         // Sign Up Footer
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text("Don't have an account? ", color = Color.Gray, fontSize = 14.sp)
+                            val context = androidx.compose.ui.platform.LocalContext.current
                             TextButton(
-                                onClick = { /* Handle sign up */ },
+                                onClick = {
+
+                                    // 2. Create the intent to start CreateAccount activity
+                                    val intent = android.content.Intent(context, CreateAccount::class.java)
+                                    context.startActivity(intent)
+
+                                    // 3. Cast context to Activity and finish it to close the login page
+                                    (context as? android.app.Activity)?.finish()
+                                },
                                 contentPadding = PaddingValues(0.dp)
                             ) {
                                 Text(

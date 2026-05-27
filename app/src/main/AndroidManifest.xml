@@ -13,48 +13,27 @@
         android:theme="@style/Theme.SmartCity">
 
         <activity
-            android:name=".ComplaintDetails"
-            android:exported="false"
-            android:label="@string/title_activity_complaint_details"
-            android:theme="@style/Theme.SmartCity" />
+            android:name=".SplashScreen"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
-        <activity
-            android:name=".AdminLoginScreen"
-            android:exported="false"
-            android:label="@string/title_activity_admin_login_screen"
-            android:theme="@style/Theme.SmartCity" />
-
-        <activity
-            android:name=".Report"
-            android:exported="false"
-            android:label="@string/title_activity_report"
-            android:theme="@style/Theme.SmartCity" />
-
-        <activity
-            android:name=".AdminManageScreen"
-            android:exported="false"
-            android:label="@string/title_activity_admin_manage_screen"
-            android:theme="@style/Theme.SmartCity" />
-        <activity
-            android:name=".ComplainProgressActivity"
-            android:exported="false"
-            android:label="@string/title_activity_complain_progress"
-            android:theme="@style/Theme.SmartCity" />
-
-
-        <activity
-            android:name=".LoginActivity"
-            android:exported="false"
-            android:label="@string/title_activity_login"
-            android:theme="@style/Theme.SmartCity" />
-
-        <activity
-            android:name=".Userprofile"
-            android:exported="false"
-            android:label="@string/title_activity_userprofile"
-            android:theme="@style/Theme.SmartCity" />
-
-
+        <activity android:name=".GetStartedScreen" android:exported="false" />
+        <activity android:name=".HomeScreen" android:exported="false" />
+        <activity android:name=".LoginActivity" android:exported="false" />
+        <activity android:name=".CreateAccount" android:exported="false" />
+        <activity android:name=".ForgotPassword" android:exported="false" />
+        <activity android:name=".AdminDashboard" android:exported="false" />
+        <activity android:name=".AdminLoginScreen" android:exported="false" />
+        <activity android:name=".AdminManageScreen" android:exported="false" />
+        <activity android:name=".AllUserComplain" android:exported="false" />
+        <activity android:name=".ComplaintDetails" android:exported="false" />
+        <activity android:name=".ComplainProgressActivity" android:exported="false" />
+        <activity android:name=".Report" android:exported="false" />
+        <activity android:name=".Userprofile" android:exported="false" />
 
     </application>
 

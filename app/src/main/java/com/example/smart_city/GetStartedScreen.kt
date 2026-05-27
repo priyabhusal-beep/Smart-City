@@ -1,5 +1,8 @@
 package com.example.smart_city
+import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -29,6 +32,17 @@ class GetStartedScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Show splash for 3 seconds, then open LoginScreen
+        Handler(Looper.getMainLooper()).postDelayed({
+
+            // Open Login Screen
+            startActivity(Intent(this, LoginActivity::class.java))
+
+            // Close Splash Screen
+            finish()
+
+        }, 3000)
         setContent {
             SmartCityTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->

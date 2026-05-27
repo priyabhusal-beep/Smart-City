@@ -46,57 +46,57 @@ fun Reportbody() {
 
 
     Scaffold(
-        bottomBar = {
-
-            Surface(
-                shadowElevation = 8.dp,
-                color = Color.White
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            painterResource(R.drawable.baseline_home_24),
-                            null,
-                            tint = Color.Gray,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Text(text = "Home", fontSize = 10.sp, color = Color.Gray)
-                    }
-
-
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            painterResource(R.drawable.baseline_report_24),
-                            null,
-                            tint = Color(0xFF1A237E),
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Text(
-                            text = "Reports",
-                            fontSize = 10.sp,
-                            color = Color(0xFF1A237E),
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            painterResource(R.drawable.baseline_person_outline_24),
-                            null,
-                            tint = Color.Gray,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Text(text = "Profile", fontSize = 10.sp, color = Color.Gray)
-                    }
-                }
-            }
-        }
+//        bottomBar = {
+//
+//            Surface(
+//                shadowElevation = 8.dp,
+//                color = Color.White
+//            ) {
+//                Row(
+//                    modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+//                    horizontalArrangement = Arrangement.SpaceEvenly,
+//                    verticalAlignment = Alignment.CenterVertically
+//                ) {
+//
+//                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+//                        Icon(
+//                            painterResource(R.drawable.baseline_home_24),
+//                            null,
+//                            tint = Color.Gray,
+//                            modifier = Modifier.size(24.dp)
+//                        )
+//                        Text(text = "Home", fontSize = 10.sp, color = Color.Gray)
+//                    }
+//
+//
+//                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+//                        Icon(
+//                            painterResource(R.drawable.baseline_report_24),
+//                            null,
+//                            tint = Color(0xFF1A237E),
+//                            modifier = Modifier.size(24.dp)
+//                        )
+//                        Text(
+//                            text = "Reports",
+//                            fontSize = 10.sp,
+//                            color = Color(0xFF1A237E),
+//                            fontWeight = FontWeight.Bold
+//                        )
+//                    }
+//
+//
+//                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+//                        Icon(
+//                            painterResource(R.drawable.baseline_person_outline_24),
+//                            null,
+//                            tint = Color.Gray,
+//                            modifier = Modifier.size(24.dp)
+//                        )
+//                        Text(text = "Profile", fontSize = 10.sp, color = Color.Gray)
+//                    }
+//                }
+//            }
+//        }
     ) { innerPadding ->
         LazyColumn (
 
