@@ -160,7 +160,7 @@ fun HomeActivity() {
                 ) {
                     // Switches between the views dynamically based on tab clicks
                     when (selectedIndex) {
-                        0 -> DashboardContent()
+                        0 -> DashboardContent(navController)
                         1 -> Reportbody()      // Ensure this matches your Composable function name for reporting
                         2 -> ComplainActivity()
                         3 -> Userprofilebody()// Ensure this matches your Composable function name for user profile
@@ -306,12 +306,12 @@ fun HomeActivity() {
 
                 // Map Visual Card
                 item {
-                    Text(
-                        text = "Live Map",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = PrimaryBlue
-                    )
+//                    Text(
+//                        text = "Live Map",
+//                        fontSize = 22.sp,
+//                        fontWeight = FontWeight.Bold,
+//                        color = PrimaryBlue
+//                    )
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
