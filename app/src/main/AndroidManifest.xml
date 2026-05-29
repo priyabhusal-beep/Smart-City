@@ -2,6 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -11,30 +17,65 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.SmartCity">
-
+        <activity
+            android:name=".FullMapScreen"
+            android:exported="false"
+            android:label="@string/title_activity_full_map_screen"
+            android:theme="@style/Theme.SmartCity" />
+        <activity
+            android:name=".MapComposable"
+            android:exported="false"
+            android:label="@string/title_activity_map_composable"
+            android:theme="@style/Theme.SmartCity"
+            tools:ignore="Instantiatable" />
         <activity
             android:name=".SplashScreen"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity android:name=".GetStartedScreen" android:exported="false" />
-        <activity android:name=".HomeScreen" android:exported="false" />
-        <activity android:name=".LoginActivity" android:exported="false" />
-        <activity android:name=".CreateAccount" android:exported="false" />
-        <activity android:name=".ForgotPassword" android:exported="false" />
-        <activity android:name=".AdminDashboard" android:exported="false" />
-        <activity android:name=".AdminLoginScreen" android:exported="false" />
-        <activity android:name=".AdminManageScreen" android:exported="false" />
-        <activity android:name=".AllUserComplain" android:exported="false" />
-        <activity android:name=".ComplaintDetails" android:exported="false" />
-        <activity android:name=".ComplainProgressActivity" android:exported="false" />
-        <activity android:name=".Report" android:exported="false" />
-        <activity android:name=".Userprofile" android:exported="false" />
-
+        <activity
+            android:name=".GetStartedScreen"
+            android:exported="false" />
+        <activity
+            android:name=".HomeScreen"
+            android:exported="false" />
+        <activity
+            android:name=".LoginActivity"
+            android:exported="false" />
+        <activity
+            android:name=".CreateAccount"
+            android:exported="false" />
+        <activity
+            android:name=".ForgotPassword"
+            android:exported="false" />
+        <activity
+            android:name=".AdminDashboard"
+            android:exported="false" />
+        <activity
+            android:name=".AdminLoginScreen"
+            android:exported="false" />
+        <activity
+            android:name=".AdminManageScreen"
+            android:exported="false" />
+        <activity
+            android:name=".AllUserComplain"
+            android:exported="false" />
+        <activity
+            android:name=".ComplaintDetails"
+            android:exported="false" />
+        <activity
+            android:name=".ComplainProgressActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Report"
+            android:exported="false" />
+        <activity
+            android:name=".Userprofile"
+            android:exported="false" />
     </application>
 
 </manifest>

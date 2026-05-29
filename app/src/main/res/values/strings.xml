@@ -12,5 +12,7 @@
     <string name="title_activity_complain_progress">ComplainProgressActivity</string>
     <string name="title_activity_admin_manage_screen">AdminManageScreen</string>
     <string name="title_activity_all_user_complain">AllUserComplain</string>
-
+    <string name="mapbox_access_token">6f2ce10e–f8e7-4008-8a03-384ff6f87d26</string>
+    <string name="title_activity_map_composable">MapComposable</string>
+    <string name="title_activity_full_map_screen">FullMapScreen</string>
 </resources>

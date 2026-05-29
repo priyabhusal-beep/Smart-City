@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.gms.google.services)
+
 }
 
 android {
@@ -49,7 +50,11 @@ dependencies {
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.database)
+    implementation(libs.androidx.navigation.compose)
     testImplementation(libs.junit)
+    implementation("com.mapbox.maps:android:11.3.0")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
