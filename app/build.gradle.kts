@@ -2,7 +2,6 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.gms.google.services)
-
 }
 
 android {
@@ -35,6 +34,13 @@ android {
     buildFeatures {
         compose = true
     }
+    
+    packaging {
+        jniLibs {
+            // This ensures native libraries are aligned and uncompressed for 16 KB page support
+            useLegacyPackaging = false
+        }
+    }
 }
 
 dependencies {
@@ -52,9 +58,13 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.database)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.camera.camera2.pipe)
     testImplementation(libs.junit)
-    implementation("com.mapbox.maps:android:11.3.0")
-    implementation("com.google.android.gms:play-services-location:21.0.1")
+
+    // Updated to 13.2.0 which supports 16 KB page sizes
+
+    implementation("org.maplibre.gl:android-sdk:13.2.0")
+
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

@@ -28,6 +28,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 
+
 val PrimaryBlue = Color(0xFF0046B1)
 val AccentTeal = Color(0xFF00A389)
 val LightBlueBg = Color(0xFFF0F5FF)
@@ -36,6 +37,10 @@ val BackgroundGray = Color(0xFFF8F9FA)
 class HomeScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Initialize MapLibre before setContent
+
+        
         enableEdgeToEdge()
         setContent {
             SmartCityTheme {
@@ -160,7 +165,7 @@ fun HomeActivity() {
                 ) {
                     // Switches between the views dynamically based on tab clicks
                     when (selectedIndex) {
-                        0 -> DashboardContent(navController)
+                        0 -> DashboardContents(navController)
                         1 -> Reportbody()      // Ensure this matches your Composable function name for reporting
                         2 -> ComplainActivity()
                         3 -> Userprofilebody()// Ensure this matches your Composable function name for user profile
@@ -176,7 +181,7 @@ fun HomeActivity() {
 
         // Your main layout logic has been moved cleanly into this component
         @Composable
-        fun DashboardContent(
+        fun DashboardContents(
             navController: androidx.navigation.NavController
         ) {
             var search by remember { mutableStateOf("") }
@@ -306,23 +311,18 @@ fun HomeActivity() {
 
                 // Map Visual Card
                 item {
-//                    Text(
-//                        text = "Live Map",
-//                        fontSize = 22.sp,
-//                        fontWeight = FontWeight.Bold,
-//                        color = PrimaryBlue
-//                    )
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(190.dp),
                         shape = RoundedCornerShape(18.dp)
                     ) {
-                        Box {
-                           MapComposable(
-                               modifier = Modifier.fillMaxSize(),
+                        Box (
+                            modifier = Modifier.fillMaxSize()
+                        ){
+                         MapScreen()
 
-                           )
+
                             Button(
                                 onClick = {
                                     navController.navigate("FullMap")
