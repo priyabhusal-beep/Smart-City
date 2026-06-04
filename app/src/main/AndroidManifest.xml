@@ -26,6 +26,12 @@
             android:exported="false"
             android:label="@string/title_activity_full_map_screen"
             android:theme="@style/Theme.SmartCity" />
+        <activity
+            android:name=".CreateAccount"
+            android:exported="true" />
+        <activity
+            android:name=".LoginActivity"
+            android:exported="true" />
 
         <activity
             android:name=".SplashScreen"
@@ -41,12 +47,6 @@
             android:exported="false" />
         <activity
             android:name=".HomeScreen"
-            android:exported="false" />
-        <activity
-            android:name=".LoginActivity"
-            android:exported="false" />
-        <activity
-            android:name=".CreateAccount"
             android:exported="false" />
         <activity
             android:name=".ForgotPassword"
