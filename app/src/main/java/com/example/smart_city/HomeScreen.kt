@@ -166,12 +166,16 @@ fun HomeActivity() {
                     // Switches between the views dynamically based on tab clicks
                     when (selectedIndex) {
                         0 -> DashboardContents(navController)
-                        1 -> Reportbody()      // Ensure this matches your Composable function name for reporting
+                        1 -> Reportbody("Traffic")      // Ensure this matches your Composable function name for reporting
                         2 -> ComplainActivity()
                         3 -> Userprofilebody()// Ensure this matches your Composable function name for user profile
                     }
                 }
             }
+        }
+        composable("report/{category}") { backStackEntry ->
+            val category = backStackEntry.arguments?.getString("category") ?: "Traffic"
+            Reportbody(category)
         }
         composable("FullMap") {
             FullMapscreen()
@@ -301,10 +305,23 @@ fun HomeActivity() {
                     )
                     Spacer(modifier = Modifier.height(15.dp))
                     Row(modifier = Modifier.fillMaxWidth()) {
-                        ReportCard(Modifier.weight(1f), R.drawable.road, "Road")
-                        ReportCard(Modifier.weight(1f), R.drawable.garbage, "Garbage")
-                        ReportCard(Modifier.weight(1f), R.drawable.traffic, "Traffic")
-                        ReportCard(Modifier.weight(1f), R.drawable.map, "Others")
+                        ReportCard(Modifier.weight(1f),
+                            R.drawable.road,
+                            "Road",
+                            onClick = {navController.navigate("report/Road")})
+                        ReportCard(Modifier.weight(1f),
+                            R.drawable.garbage,
+                            "Garbage",
+                            onClick = {navController.navigate("report/Garbage")})
+                        ReportCard(Modifier.weight(1f),
+                            R.drawable.traffic,
+                            "Traffic",
+                            onClick = {navController.navigate("report/Traffic")})
+
+                        ReportCard(Modifier.weight(1f),
+                            R.drawable.map,
+                            "Others",
+                            onClick = {navController.navigate("report/Others")})
                     }
                     Spacer(modifier = Modifier.height(20.dp))
                 }
@@ -372,13 +389,15 @@ fun HomeActivity() {
         }
 
         @Composable
-        fun ReportCard(modifier: Modifier, image: Int, label: String) {
+        fun ReportCard(modifier: Modifier, image: Int, label: String,
+                       onClick:() ->Unit ={}) {
             Column(
                 modifier = modifier,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Card(
                     modifier = Modifier.size(70.dp),
+                    onClick= onClick,
                     shape = RoundedCornerShape(18.dp),
                     elevation = CardDefaults.cardElevation(4.dp)
                 ) {
