@@ -32,7 +32,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.smart_city.presentation.viewmodel.AuthViewModel
+import com.example.smart_city.viewmodel.AuthViewModel
 import com.example.smart_city.ui.theme.SmartCityTheme
 
 class CreateAccount : ComponentActivity() {
