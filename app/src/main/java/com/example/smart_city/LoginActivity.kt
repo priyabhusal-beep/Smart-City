@@ -27,9 +27,9 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.smart_city.viewmodel.AuthViewModel
+import com.example.smart_city.viewmodel.LoginUiState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.smart_city.presentation.viewmodel.AuthViewModel
-import com.example.smart_city.presentation.viewmodel.LoginUiState
 import com.example.smart_city.ui.theme.SmartCityTheme
 
 class LoginActivity : ComponentActivity() {
@@ -399,11 +399,12 @@ fun LoginScreen(viewModel: AuthViewModel) {
 @Preview(showBackground = true)
 @Composable
 fun LoginPreview() {
-    // Just show a blank preview (don't construct ViewModel)
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = Color(0xFFF1F4F8)
-    ) {
-        // Preview placeholder
+    SmartCityTheme {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = Color(0xFFF1F4F8)
+        ) {
+            // Preview
+        }
     }
 }
