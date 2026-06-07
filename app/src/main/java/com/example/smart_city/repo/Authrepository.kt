@@ -1,6 +1,6 @@
-package com.example.smart_city.data.repository
+package com.example.smart_city.repo
 
-import com.example.smart_city.data.models.User
+import com.example.smart_city.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.tasks.await

@@ -1,9 +1,9 @@
-package com.example.smart_city.presentation.viewmodel
+package com.example.smart_city.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.smart_city.data.models.User
-import com.example.smart_city.data.repository.AuthRepository
+import com.example.smart_city.model.User
+import com.example.smart_city.repo.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
