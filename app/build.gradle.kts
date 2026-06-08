@@ -46,6 +46,7 @@ android {
 dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.foundation)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
@@ -59,6 +60,8 @@ dependencies {
     implementation(libs.firebase.database)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.camera.camera2.pipe)
+    implementation("androidx.compose.material3:material3:1.2.0")
+    implementation("androidx.navigation:navigation-compose:2.7.0")
     testImplementation(libs.junit)
 
     // Updated to 13.2.0 which supports 16 KB page sizes
