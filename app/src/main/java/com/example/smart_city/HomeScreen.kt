@@ -44,7 +44,12 @@ class HomeScreen : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             SmartCityTheme {
-                HomeActivity()
+                var isDarkMode by remember { mutableStateOf(false) }
+                val mainNavController = rememberNavController()
+                HomeActivity(
+                    navController = mainNavController,
+                    isDarkMode = isDarkMode,
+                    onDarkModeToggle = { updatedValue -> isDarkMode = updatedValue })
             }
         }
     }
@@ -60,12 +65,21 @@ data class RecentReportData(
 )
 
 @Composable
-fun HomeActivity() {
+fun HomeActivity(
+    navController: NavController,
+    isDarkMode: Boolean,              // 👈 Add this line
+    onDarkModeToggle: (Boolean) -> Unit
+) {
     // State to track which screen tab is currently active
     var selectedIndex by remember { mutableStateOf(0) }
-    val navController = rememberNavController()
+    val innerNavController = rememberNavController()
+    // ✅ ADD THIS: Define colors based on dark mode
+    val backgroundColor = if (isDarkMode) Color(0xFF121212) else Color.White
+    val cardBackgroundColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFF5F5F5)
+    val textColor = if (isDarkMode) Color(0xFFE0E0E0) else Color.Black
+    val secondaryTextColor = if (isDarkMode) Color(0xFFB0B0B0) else Color.Gray
     NavHost(
-        navController = navController,
+        navController = innerNavController,
         startDestination = "home"
     ) {
         composable("home") {
@@ -74,7 +88,7 @@ fun HomeActivity() {
                 bottomBar = {
                     Surface(
                         shadowElevation = 8.dp,
-                        color = Color.White
+                        color = backgroundColor
                     ) {
                         Row(
                             modifier = Modifier
@@ -162,13 +176,14 @@ fun HomeActivity() {
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding)
+                        .background(backgroundColor)
                 ) {
                     // Switches between the views dynamically based on tab clicks
                     when (selectedIndex) {
-                        0 -> DashboardContents(navController)
-                        1 -> Reportbody("Traffic")      // Ensure this matches your Composable function name for reporting
-                        2 -> ComplainActivity()
-                        3 -> Userprofilebody()// Ensure this matches your Composable function name for user profile
+                        0 -> DashboardContents(innerNavController, isDarkMode, backgroundColor, cardBackgroundColor, textColor, secondaryTextColor)
+                        1 -> Reportbody("Traffic", isDarkMode, backgroundColor, cardBackgroundColor, textColor, secondaryTextColor)
+                        2 -> ComplainActivity(isDarkMode, backgroundColor, cardBackgroundColor, textColor, secondaryTextColor)
+                        3 -> UserprofileBody(navController = navController, isDarkMode = isDarkMode, onDarkModeToggle = onDarkModeToggle)
                     }
                 }
             }
@@ -186,7 +201,12 @@ fun HomeActivity() {
         // Your main layout logic has been moved cleanly into this component
         @Composable
         fun DashboardContents(
-            navController: androidx.navigation.NavController
+            navController: androidx.navigation.NavController,
+            isDarkMode: Boolean = false,
+            backgroundColor: Color = Color.White,
+            cardBackgroundColor: Color = Color(0xFFF5F5F5),
+            textColor: Color = Color.Black,
+            secondaryTextColor: Color = Color.Gray
         ) {
             var search by remember { mutableStateOf("") }
 
@@ -212,7 +232,7 @@ fun HomeActivity() {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.White)
+                    .background(backgroundColor)
                     .padding(horizontal = 20.dp)
             ) {
                 // Header
@@ -226,12 +246,12 @@ fun HomeActivity() {
                             painter = painterResource(R.drawable.lana),
                             contentDescription = null,
                             modifier = Modifier
-                                .size(60.dp)
+                                .size(48.dp)
                                 .clip(RoundedCornerShape(50.dp))
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "Good Morning", color = Color.Gray)
+                            Text(text = "Good Morning", color = secondaryTextColor)
                             Text(
                                 text = "Lana Del",
                                 fontSize = 20.sp,
@@ -390,13 +410,15 @@ fun HomeActivity() {
 
         @Composable
         fun ReportCard(modifier: Modifier, image: Int, label: String,
+                       backgroundColor: Color = Color.White,  // ✅ ADD
+                       textColor: Color = Color.Black,
                        onClick:() ->Unit ={}) {
             Column(
                 modifier = modifier,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Card(
-                    modifier = Modifier.size(70.dp),
+                    modifier = Modifier.size(50.dp),
                     onClick= onClick,
                     shape = RoundedCornerShape(18.dp),
                     elevation = CardDefaults.cardElevation(4.dp)
@@ -405,7 +427,7 @@ fun HomeActivity() {
                         Image(
                             painter = painterResource(image),
                             contentDescription = null,
-                            modifier = Modifier.size(70.dp)
+                            modifier = Modifier.size(60.dp)
                         )
                     }
                 }
@@ -415,7 +437,9 @@ fun HomeActivity() {
         }
 
         @Composable
-        fun RecentReportCard(report: RecentReportData) {
+        fun RecentReportCard(report: RecentReportData,
+                             cardBackgroundColor: Color = Color.White,  // ✅ ADD
+                             textColor: Color = Color.Black ) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -433,7 +457,7 @@ fun HomeActivity() {
                         painter = painterResource(report.image),
                         contentDescription = null,
                         modifier = Modifier
-                            .size(60.dp)
+                            .size(50.dp)
                             .clip(RoundedCornerShape(12.dp))
                     )
                     Spacer(modifier = Modifier.width(12.dp))
@@ -462,6 +486,8 @@ fun HomeActivity() {
 @Composable
 fun HomePreview() {
     SmartCityTheme {
-        HomeActivity()
+        HomeActivity(navController = rememberNavController(),
+            isDarkMode = false,
+            onDarkModeToggle = {})
     }
 }

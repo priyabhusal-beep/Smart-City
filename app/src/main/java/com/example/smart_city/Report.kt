@@ -39,7 +39,12 @@ class Report : ComponentActivity() {
 
 @Composable
 fun Reportbody(
-    category: String = "Road"
+    category: String = "Road",
+    isDarkMode: Boolean = false,
+    backgroundColor: Color = Color.White,
+    cardBackgroundColor: Color = Color(0xFFF5F5F5),
+    textColor: Color = Color.Black,
+    secondaryTextColor: Color = Color.Gray
 ) {
     var search by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
@@ -57,8 +62,8 @@ fun Reportbody(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(color = Color.White)
-                .padding(top = 20.dp)
+                .background(color = backgroundColor )
+                .padding(top = 12.dp)
         ) {
             item {
                 Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
@@ -80,7 +85,7 @@ fun Reportbody(
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(32.dp)) }
+            item { Spacer(modifier = Modifier.height(16.dp)) }
 
             item {
                 Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
@@ -88,17 +93,17 @@ fun Reportbody(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        StepCircle("1", isSelected = true)
+                        StepCircle("1", isSelected = true, isDarkMode = isDarkMode)
                         HorizontalDivider(
                             modifier = Modifier.weight(1f),
-                            color = Color(0xFFE0E0E0)
+                            color = if (isDarkMode) Color(0xFF444444) else Color(0xFFE0E0E0)
                         )
-                        StepCircle("2", isSelected = false)
+                        StepCircle("2", isSelected = false, isDarkMode = isDarkMode)
                         HorizontalDivider(
                             modifier = Modifier.weight(1f),
-                            color = Color(0xFFE0E0E0)
+                            color = if (isDarkMode) Color(0xFF444444) else Color(0xFFE0E0E0)
                         )
-                        StepCircle("3", isSelected = false)
+                        StepCircle("3", isSelected = false, isDarkMode = isDarkMode)
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
@@ -110,13 +115,13 @@ fun Reportbody(
                             color = Color(0xFF1A237E),
                             fontWeight = FontWeight.Bold
                         )
-                        Text("Details", fontSize = 12.sp, color = Color.Gray)
-                        Text("Review", fontSize = 12.sp, color = Color.Gray)
+                        Text("Details", fontSize = 12.sp, color = secondaryTextColor)
+                        Text("Review", fontSize = 12.sp, color = secondaryTextColor)
                     }
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(12.dp)) }
+            item { Spacer(modifier = Modifier.height(8.dp)) }
 
             item {
                 Row(
@@ -129,7 +134,7 @@ fun Reportbody(
                         style = TextStyle(
                             fontWeight = FontWeight.Bold,
                             fontSize = 12.sp,
-                            color = Color.Gray
+                            color = secondaryTextColor
                         )
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -165,7 +170,7 @@ fun Reportbody(
                 )
             }
 
-            item { Spacer(modifier = Modifier.height(12.dp)) }
+            item { Spacer(modifier = Modifier.height(8.dp)) }
 
             // ISSUE TYPE DROPDOWN
             item {
@@ -180,7 +185,7 @@ fun Reportbody(
                 )
             }
 
-            item { Spacer(modifier = Modifier.height(12.dp)) }
+            item { Spacer(modifier = Modifier.height(8.dp)) }
 
             // Category Specific Section
             if (category == "Traffic") {
@@ -191,7 +196,8 @@ fun Reportbody(
                             .padding(16.dp)
                             .height(200.dp),
                         shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFE0E0E0))
+                        colors = CardDefaults.cardColors(
+                                containerColor = Color(0xFFE0E0E0))
                     ) {
                         Box(
                             modifier = Modifier.fillMaxSize(),
@@ -200,7 +206,7 @@ fun Reportbody(
                             Text(
                                 "Map View for Traffic",
                                 fontWeight = FontWeight.Bold,
-                                color = Color.Black
+                                color = textColor
                             )
                         }
                     }
@@ -215,20 +221,26 @@ fun Reportbody(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
-                    label = { Text("Area / Locality") },
-                    placeholder = { Text("e.g. Baneshwor, Kalanki") },
-                    shape = RoundedCornerShape(8.dp)
+                    label = { Text("Area / Locality", color = textColor) },
+                    placeholder = { Text("e.g. Baneshwor, Kalanki", color = secondaryTextColor) },
+                    shape = RoundedCornerShape(8.dp),
+                    colors = OutlinedTextFieldDefaults.colors(  // ✅ ADD THIS
+                        focusedTextColor = textColor,
+                        unfocusedTextColor = textColor,
+                        focusedContainerColor = cardBackgroundColor,
+                        unfocusedContainerColor = cardBackgroundColor
+                )
                 )
             }
 
             item {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     "Visual Evidence",
                     modifier = Modifier.padding(horizontal = 18.dp),
                     style = TextStyle(
                         fontSize = 13.sp,
-                        color = Color.Gray,
+                        color = secondaryTextColor,
                         fontWeight = FontWeight.Bold
                     )
                 )
@@ -259,14 +271,14 @@ fun Reportbody(
                             Icon(
                                 painterResource(R.drawable.baseline_add_a_photo_24),
                                 null,
-                                tint = Color.Gray
+                                tint = secondaryTextColor
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 "Add Photo",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.Gray
+                                color = secondaryTextColor
                             )
                         }
                     }
@@ -276,7 +288,7 @@ fun Reportbody(
                     Card(
                         modifier = Modifier.size(110.dp),
                         shape = RoundedCornerShape(8.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFE0E0E0))
+                        colors = CardDefaults.cardColors(containerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color(0xFFE0E0E0))
                     ) {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             Image(
@@ -297,7 +309,7 @@ fun Reportbody(
                         "ISSUE DESCRIPTION",
                         style = TextStyle(
                             fontSize = 12.sp,
-                            color = Color.Gray,
+                            color = secondaryTextColor,
                             fontWeight = FontWeight.Bold
                         )
                     )
@@ -311,14 +323,16 @@ fun Reportbody(
                         placeholder = { Text("Describe the issue in detail...") },
                         shape = RoundedCornerShape(8.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedContainerColor = Color.White,
-                            focusedContainerColor = Color.White
+                            unfocusedContainerColor = cardBackgroundColor,  // ✅ CHANGED
+                            focusedContainerColor = cardBackgroundColor,  // ✅ CHANGED
+                            focusedTextColor = textColor,  // ✅ ADD
+                            unfocusedTextColor = textColor
                         )
                     )
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(32.dp)) }
+            item { Spacer(modifier = Modifier.height(16.dp)) }
 
             item {
                 ElevatedButton(
@@ -351,19 +365,25 @@ fun Reportbody(
 }
 
 @Composable
-fun StepCircle(number: String, isSelected: Boolean) {
+fun StepCircle(number: String, isSelected: Boolean, isDarkMode: Boolean = false) {
     Box(
         modifier = Modifier
             .size(32.dp)
             .background(
-                color = if (isSelected) Color(0xFF1A237E) else Color(0xFFF5F5F5),
+                color = if (isSelected)
+                    Color(0xFF1A237E)
+                else
+                    if (isDarkMode) Color(0xFF333333) else Color(0xFFF5F5F5),  // ✅ DYNAMIC
                 shape = CircleShape
             ),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = number,
-            color = if (isSelected) Color.White else Color.Gray,
+            color = if (isSelected)
+                Color.White
+            else
+                if (isDarkMode) Color(0xFFB0B0B0) else Color.Gray,  // ✅ DYNAMIC
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold
         )
@@ -373,5 +393,10 @@ fun StepCircle(number: String, isSelected: Boolean) {
 @Preview(showBackground = true)
 @Composable
 fun ReportPreview() {
-    Reportbody()
+    Reportbody(category = "Road",
+        isDarkMode = false,
+        backgroundColor = Color.White,
+        cardBackgroundColor = Color(0xFFF5F5F5),
+        textColor = Color.Black,
+        secondaryTextColor = Color.Gray )
 }

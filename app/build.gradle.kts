@@ -62,6 +62,7 @@ dependencies {
     implementation(libs.androidx.camera.camera2.pipe)
     implementation("androidx.compose.material3:material3:1.2.0")
     implementation("androidx.navigation:navigation-compose:2.7.0")
+    implementation(libs.play.services.location)
     testImplementation(libs.junit)
 
     // Updated to 13.2.0 which supports 16 KB page sizes

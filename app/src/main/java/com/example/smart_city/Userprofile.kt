@@ -131,7 +131,7 @@ fun UserprofileBody(
                 .padding(innerPadding)
                 .background(color = backgroundColor)
                 .verticalScroll(scrollState)
-                .padding(horizontal = 20.dp)
+                .padding(horizontal = 16.dp)
         ) {
 
             Row(
@@ -157,7 +157,7 @@ fun UserprofileBody(
                 )
             }
 
-            Spacer(modifier = Modifier.height(30.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Profile Section
             Column(
@@ -228,7 +228,7 @@ fun UserprofileBody(
                 }
             }
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             // Statistics Row
             Row(
@@ -241,7 +241,7 @@ fun UserprofileBody(
                 StatItem("8", "RESOLVED", Color(0xFF4CAF50))
             }
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             // Menu Items Card
             Card(
@@ -335,7 +335,7 @@ fun UserprofileBody(
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Logout Button
             Card(
@@ -367,7 +367,7 @@ fun UserprofileBody(
                 }
             }
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }
