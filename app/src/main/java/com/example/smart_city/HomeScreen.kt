@@ -16,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -33,6 +32,7 @@ val PrimaryBlue = Color(0xFF0046B1)
 val AccentTeal = Color(0xFF00A389)
 val LightBlueBg = Color(0xFFF0F5FF)
 val BackgroundGray = Color(0xFFF8F9FA)
+
 
 class HomeScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -181,7 +181,13 @@ fun HomeActivity(
                     // Switches between the views dynamically based on tab clicks
                     when (selectedIndex) {
                         0 -> DashboardContents(innerNavController, isDarkMode, backgroundColor, cardBackgroundColor, textColor, secondaryTextColor)
-                        1 -> Reportbody("Traffic", isDarkMode, backgroundColor, cardBackgroundColor, textColor, secondaryTextColor)
+                        1 -> Reportbody(navController = innerNavController,
+                            category = "Traffic",
+                            isDarkMode = isDarkMode,
+                            backgroundColor = backgroundColor,
+                            cardBackgroundColor = cardBackgroundColor,
+                            textColor = textColor,
+                            secondaryTextColor = secondaryTextColor)
                         2 -> ComplainActivity(isDarkMode, backgroundColor, cardBackgroundColor, textColor, secondaryTextColor)
                         3 -> UserprofileBody(navController = navController, isDarkMode = isDarkMode, onDarkModeToggle = onDarkModeToggle)
                     }
@@ -190,7 +196,8 @@ fun HomeActivity(
         }
         composable("report/{category}") { backStackEntry ->
             val category = backStackEntry.arguments?.getString("category") ?: "Traffic"
-            Reportbody(category)
+            Reportbody(navController = innerNavController,
+                category = category,)
         }
         composable("FullMap") {
             FullMapscreen()

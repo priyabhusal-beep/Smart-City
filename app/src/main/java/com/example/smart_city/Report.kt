@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,19 +24,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 
 class Report : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            Reportbody()
+            val navController = rememberNavController()
+            Reportbody(
+                navController= navController,
+            )
         }
     }
 }
 
 @Composable
 fun Reportbody(
+    navController: NavHostController,
     category: String = "Road",
     isDarkMode: Boolean = false,
     backgroundColor: Color = Color.White,
@@ -54,6 +58,7 @@ fun Reportbody(
     var issueExpanded by remember { mutableStateOf(false) }
 
     val issueOptions = ReportData.issueOptions[category] ?: emptyList()
+
 
     Scaffold(
         modifier = Modifier.fillMaxSize()
@@ -203,13 +208,27 @@ fun Reportbody(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(
-                                "Map View for Traffic",
-                                fontWeight = FontWeight.Bold,
-                                color = textColor
-                            )
+                           MapScreen()
+                            Button(
+                                onClick = {
+                                    navController.navigate("FullMap")
+                                },
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .padding(10.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A237E)),
+                                shape= RoundedCornerShape(50)
+                            ){
+                                Text("View Full Map")
+                            }
+
                         }
+
+
                     }
+
+
+
                 }
             }
 
@@ -393,7 +412,10 @@ fun StepCircle(number: String, isSelected: Boolean, isDarkMode: Boolean = false)
 @Preview(showBackground = true)
 @Composable
 fun ReportPreview() {
-    Reportbody(category = "Road",
+    val navController = rememberNavController()
+    Reportbody(
+        navController = navController,
+        category = "Road",
         isDarkMode = false,
         backgroundColor = Color.White,
         cardBackgroundColor = Color(0xFFF5F5F5),
