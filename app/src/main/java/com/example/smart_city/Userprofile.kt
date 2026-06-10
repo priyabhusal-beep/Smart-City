@@ -111,7 +111,7 @@ fun SmartCityApp() {
     }
 }
 
-// ============ MAIN PROFILE SCREEN ============
+// ============ MAIN, PROFILE SCREEN ============
 @Composable
 fun UserprofileBody(
     navController: NavController,
