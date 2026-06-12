@@ -12,6 +12,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -26,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.launch
 
 class Report : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,9 +36,7 @@ class Report : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val navController = rememberNavController()
-            Reportbody(
-                navController= navController,
-            )
+            Reportbody(navController = navController)
         }
     }
 }
@@ -44,42 +45,39 @@ class Report : ComponentActivity() {
 fun Reportbody(
     navController: NavHostController,
     category: String = "Road",
+    viewModel: ReportViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
     isDarkMode: Boolean = false,
     backgroundColor: Color = Color.White,
     cardBackgroundColor: Color = Color(0xFFF5F5F5),
     textColor: Color = Color.Black,
     secondaryTextColor: Color = Color.Gray
 ) {
-    var search by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var ward by remember { mutableStateOf("") }
-    var issueType by remember { mutableStateOf("") }
     var wardExpanded by remember { mutableStateOf(false) }
     var issueExpanded by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     val issueOptions = ReportData.issueOptions[category] ?: emptyList()
 
-
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(color = backgroundColor )
-                .padding(top = 12.dp)
+                .background(color = backgroundColor)
+                .padding(top = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Header
             item {
                 Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
                     Text(
                         text = "$category Report",
                         modifier = Modifier.align(Alignment.CenterStart),
-                        style = TextStyle(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp,
-                            color = Color(0xFF1A237E)
-                        )
+                        style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Color(0xFF1A237E))
                     )
                     Icon(
                         painter = painterResource(R.drawable.baseline_notifications_24),
@@ -90,288 +88,186 @@ fun Reportbody(
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(16.dp)) }
-
+            // Progress Steps
             item {
                 Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         StepCircle("1", isSelected = true, isDarkMode = isDarkMode)
-                        HorizontalDivider(
-                            modifier = Modifier.weight(1f),
-                            color = if (isDarkMode) Color(0xFF444444) else Color(0xFFE0E0E0)
-                        )
+                        HorizontalDivider(modifier = Modifier.weight(1f), color = if (isDarkMode) Color(0xFF444444) else Color(0xFFE0E0E0))
                         StepCircle("2", isSelected = false, isDarkMode = isDarkMode)
-                        HorizontalDivider(
-                            modifier = Modifier.weight(1f),
-                            color = if (isDarkMode) Color(0xFF444444) else Color(0xFFE0E0E0)
-                        )
+                        HorizontalDivider(modifier = Modifier.weight(1f), color = if (isDarkMode) Color(0xFF444444) else Color(0xFFE0E0E0))
                         StepCircle("3", isSelected = false, isDarkMode = isDarkMode)
                     }
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            "Location",
-                            fontSize = 12.sp,
-                            color = Color(0xFF1A237E),
-                            fontWeight = FontWeight.Bold
-                        )
+                    Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Location", fontSize = 12.sp, color = Color(0xFF1A237E), fontWeight = FontWeight.Bold)
                         Text("Details", fontSize = 12.sp, color = secondaryTextColor)
                         Text("Review", fontSize = 12.sp, color = secondaryTextColor)
                     }
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(8.dp)) }
-
+            // Incident Location Header
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        "INCIDENT LOCATION",
-                        style = TextStyle(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp,
-                            color = secondaryTextColor
-                        )
-                    )
+                    Text("INCIDENT LOCATION", style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 12.sp, color = secondaryTextColor))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            painter = painterResource(R.drawable.baseline_my_location_24),
-                            contentDescription = null,
-                        )
+                        Icon(painter = painterResource(R.drawable.baseline_my_location_24), contentDescription = null)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            "Detect My Location",
-                            style = TextStyle(
-                                fontSize = 13.sp,
-                                color = Color(0xFF1E88E5),
-                                fontWeight = FontWeight.Bold
-                            )
-                        )
+                        Text("Detect My Location", style = TextStyle(fontSize = 13.sp, color = Color(0xFF1E88E5), fontWeight = FontWeight.Bold))
                     }
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(16.dp)) }
-
-            // WARD DROPDOWN
+            // WARD DROPDOWN (MVVM State)
             item {
                 DropdownField(
                     label = "Ward",
-                    selectedValue = ward,
+                    selectedValue = viewModel.ward,
                     options = ReportData.wards,
                     expanded = wardExpanded,
                     onExpandedChange = { wardExpanded = it },
-                    onValueSelected = { ward = it },
+                    onValueSelected = { viewModel.ward = it },
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
                 )
             }
 
-            item { Spacer(modifier = Modifier.height(8.dp)) }
-
-            // ISSUE TYPE DROPDOWN
+            // ISSUE TYPE DROPDOWN (MVVM State)
             item {
                 DropdownField(
                     label = "Issue Type",
-                    selectedValue = issueType,
+                    selectedValue = viewModel.issueType,
                     options = issueOptions,
                     expanded = issueExpanded,
                     onExpandedChange = { issueExpanded = it },
-                    onValueSelected = { issueType = it },
+                    onValueSelected = { viewModel.issueType = it },
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
                 )
             }
 
-            item { Spacer(modifier = Modifier.height(8.dp)) }
+            // Searchable Area Field
+            item {
+                Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                    OutlinedTextField(
+                        value = viewModel.searchArea,
+                        onValueChange = { viewModel.searchArea = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Area / Locality", color = textColor) },
+                        placeholder = { Text("Search Area...", color = secondaryTextColor) },
+                        shape = RoundedCornerShape(8.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = cardBackgroundColor,
+                            unfocusedContainerColor = cardBackgroundColor
+                        )
+                    )
+                    // Search suggestions list
+                    val suggestions = viewModel.getFilteredAreas()
+                    if (suggestions.isNotEmpty()) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                            elevation = CardDefaults.cardElevation(4.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White)
+                        ) {
+                            suggestions.forEach { area ->
+                                TextButton(
+                                    onClick = {
+                                        viewModel.searchArea = area
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(area, color = Color.Black, modifier = Modifier.align(Alignment.CenterVertically))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
-            // Category Specific Section
+            // Map (for Traffic category)
             if (category == "Traffic") {
                 item {
                     Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                            .height(200.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(200.dp),
                         shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(
-                                containerColor = Color(0xFFE0E0E0))
-                    ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                           MapScreen()
-                            Button(
-                                onClick = {
-                                    navController.navigate("FullMap")
-                                },
-                                modifier = Modifier
-                                    .align(Alignment.BottomEnd)
-                                    .padding(10.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A237E)),
-                                shape= RoundedCornerShape(50)
-                            ){
-                                Text("View Full Map")
-                            }
-
-                        }
-
-
-                    }
-
-
-
-                }
-            }
-
-            // AREA / LOCALITY INPUT
-            item {
-                OutlinedTextField(
-                    value = search,
-                    onValueChange = { search = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    label = { Text("Area / Locality", color = textColor) },
-                    placeholder = { Text("e.g. Baneshwor, Kalanki", color = secondaryTextColor) },
-                    shape = RoundedCornerShape(8.dp),
-                    colors = OutlinedTextFieldDefaults.colors(  // ✅ ADD THIS
-                        focusedTextColor = textColor,
-                        unfocusedTextColor = textColor,
-                        focusedContainerColor = cardBackgroundColor,
-                        unfocusedContainerColor = cardBackgroundColor
-                )
-                )
-            }
-
-            item {
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    "Visual Evidence",
-                    modifier = Modifier.padding(horizontal = 18.dp),
-                    style = TextStyle(
-                        fontSize = 13.sp,
-                        color = secondaryTextColor,
-                        fontWeight = FontWeight.Bold
-                    )
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                    Card(
-                        modifier = Modifier
-                            .size(110.dp)
-                            .drawBehind {
-                                drawRoundRect(
-                                    color = Color.LightGray,
-                                    style = Stroke(
-                                        width = 2F,
-                                        pathEffect = PathEffect.dashPathEffect(
-                                            floatArrayOf(10f, 10f), 0f
-                                        )
-                                    )
-                                )
-                            },
-                        shape = RoundedCornerShape(8.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Icon(
-                                painterResource(R.drawable.baseline_add_a_photo_24),
-                                null,
-                                tint = secondaryTextColor
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                "Add Photo",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = secondaryTextColor
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.width(12.dp))
-
-                    Card(
-                        modifier = Modifier.size(110.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = CardDefaults.cardColors(containerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color(0xFFE0E0E0))
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFE0E0E0))
                     ) {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Image(
-                                painterResource(R.drawable.baseline_image_24),
-                                null,
-                                Modifier.size(40.dp)
-                            )
+                            MapScreen()
+                            Button(
+                                onClick = { navController.navigate("FullMap") },
+                                modifier = Modifier.align(Alignment.BottomEnd).padding(10.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A237E)),
+                                shape = RoundedCornerShape(50)
+                            ) { Text("View Full Map") }
                         }
                     }
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(16.dp)) }
+            // Visual Evidence Section
+            item {
+                Column {
+                    Text("Visual Evidence", modifier = Modifier.padding(horizontal = 18.dp), style = TextStyle(fontSize = 13.sp, color = secondaryTextColor, fontWeight = FontWeight.Bold))
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                        Card(
+                            modifier = Modifier.size(110.dp).drawBehind {
+                                drawRoundRect(color = Color.LightGray, style = Stroke(width = 2F, pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)))
+                            },
+                            shape = RoundedCornerShape(8.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+                        ) {
+                            Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(painterResource(R.drawable.baseline_add_a_photo_24), null, tint = secondaryTextColor)
+                                Text("Add Photo", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = secondaryTextColor)
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Card(modifier = Modifier.size(110.dp), shape = RoundedCornerShape(8.dp), colors = CardDefaults.cardColors(containerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color(0xFFE0E0E0))) {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Image(painterResource(R.drawable.baseline_image_24), null, Modifier.size(40.dp))
+                            }
+                        }
+                    }
+                }
+            }
 
+            // Description Field (MVVM State)
             item {
                 Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                    Text(
-                        "ISSUE DESCRIPTION",
-                        style = TextStyle(
-                            fontSize = 12.sp,
-                            color = secondaryTextColor,
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
+                    Text("ISSUE DESCRIPTION", style = TextStyle(fontSize = 12.sp, color = secondaryTextColor, fontWeight = FontWeight.Bold))
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
-                        value = description,
-                        onValueChange = { description = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(120.dp),
+                        value = viewModel.description,
+                        onValueChange = { viewModel.description = it },
+                        modifier = Modifier.fillMaxWidth().height(120.dp),
                         placeholder = { Text("Describe the issue in detail...") },
                         shape = RoundedCornerShape(8.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedContainerColor = cardBackgroundColor,  // ✅ CHANGED
-                            focusedContainerColor = cardBackgroundColor,  // ✅ CHANGED
-                            focusedTextColor = textColor,  // ✅ ADD
-                            unfocusedTextColor = textColor
+                            unfocusedContainerColor = cardBackgroundColor,
+                            focusedContainerColor = cardBackgroundColor
                         )
                     )
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(16.dp)) }
-
+            // Submit Button
             item {
                 ElevatedButton(
-                    onClick = { },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .height(56.dp),
+                    onClick = {
+                        viewModel.submit(category) { resultMessage ->
+                            scope.launch { snackbarHostState.showSnackbar(resultMessage) }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(56.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.elevatedButtonColors(
-                        containerColor = Color(0xFF0D2A77),
-                        contentColor = Color.White
-                    )
+                    colors = ButtonDefaults.elevatedButtonColors(containerColor = Color(0xFF0D2A77), contentColor = Color.White)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            "Submit Report",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Text("Submit Report", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.width(8.dp))
                         Icon(painterResource(R.drawable.baseline_arrow_forward_24), null)
                     }
@@ -389,20 +285,14 @@ fun StepCircle(number: String, isSelected: Boolean, isDarkMode: Boolean = false)
         modifier = Modifier
             .size(32.dp)
             .background(
-                color = if (isSelected)
-                    Color(0xFF1A237E)
-                else
-                    if (isDarkMode) Color(0xFF333333) else Color(0xFFF5F5F5),  // ✅ DYNAMIC
+                color = if (isSelected) Color(0xFF1A237E) else if (isDarkMode) Color(0xFF333333) else Color(0xFFF5F5F5),
                 shape = CircleShape
             ),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = number,
-            color = if (isSelected)
-                Color.White
-            else
-                if (isDarkMode) Color(0xFFB0B0B0) else Color.Gray,  // ✅ DYNAMIC
+            color = if (isSelected) Color.White else if (isDarkMode) Color(0xFFB0B0B0) else Color.Gray,
             fontSize = 14.sp,
             fontWeight = FontWeight.Bold
         )
@@ -420,5 +310,6 @@ fun ReportPreview() {
         backgroundColor = Color.White,
         cardBackgroundColor = Color(0xFFF5F5F5),
         textColor = Color.Black,
-        secondaryTextColor = Color.Gray )
+        secondaryTextColor = Color.Gray
+    )
 }

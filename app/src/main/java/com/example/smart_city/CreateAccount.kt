@@ -1,6 +1,7 @@
 package com.example.smart_city
 
 import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -34,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.smart_city.viewmodel.AuthViewModel
 import com.example.smart_city.ui.theme.SmartCityTheme
+import com.example.smart_city.viewmodel.RegisterUiState
 
 class CreateAccount : ComponentActivity() {
 

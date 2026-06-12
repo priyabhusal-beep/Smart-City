@@ -1,9 +1,11 @@
 package com.example.smart_city
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -26,6 +28,9 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.smart_city.repo.AuthRepository
+import com.example.smart_city.viewmodel.AuthViewModel
+import com.example.smart_city.viewmodel.AuthViewModelFactory
 
 
 val PrimaryBlue = Color(0xFF0046B1)
@@ -35,6 +40,9 @@ val BackgroundGray = Color(0xFFF8F9FA)
 
 
 class HomeScreen : ComponentActivity() {
+    private val authViewModel: AuthViewModel by viewModels {
+        AuthViewModelFactory(application)
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
@@ -49,7 +57,9 @@ class HomeScreen : ComponentActivity() {
                 HomeActivity(
                     navController = mainNavController,
                     isDarkMode = isDarkMode,
-                    onDarkModeToggle = { updatedValue -> isDarkMode = updatedValue })
+                    onDarkModeToggle = { newValue -> isDarkMode = newValue },
+                    authViewModel = authViewModel
+                )
             }
         }
     }
@@ -63,13 +73,28 @@ data class RecentReportData(
     val status: String,
     val color: Color
 )
+@Composable
+fun LoadCurrentUserEffect(authViewModel: AuthViewModel?) {
+    LaunchedEffect(Unit) {
+        try {
+            val authRepository = AuthRepository()
+            val currentUser = authRepository.getCurrentUser()
+            authViewModel?.setCurrentUser(currentUser)
+            Log.d("HomeScreen", "User loaded: ${currentUser.name}")
+        } catch (e: Exception) {
+            Log.e("HomeScreen", "Failed to load user: ${e.message}")
+        }
+    }
+}
 
 @Composable
 fun HomeActivity(
     navController: NavController,
     isDarkMode: Boolean,              // 👈 Add this line
-    onDarkModeToggle: (Boolean) -> Unit
+    onDarkModeToggle: (Boolean) -> Unit,
+    authViewModel: AuthViewModel? = null
 ) {
+    LoadCurrentUserEffect(authViewModel)
     // State to track which screen tab is currently active
     var selectedIndex by remember { mutableStateOf(0) }
     val innerNavController = rememberNavController()
@@ -180,7 +205,7 @@ fun HomeActivity(
                 ) {
                     // Switches between the views dynamically based on tab clicks
                     when (selectedIndex) {
-                        0 -> DashboardContents(innerNavController, isDarkMode, backgroundColor, cardBackgroundColor, textColor, secondaryTextColor)
+                        0 -> DashboardContents(innerNavController, isDarkMode, backgroundColor, cardBackgroundColor, textColor, secondaryTextColor, authViewModel)
                         1 -> Reportbody(navController = innerNavController,
                             category = "Traffic",
                             isDarkMode = isDarkMode,
@@ -189,7 +214,7 @@ fun HomeActivity(
                             textColor = textColor,
                             secondaryTextColor = secondaryTextColor)
                         2 -> ComplainActivity(isDarkMode, backgroundColor, cardBackgroundColor, textColor, secondaryTextColor)
-                        3 -> UserprofileBody(navController = navController, isDarkMode = isDarkMode, onDarkModeToggle = onDarkModeToggle)
+                        3 -> UserprofileBody(isDarkMode = isDarkMode, onDarkModeToggle = onDarkModeToggle, authViewModel = authViewModel)
                     }
                 }
             }
@@ -208,14 +233,17 @@ fun HomeActivity(
         // Your main layout logic has been moved cleanly into this component
         @Composable
         fun DashboardContents(
-            navController: androidx.navigation.NavController,
+            navController: NavController,
             isDarkMode: Boolean = false,
             backgroundColor: Color = Color.White,
             cardBackgroundColor: Color = Color(0xFFF5F5F5),
             textColor: Color = Color.Black,
-            secondaryTextColor: Color = Color.Gray
+            secondaryTextColor: Color = Color.Gray,
+            authViewModel: AuthViewModel? = null
         ) {
             var search by remember { mutableStateOf("") }
+            val currentUser by authViewModel?.currentUser?.collectAsState()
+                ?: remember { mutableStateOf(null) }
 
             val recentReport = listOf(
                 RecentReportData(
@@ -260,7 +288,7 @@ fun HomeActivity(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(text = "Good Morning", color = secondaryTextColor)
                             Text(
-                                text = "Lana Del",
+                                text = currentUser?.name ?: "Guest",
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = PrimaryBlue
