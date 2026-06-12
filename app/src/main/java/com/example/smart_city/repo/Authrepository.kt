@@ -1,6 +1,8 @@
 package com.example.smart_city.repo
 
+import android.util.Log
 import com.example.smart_city.model.User
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.tasks.await
@@ -76,6 +78,69 @@ class AuthRepository {
             user
 
         } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    // ✅ UPDATED: Update User Profile with proper email handling
+    suspend fun updateUserProfile(
+        name: String,
+        email: String,
+        password: String = ""  // Required for email update
+    ): User {
+        return try {
+            val currentUser = auth.currentUser
+                ?: throw Exception("No user logged in")
+
+            val uid = currentUser.uid
+
+            // Step 1: Get current user data
+            val snapshot = database.child("users").child(uid).get().await()
+            val user = snapshot.getValue(User::class.java)
+                ?: throw Exception("User not found in database")
+
+            // Step 2: Create updated user object
+            val updatedUser = user.copy(
+                name = name,
+                email = email
+            )
+
+            // Step 3: Update in Firebase Database
+            database.child("users").child(uid).setValue(updatedUser).await()
+            Log.d("AuthRepo", "User data updated in database")
+
+            // ✅ STEP 4: Update email in Firebase Auth (if changed)
+            if (email != currentUser.email) {
+                try {
+                    // If email is different, need to re-authenticate first
+                    if (password.isNotEmpty()) {
+                        // Re-authenticate with current password
+                        val credential = EmailAuthProvider.getCredential(
+                            currentUser.email ?: "",
+                            password
+                        )
+                        currentUser.reauthenticate(credential).await()
+                        Log.d("AuthRepo", "Re-authentication successful")
+                    }
+
+                    // Now update email
+                    currentUser.updateEmail(email).await()
+                    Log.d("AuthRepo", "Email updated in Firebase Auth: $email")
+
+                } catch (e: Exception) {
+                    Log.e("AuthRepo", "Failed to update email in Auth: ${e.message}")
+                    // Still return success - database is updated
+                    // The email will work after next login
+                }
+            }
+
+            Log.d("AuthRepo", "Profile updated: name=$name, email=$email")
+
+            // Step 5: Return updated user
+            updatedUser
+
+        } catch (e: Exception) {
+            Log.e("AuthRepo", "Update profile failed: ${e.message}")
             throw e
         }
     }

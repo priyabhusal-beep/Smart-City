@@ -286,7 +286,7 @@ fun HomeActivity(
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(text = "Good Morning", color = secondaryTextColor)
+                            Text(text = "Hello", color = secondaryTextColor)
                             Text(
                                 text = currentUser?.name ?: "Guest",
                                 fontSize = 20.sp,
