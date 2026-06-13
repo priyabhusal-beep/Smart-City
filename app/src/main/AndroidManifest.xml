@@ -39,6 +39,9 @@
             android:name=".CreateAccount"
             android:exported="true" />
         <activity
+            android:name=".Report"
+            android:exported="true" />
+        <activity
             android:name=".LoginActivity"
             android:exported="true" />
         <activity
@@ -55,7 +58,7 @@
             android:exported="false" />
         <activity
             android:name=".HomeScreen"
-            android:exported="false" />
+            android:exported="true" />
         <activity
             android:name=".ForgotPassword"
             android:exported="false" />
@@ -70,16 +73,14 @@
             android:exported="false" />
         <activity
             android:name=".AllUserComplain"
-            android:exported="false" />
+            android:exported="true" />
         <activity
             android:name=".ComplaintDetails"
             android:exported="false" />
         <activity
             android:name=".ComplainProgressActivity"
             android:exported="false" />
-        <activity
-            android:name=".Report"
-            android:exported="false" />
+
         <activity
             android:name=".Userprofile"
             android:exported="false" />
