@@ -190,7 +190,7 @@ fun Reported(
                         colors = CardDefaults.cardColors(containerColor = Color(0xFFE0E0E0))
                     ) {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            MapScreen()
+                            FullMapscreen()
                             Button(
                                 onClick = { },
                                 modifier = Modifier.align(Alignment.BottomEnd).padding(10.dp),
@@ -299,21 +299,10 @@ fun Reported(
                             .fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        if (successMessage.contains("Successfully")) {
-                            Icon(
-                                painter = painterResource(R.drawable.baseline_check_circle_24),
-                                contentDescription = null,
-                                modifier = Modifier.size(64.dp),
-                                tint = Color(0xFF4CAF50)
-                            )
-                        } else {
-                            Icon(
-                                painter = painterResource(R.drawable.baseline_error_24),
-                                contentDescription = null,
-                                modifier = Modifier.size(64.dp),
-                                tint = Color(0xFFE53935)
-                            )
-                        }
+                        Text(
+                            text = if (successMessage.contains("Successfully")) "✅" else "❌",
+                            fontSize = 64.sp
+                        )
 
                         Spacer(modifier = Modifier.height(16.dp))
 

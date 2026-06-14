@@ -7,7 +7,7 @@ data class ReportModel(
     val area: String = "",
     val description: String = "",
     val timestamp: Long = System.currentTimeMillis(),
-    val userId: String,
-    val status: String,
-    val id: String
+    val userId: String = "",
+    val status: String = "Pending",
+    val id: String = ""
 )

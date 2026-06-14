@@ -22,17 +22,17 @@
         android:usesCleartextTraffic="true">
         <activity
             android:name=".HelpSupportActivity"
-            android:exported="false"
+            android:exported="true"
             android:label="@string/title_activity_help_support"
             android:theme="@style/Theme.SmartCity" />
         <activity
             android:name=".SettingPrivacyActivity"
-            android:exported="false"
+            android:exported="true"
             android:label="@string/title_activity_setting_privacy"
             android:theme="@style/Theme.SmartCity" />
         <activity
             android:name=".FullMapScreen"
-            android:exported="false"
+            android:exported="true"
             android:label="@string/title_activity_full_map_screen"
             android:theme="@style/Theme.SmartCity" />
         <activity
@@ -47,6 +47,13 @@
         <activity
             android:name=".SplashScreen"
             android:exported="true">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".SplashScreen" />
+        </activity>
+        <activity
+            android:name=".GetStartedScreen"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -54,23 +61,20 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".GetStartedScreen"
-            android:exported="false" />
-        <activity
             android:name=".HomeScreen"
             android:exported="true" />
         <activity
             android:name=".ForgotPassword"
-            android:exported="false" />
+            android:exported="true" />
         <activity
             android:name=".AdminDashboard"
-            android:exported="false" />
+            android:exported="true" />
         <activity
             android:name=".AdminLoginScreen"
-            android:exported="false" />
+            android:exported="true" />
         <activity
             android:name=".AdminManageScreen"
-            android:exported="false" />
+            android:exported="true" />
         <activity
             android:name=".AllUserComplain"
             android:exported="true" />
