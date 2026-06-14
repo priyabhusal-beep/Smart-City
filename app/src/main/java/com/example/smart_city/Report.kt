@@ -12,8 +12,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -28,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.example.smart_city.viewmodel.ReportViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class Report : ComponentActivity() {
@@ -36,13 +36,13 @@ class Report : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val navController = rememberNavController()
-            Reportbody(navController = navController)
+            Reported(navController = navController)
         }
     }
 }
 
 @Composable
-fun Reportbody(
+fun Reported(
     navController: NavHostController,
     category: String = "Road",
     viewModel: ReportViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
@@ -54,6 +54,8 @@ fun Reportbody(
 ) {
     var wardExpanded by remember { mutableStateOf(false) }
     var issueExpanded by remember { mutableStateOf(false) }
+    var showSuccessPopup by remember { mutableStateOf(false) }
+    var successMessage by remember { mutableStateOf("") }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -71,7 +73,6 @@ fun Reportbody(
                 .padding(top = 12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header
             item {
                 Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
                     Text(
@@ -88,7 +89,6 @@ fun Reportbody(
                 }
             }
 
-            // Progress Steps
             item {
                 Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -106,7 +106,6 @@ fun Reportbody(
                 }
             }
 
-            // Incident Location Header
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -122,7 +121,6 @@ fun Reportbody(
                 }
             }
 
-            // WARD DROPDOWN (MVVM State)
             item {
                 DropdownField(
                     label = "Ward",
@@ -135,7 +133,6 @@ fun Reportbody(
                 )
             }
 
-            // ISSUE TYPE DROPDOWN (MVVM State)
             item {
                 DropdownField(
                     label = "Issue Type",
@@ -148,7 +145,6 @@ fun Reportbody(
                 )
             }
 
-            // Searchable Area Field
             item {
                 Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                     OutlinedTextField(
@@ -163,7 +159,7 @@ fun Reportbody(
                             unfocusedContainerColor = cardBackgroundColor
                         )
                     )
-                    // Search suggestions list
+
                     val suggestions = viewModel.getFilteredAreas()
                     if (suggestions.isNotEmpty()) {
                         Card(
@@ -186,7 +182,6 @@ fun Reportbody(
                 }
             }
 
-            // Map (for Traffic category)
             if (category == "Traffic") {
                 item {
                     Card(
@@ -197,7 +192,7 @@ fun Reportbody(
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             MapScreen()
                             Button(
-                                onClick = { navController.navigate("FullMap") },
+                                onClick = { },
                                 modifier = Modifier.align(Alignment.BottomEnd).padding(10.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A237E)),
                                 shape = RoundedCornerShape(50)
@@ -207,7 +202,6 @@ fun Reportbody(
                 }
             }
 
-            // Visual Evidence Section
             item {
                 Column {
                     Text("Visual Evidence", modifier = Modifier.padding(horizontal = 18.dp), style = TextStyle(fontSize = 13.sp, color = secondaryTextColor, fontWeight = FontWeight.Bold))
@@ -235,7 +229,6 @@ fun Reportbody(
                 }
             }
 
-            // Description Field (MVVM State)
             item {
                 Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
                     Text("ISSUE DESCRIPTION", style = TextStyle(fontSize = 12.sp, color = secondaryTextColor, fontWeight = FontWeight.Bold))
@@ -254,12 +247,18 @@ fun Reportbody(
                 }
             }
 
-            // Submit Button
             item {
                 ElevatedButton(
                     onClick = {
                         viewModel.submit(category) { resultMessage ->
-                            scope.launch { snackbarHostState.showSnackbar(resultMessage) }
+                            successMessage = resultMessage
+                            showSuccessPopup = true
+
+                            // Auto-hide popup after 3 seconds
+                            scope.launch {
+                                delay(3000)
+                                showSuccessPopup = false
+                            }
                         }
                     },
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(56.dp),
@@ -275,6 +274,69 @@ fun Reportbody(
             }
 
             item { Spacer(modifier = Modifier.height(24.dp)) }
+        }
+
+        // Success Popup (appears on same screen)
+        if (showSuccessPopup) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f))
+                    .padding(innerPadding),
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth(0.85f)
+                        .padding(16.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(32.dp)
+                            .fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        if (successMessage.contains("Successfully")) {
+                            Icon(
+                                painter = painterResource(R.drawable.baseline_check_circle_24),
+                                contentDescription = null,
+                                modifier = Modifier.size(64.dp),
+                                tint = Color(0xFF4CAF50)
+                            )
+                        } else {
+                            Icon(
+                                painter = painterResource(R.drawable.baseline_error_24),
+                                contentDescription = null,
+                                modifier = Modifier.size(64.dp),
+                                tint = Color(0xFFE53935)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = successMessage,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Black,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        Button(
+                            onClick = { showSuccessPopup = false },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0D2A77))
+                        ) {
+                            Text("OK", color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -303,13 +365,8 @@ fun StepCircle(number: String, isSelected: Boolean, isDarkMode: Boolean = false)
 @Composable
 fun ReportPreview() {
     val navController = rememberNavController()
-    Reportbody(
+    Reported(
         navController = navController,
-        category = "Road",
-        isDarkMode = false,
-        backgroundColor = Color.White,
-        cardBackgroundColor = Color(0xFFF5F5F5),
-        textColor = Color.Black,
-        secondaryTextColor = Color.Gray
+        category = "Road"
     )
 }

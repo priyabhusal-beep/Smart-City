@@ -42,6 +42,7 @@ class SplashScreen : ComponentActivity() {
                     finish()
                 }
             }
+
         }
     }
 }

@@ -1,6 +1,10 @@
 package com.example.smart_city.viewmodel
 
+import android.app.Application
+import android.util.Log
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.smart_city.model.User
 import com.example.smart_city.repo.AuthRepository
@@ -9,7 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class AuthViewModel : ViewModel() {
+class AuthViewModel (application: Application) : AndroidViewModel(application) {
 
     private val authRepository = AuthRepository()
 
@@ -105,6 +109,10 @@ class AuthViewModel : ViewModel() {
         _loginState.value = LoginUiState.Idle
         _registerState.value = RegisterUiState.Idle
         _errorMessage.value = ""
+    }
+    fun setCurrentUser(user: User) {
+        _currentUser.value = user
+        Log.d("AuthVM", "Current user set to: ${user.name}")
     }
 
     // ================== VALIDATION FUNCTIONS ==================
@@ -203,4 +211,11 @@ sealed class RegisterUiState {
     object Loading : RegisterUiState()
     data class Success(val user: User) : RegisterUiState()
     data class Error(val message: String) : RegisterUiState()
+}
+
+class AuthViewModelFactory(private val application: Application) :
+    ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        return AuthViewModel(application) as T
+    }
 }
