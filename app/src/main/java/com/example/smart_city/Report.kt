@@ -29,10 +29,44 @@ import androidx.navigation.compose.rememberNavController
 import com.example.smart_city.viewmodel.ReportViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.clickable
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import com.example.smart_city.util.LocationHelper
+import com.example.smart_city.util.GeoCoderHelper
 
 class Report : ComponentActivity() {
+    private val permissionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { permissions ->
+
+            val fineLocation =
+                permissions[android.Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+
+            val coarseLocation =
+                permissions[android.Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
+
+//            if (fineLocation || coarseLocation) {
+//                // Permission granted
+
+            android.util.Log.d(
+                "PERMISSION_DEBUG",
+                "Fine=$fineLocation, Coarse=$coarseLocation"
+            )
+
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        permissionLauncher.launch(
+            arrayOf(
+                android.Manifest.permission.ACCESS_FINE_LOCATION,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+        )
+
         enableEdgeToEdge()
         setContent {
             val navController = rememberNavController()
@@ -58,6 +92,7 @@ fun Reported(
     var successMessage by remember { mutableStateOf("") }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     val issueOptions = ReportData.issueOptions[category] ?: emptyList()
 
@@ -108,17 +143,80 @@ fun Reported(
 
             item {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.clickable {
+
+                        LocationHelper.getLocation(
+                            context = context,
+
+                            callback = { lat, lng ->
+                                android.util.Log.d("GPS_TEST", "GOT LAT=$lat LNG=$lng")
+
+
+                                viewModel.latitude = lat
+                                viewModel.longitude = lng
+
+                                android.util.Log.d(
+                                    "VM_TEST",
+                                    "VM LAT=${viewModel.latitude} LNG=${viewModel.longitude}"
+                                )
+
+                                viewModel.searchArea =
+                                    GeoCoderHelper.getAddress(
+                                        context,
+                                        lat,
+                                        lng
+                                    )
+
+                                Toast.makeText(
+                                    context,
+                                    "Location Detected",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            },
+
+                            onFailure = {
+                                Toast.makeText(
+                                    context,
+                                    "Failed to get location",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        )
+                    },
+
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("INCIDENT LOCATION", style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 12.sp, color = secondaryTextColor))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(painter = painterResource(R.drawable.baseline_my_location_24), contentDescription = null)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Detect My Location", style = TextStyle(fontSize = 13.sp, color = Color(0xFF1E88E5), fontWeight = FontWeight.Bold))
-                    }
+
+                    Icon(
+                        painter = painterResource(
+                            R.drawable.baseline_my_location_24
+                        ),
+                        contentDescription = null
+                    )
+
+                    Spacer(modifier = Modifier.width(4.dp))
+
+                    Text(
+                        "Detect My Location",
+                        style = TextStyle(
+                            fontSize = 13.sp,
+                            color = Color(0xFF1E88E5),
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
                 }
+//                Row(
+//                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+//                    horizontalArrangement = Arrangement.SpaceBetween,
+//                    verticalAlignment = Alignment.CenterVertically
+//                ) {
+//                    Text("INCIDENT LOCATION", style = TextStyle(fontWeight = FontWeight.Bold, fontSize = 12.sp, color = secondaryTextColor))
+//                    Row(verticalAlignment = Alignment.CenterVertically) {
+//                        Icon(painter = painterResource(R.drawable.baseline_my_location_24), contentDescription = null)
+//                        Spacer(modifier = Modifier.width(4.dp))
+//                        Text("Detect My Location", style = TextStyle(fontSize = 13.sp, color = Color(0xFF1E88E5), fontWeight = FontWeight.Bold))
+//                    }
+//                }
             }
 
             item {
@@ -190,7 +288,9 @@ fun Reported(
                         colors = CardDefaults.cardColors(containerColor = Color(0xFFE0E0E0))
                     ) {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            FullMapscreen()
+                            FullMapscreen(
+                                complaints = emptyList()
+                            )
                             Button(
                                 onClick = { },
                                 modifier = Modifier.align(Alignment.BottomEnd).padding(10.dp),

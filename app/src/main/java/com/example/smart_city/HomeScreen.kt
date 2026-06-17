@@ -158,10 +158,21 @@ fun HomeActivity(
         }
 
         composable("FullMap") {
-            FullMapscreen()
+
+                val complaintsViewModel: ComplaintsViewModel =
+                    androidx.lifecycle.viewmodel.compose.viewModel()
+
+                LaunchedEffect(Unit) {
+                    complaintsViewModel.fetchAllComplaints()
+                }
+
+                FullMapscreen(
+                    complaints = complaintsViewModel.complaints
+                )
+            }
         }
     }
-}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -376,7 +387,17 @@ fun DashboardContents(
         item {
             Card(modifier = Modifier.fillMaxWidth().height(190.dp), shape = RoundedCornerShape(18.dp)) {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    FullMapscreen()
+                    val complaintsViewModel: ComplaintsViewModel =
+                        androidx.lifecycle.viewmodel.compose.viewModel()
+
+                    LaunchedEffect(Unit) {
+                        complaintsViewModel.fetchAllComplaints()
+                    }
+
+                    FullMapscreen(
+                        complaints = complaintsViewModel.complaints
+                    )
+
                     Button(onClick = { navController.navigate("FullMap") }, modifier = Modifier.align(Alignment.BottomEnd).padding(10.dp), colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue), shape = RoundedCornerShape(50)) {
                         Text("View Full Map")
                     }

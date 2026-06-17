@@ -15,6 +15,9 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
     var issueType by mutableStateOf("")
     var isLoading by mutableStateOf(false)
 
+    var  latitude by mutableStateOf(0.0)
+    var longitude by mutableStateOf(0.0)
+
     val areaSuggestions = listOf("Baneshwor", "Kalanki", "Koteshwor", "Patan", "Thamel", "Maitidevi", "Baluwatar")
 
     fun getFilteredAreas(): List<String> {
@@ -50,6 +53,14 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
         }
 
         isLoading = true
+        android.util.Log.d(
+            "FINAL_CHECK",
+            "LAT=${latitude}, LNG=${longitude}"
+        )
+        if (latitude == 0.0 || longitude == 0.0) {
+            onResult("❌ Please detect location first!")
+            return
+        }
 
         // Create report model
         val report = ReportModel(
@@ -61,7 +72,9 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
             description = description,
             timestamp = System.currentTimeMillis(),
             userId = currentUser.uid,
-            status = "pending"
+            status = "pending",
+            latitude = latitude,
+            longitude = longitude,
         )
 
         // Submit to Firebase
