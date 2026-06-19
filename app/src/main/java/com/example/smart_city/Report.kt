@@ -35,6 +35,9 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import com.example.smart_city.util.LocationHelper
 import com.example.smart_city.util.GeoCoderHelper
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.smart_city.viewmodel.TrafficViewModel
+import android.content.Intent
 
 class Report : ComponentActivity() {
     private val permissionLauncher =
@@ -93,7 +96,16 @@ fun Reported(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val trafficViewModel: TrafficViewModel = viewModel()
 
+    LaunchedEffect(Unit){
+    android.util.Log.d(
+        "TRAFFIC_DEBUG",
+        "LaunchedEffect Running"
+    )
+
+        trafficViewModel.fetchTraffic()
+    }
     val issueOptions = ReportData.issueOptions[category] ?: emptyList()
 
     Scaffold(
@@ -288,11 +300,19 @@ fun Reported(
                         colors = CardDefaults.cardColors(containerColor = Color(0xFFE0E0E0))
                     ) {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            FullMapscreen(
-                                complaints = emptyList()
-                            )
+                           TrafficMapScreen(
+                                trafficList = trafficViewModel.trafficList
+                           )
                             Button(
-                                onClick = { },
+                                onClick = {
+                                    context.startActivity(
+
+                                        Intent(
+                                            context,
+                                            TrafficMapActivity::class.java
+                                        )
+                                    )
+                                },
                                 modifier = Modifier.align(Alignment.BottomEnd).padding(10.dp),
                                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1A237E)),
                                 shape = RoundedCornerShape(50)

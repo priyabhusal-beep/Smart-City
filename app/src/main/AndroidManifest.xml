@@ -20,6 +20,14 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SmartCity"
         android:usesCleartextTraffic="true">
+
+        <activity
+            android:name=".TrafficMapActivity" />
+        <activity
+            android:name=".TrafficMapScreen.kt"
+            android:exported="false"
+            android:label="@string/title_activity_traffic_map_screen.kt"
+            android:theme="@style/Theme.SmartCity" />
         <activity
             android:name=".HelpSupportActivity"
             android:exported="true"
@@ -84,7 +92,6 @@
         <activity
             android:name=".ComplainProgressActivity"
             android:exported="false" />
-
         <activity
             android:name=".Userprofile"
             android:exported="false" />

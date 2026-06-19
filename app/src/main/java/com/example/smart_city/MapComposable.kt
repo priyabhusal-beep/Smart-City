@@ -1,5 +1,7 @@
 package com.example.smart_city
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -15,6 +17,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.example.smart_city.model.ReportModel
@@ -26,7 +29,7 @@ import org.maplibre.android.maps.Style
 
 @Composable
 fun MapScreen(
-    complaints: List<ReportModel>
+    complaints: List<ReportModel> = emptyList()
 ) {
     if (LocalInspectionMode.current) {
         Box(
@@ -70,81 +73,6 @@ fun MapScreen(
         }
     }
 
-//    AndroidView(
-//        modifier = Modifier.fillMaxSize(),
-//        factory = {
-//            mapView.apply {
-//                getMapAsync { map ->
-//                    val styleUrl =
-//                        "https://map-init.gallimap.com/styles/light/style.json?accessToken=6f2ce10e-f8e7-4008-8a03-384ff6f87d26"
-//                    map.setStyle(Style.Builder().fromUri(styleUrl))
-//                    {
-//                        style ->
-//                        Log.d(
-//                            "MAP_DATA",
-//                            "Complaints received = ${complaints.size}"
-//                        )
-//                        complaints.forEach { complaint ->
-//                            Log.d(
-//                                "MAP_MARKER",
-//                                "${complaint.issueType}:Lat=${complaint.latitude}, Lng=${complaint.longitude}"
-//                            )
-//
-//                            if (
-//                                complaint.latitude != 0.0 &&
-//                                complaint.longitude != 0.0
-//                            ) {
-//
-//                                val marker = org.maplibre.android.annotations.MarkerOptions()
-//                                    .position(
-//                                        org.maplibre.android.geometry.LatLng(
-//                                            complaint.latitude,
-//                                            complaint.longitude
-//                                        )
-//                                    )
-//                                    .title(complaint.issueType)
-//
-//                                map.addMarker(marker)
-//                            }
-//                        }
-//                        Log.d(
-//                            "MAP_DATA",
-//                            "Complaints received = ${complaints.size}"
-//                        )
-//
-//                        if (complaints.isNotEmpty()) {
-//
-////                            map.cameraPosition =
-////                                org.maplibre.android.camera.CameraPosition.Builder()
-////                                    .target(
-////                                        org.maplibre.android.geometry.LatLng(
-////                                            complaints[0].latitude,
-////                                            complaints[0].longitude
-////                                        )
-////                                    )
-////                                    .zoom(15.0)
-////                                    .build()
-//                            map.cameraPosition =
-//                                CameraPosition.Builder()
-//                                    .target(
-//                                        LatLng(
-//                                            27.7172,
-//                                            85.3240
-//                                        )
-//                                    )
-//                                    .zoom(11.0)
-//                                    .build()
-//
-//                            complaints.forEach { complaint ->
-//                                // add markers
-//                            }
-//                        }
-//                    }
-//
-//
-//                }
-//            }
-//        }
     AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = { mapView },
@@ -179,22 +107,57 @@ fun MapScreen(
                                 else -> R.drawable.baseline_locationothers_on_24
                             }
 
-                            val icon = org.maplibre.android.annotations.IconFactory
-                                .getInstance(context)
-                                .fromResource(iconRes)
+                            // FIX: Convert Vector Drawable to Bitmap because MapLibre IconFactory cannot handle XML directly
+                            val drawable = ContextCompat.getDrawable(context, iconRes)
+                            drawable?.let {
+                                val scale = 1.5f
+                                val bitmap = Bitmap.createBitmap(
+                                    (it.intrinsicWidth * scale).toInt(),
+                                    (it.intrinsicHeight *scale).toInt(),
+                                    Bitmap.Config.ARGB_8888
+                                )
+                                val canvas = Canvas(bitmap)
+                                it.setBounds(0, 0, canvas.width, canvas.height)
+                                it.draw(canvas)
 
-                            map.addMarker(
-                                org.maplibre.android.annotations.MarkerOptions()
-                                    .position(
-                                        LatLng(
-                                            complaint.latitude,
-                                            complaint.longitude
+                                val icon = org.maplibre.android.annotations.IconFactory
+                                    .getInstance(context)
+                                    .fromBitmap(bitmap)
+
+                                var lat = complaint.latitude
+                                var lng = complaint.longitude
+
+                                when (complaint.category.lowercase()) {
+
+                                    "road" -> {
+                                        lat += 0.00008
+                                    }
+
+                                    "traffic" -> {
+                                        lng += 0.00008
+                                    }
+
+                                    "garbage" -> {
+                                        lat -= 0.00008
+                                    }
+
+                                    else -> {
+                                        lng -= 0.00008
+                                    }
+                                }
+                                map.addMarker(
+                                    org.maplibre.android.annotations.MarkerOptions()
+                                        .position(
+                                            LatLng(
+                                                lat,
+                                                lng
+                                            )
                                         )
-                                    )
-                                    .title(complaint.issueType)
-                                    .snippet(complaint.category)
-                                    .icon(icon)
-                            )
+                                        .title(complaint.issueType)
+                                        .snippet(complaint.category)
+                                        .icon(icon)
+                                )
+                            }
                         }
                     }
 
