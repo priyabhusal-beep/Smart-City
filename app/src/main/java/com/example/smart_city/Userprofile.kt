@@ -34,9 +34,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.smart_city.viewmodel.AuthViewModel
 import com.example.smart_city.viewmodel.AuthViewModelFactory
 import com.example.smart_city.repo.AuthRepository
+import com.example.smart_city.viewmodel.ReportViewModel
 
 class Userprofile : ComponentActivity() {
     private val authViewModel: AuthViewModel by viewModels {
@@ -111,11 +113,21 @@ fun UserprofileApp(authViewModel: AuthViewModel? = null) {
 fun UserprofileBody(
     isDarkMode: Boolean,
     onDarkModeToggle: (Boolean) -> Unit,
-    authViewModel: AuthViewModel? = null
+    authViewModel: AuthViewModel? = null,
+    reportViewModel: ReportViewModel = viewModel()
 ) {
     // ✅ COLLECT current user from ViewModel
     val currentUser by authViewModel?.currentUser?.collectAsState()
         ?: remember { mutableStateOf(null) }
+
+    // ✅ FETCH user complaints to update stats
+    LaunchedEffect(Unit) {
+        reportViewModel.fetchUserComplaints()
+    }
+
+    val userComplaints = reportViewModel.userComplaints
+    val totalReports = userComplaints.size
+    val resolvedReports = userComplaints.count { it.status.lowercase() == "resolved" }
 
     val scrollState = rememberScrollState()
     val backgroundColor = if (isDarkMode) Color(0xFF121212) else Color(0xFFF8F9FA)
@@ -231,15 +243,15 @@ fun UserprofileBody(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Statistics Row
+            // ✅ Dynamic Statistics Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                StatItem("12", "REPORTS", Color.Blue)
-                StatItem("45", "UPVOTES", Color.Blue)
-                StatItem("8", "RESOLVED", Color(0xFF4CAF50))
+                StatItem(totalReports.toString(), "REPORTS", Color.Blue)
+                StatItem("0", "UPVOTES", Color.Blue)
+                StatItem(resolvedReports.toString(), "RESOLVED", Color(0xFF4CAF50))
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -252,7 +264,7 @@ fun UserprofileBody(
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column {
-                    // My Complaints
+                    // ✅ FIXED: My Complaints Navigation
                     MenuRowNavigate(
                         icon = painterResource(R.drawable.baseline_report_24),
                         title = "My Complaints",
@@ -260,7 +272,8 @@ fun UserprofileBody(
                         iconColor = secondaryTextColor,
                         textColor = textColor,
                         onClick = {
-                            // TODO: Navigate to My Complaints screen
+                            val intent = Intent(context, AllUserComplain::class.java)
+                            context.startActivity(intent)
                         }
                     )
                     HorizontalDivider(
@@ -349,7 +362,12 @@ fun UserprofileBody(
 
             // Logout Button
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().clickable {
+                    // authViewModel?.logout()
+                    // val intent = Intent(context, LoginActivity::class.java)
+                    // context.startActivity(intent)
+                    // (context as? Activity)?.finish()
+                },
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = cardColor),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
