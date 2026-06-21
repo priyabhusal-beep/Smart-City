@@ -1,5 +1,23 @@
 <resources>
     <string name="app_name">Smart-City</string>
-    <string name="title_activity_admin_login_screen">AdminLoginScreen</string>
-    <string name="title_activity_complaint_details">ComplaintDetails</string>
+
+    <string name="title_activity_complaint_details">Complaint Details</string>
+    <string name="title_activity_admin_login_screen">Admin Login</string>
+    <string name="title_activity_report">Report Issue</string>
+
+    <string name="title_activity_userprofile">User Profile</string>
+
+    <string name="title_activity_login">LoginActivity</string>
+    <string name="title_activity_complain_report_issue">ComplainReportIssueActivity</string>
+    <string name="title_activity_complain_progress">ComplainProgressActivity</string>
+    <string name="title_activity_admin_manage_screen">AdminManageScreen</string>
+    <string name="title_activity_all_user_complain">AllUserComplain</string>
+    <string name="mapbox_access_token">6f2ce10e-f8e7-4008-8a03-384ff6f87d26</string>
+    <string name="title_activity_map_composable">MapComposable</string>
+    <string name="title_activity_full_map_screen">FullMapScreen</string>
+    <string name="title_activity_setting_privacy">SettingPrivacyActivity</string>
+    <string name="title_activity_help_support">HelpSupportActivity</string>
+    <string name="title_activity_traffic_map_screen.kt">TrafficMapScreen.kt</string>
+    <string name="title_activity_trrafficfullmap">Trrafficfullmap</string>
+    <string name="title_activity_traffic_full_map_screen">TrafficFullMapScreen</string>
 </resources>

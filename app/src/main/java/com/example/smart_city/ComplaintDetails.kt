@@ -317,6 +317,7 @@ fun CDBottomNavigationBar() {
     }
 }
 
+
 @Preview(showBackground = true)
 @Composable
 fun ComplaintDetailsPreview() {

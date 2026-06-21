@@ -2,65 +2,100 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
     <application
+        android:name=".SmartCityApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
+        android:extractNativeLibs="false"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.SmartCity">
+        android:theme="@style/Theme.SmartCity"
+        android:usesCleartextTraffic="true"
+        tools:replace="android:allowBackup,android:fullBackupContent,android:dataExtractionRules">
 
         <activity
-            android:name=".ComplaintDetails"
-            android:exported="false"
-            android:label="@string/title_activity_complaint_details"
-            android:theme="@style/Theme.SmartCity" />
-
+            android:name=".TrafficMapActivity"
+            android:exported="false" />
         <activity
-            android:name=".AdminLoginScreen"
-            android:exported="false"
-            android:label="@string/title_activity_admin_login_screen"
+            android:name=".HelpSupportActivity"
+            android:exported="true"
+            android:label="@string/title_activity_help_support"
             android:theme="@style/Theme.SmartCity" />
-
+        <activity
+            android:name=".SettingPrivacyActivity"
+            android:exported="true"
+            android:label="@string/title_activity_setting_privacy"
+            android:theme="@style/Theme.SmartCity" />
+        <activity
+            android:name=".FullMapScreen"
+            android:exported="true"
+            android:label="@string/title_activity_full_map_screen"
+            android:theme="@style/Theme.SmartCity" />
+        <activity
+            android:name=".CreateAccount"
+            android:exported="true" />
         <activity
             android:name=".Report"
-            android:exported="false"
-            android:label="@string/title_activity_report"
-            android:theme="@style/Theme.SmartCity" />
-
-        <activity
-            android:name=".ComplainProgressActivity"
-            android:exported="false"
-            android:label="@string/title_activity_complain_progress"
-            android:theme="@style/Theme.SmartCity" />
-
-        <activity
-            android:name=".ComplainReportIssueActivity"
-            android:exported="false"
-            android:label="@string/title_activity_complain_report_issue"
-            android:theme="@style/Theme.SmartCity" />
-
+            android:exported="true" />
         <activity
             android:name=".LoginActivity"
-            android:exported="false"
-            android:label="@string/title_activity_login"
-            android:theme="@style/Theme.SmartCity" />
-
+            android:exported="true" />
         <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.SmartCity">
-
+            android:name=".SplashScreen"
+            android:exported="true">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".SplashScreen" />
+        </activity>
+        <activity
+            android:name=".GetStartedScreen"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
         </activity>
-
+        <activity
+            android:name=".HomeScreen"
+            android:exported="true" />
+        <activity
+            android:name=".ForgotPassword"
+            android:exported="true" />
+        <activity
+            android:name=".AdminDashboard"
+            android:exported="true" />
+        <activity
+            android:name=".AdminLoginScreen"
+            android:exported="true" />
+        <activity
+            android:name=".AdminManageScreen"
+            android:exported="true" />
+        <activity
+            android:name=".AllUserComplain"
+            android:exported="true" />
+        <activity
+            android:name=".ComplaintDetails"
+            android:exported="false" />
+        <activity
+            android:name=".ComplainProgressActivity"
+            android:exported="false" />
+        <activity
+            android:name=".Userprofile"
+            android:exported="false" />
     </application>
 
 </manifest>
