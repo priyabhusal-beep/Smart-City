@@ -154,11 +154,10 @@ fun HomeActivity(
 
         composable("report/{category}") { backStackEntry ->
             val category = backStackEntry.arguments?.getString("category") ?: "Traffic"
-            Reported(navController = innerNavController, category = category)
+            Reported(navController = innerNavController, category = category, isDarkMode = isDarkMode) // ✅ FIXED: Added isDarkMode
         }
 
         composable("FullMap") {
-
                 val complaintsViewModel: ComplaintsViewModel =
                     androidx.lifecycle.viewmodel.compose.viewModel()
 

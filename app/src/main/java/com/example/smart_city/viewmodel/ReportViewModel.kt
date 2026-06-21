@@ -1,5 +1,6 @@
 package com.example.smart_city.viewmodel
 
+import android.graphics.Bitmap
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -14,8 +15,14 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
     var ward by mutableStateOf("")
     var issueType by mutableStateOf("")
     var isLoading by mutableStateOf(false)
+    
+    // IMAGE STATES
+    var capturedImage by mutableStateOf<Bitmap?>(null)
+    var imageUrl by mutableStateOf("")
 
-    var  latitude by mutableStateOf(0.0)
+    var userComplaints by mutableStateOf<List<ReportModel>>(emptyList())
+
+    var latitude by mutableStateOf(0.0)
     var longitude by mutableStateOf(0.0)
 
     val areaSuggestions = listOf("Baneshwor", "Kalanki", "Koteshwor", "Patan", "Thamel", "Maitidevi", "Baluwatar")
@@ -23,6 +30,15 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
     fun getFilteredAreas(): List<String> {
         return if (searchArea.isEmpty()) emptyList()
         else areaSuggestions.filter { it.contains(searchArea, ignoreCase = true) }
+    }
+
+    fun fetchUserComplaints() {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        isLoading = true
+        repository.getUserComplaints(userId) { complaints ->
+            userComplaints = complaints
+            isLoading = false
+        }
     }
 
     open fun submit(category: String, onResult: (String) -> Unit) {
@@ -52,17 +68,14 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
             return
         }
 
-        isLoading = true
-        android.util.Log.d(
-            "FINAL_CHECK",
-            "LAT=${latitude}, LNG=${longitude}"
-        )
         if (latitude == 0.0 || longitude == 0.0) {
             onResult("❌ Please detect location first!")
             return
         }
 
-        // Create report model
+        isLoading = true
+
+        // Create report model including the imageUrl
         val report = ReportModel(
             id = System.currentTimeMillis().toString(),
             category = category,
@@ -75,6 +88,7 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
             status = "pending",
             latitude = latitude,
             longitude = longitude,
+            imageUrl = imageUrl
         )
 
         // Submit to Firebase
@@ -94,5 +108,7 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
         issueType = ""
         searchArea = ""
         description = ""
+        capturedImage = null
+        imageUrl = ""
     }
 }

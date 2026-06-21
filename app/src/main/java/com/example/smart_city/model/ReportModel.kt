@@ -11,5 +11,6 @@ data class ReportModel(
     val status: String = "Pending",
     val id: String = "",
     val latitude: Double = 0.0,
-    val longitude : Double=0.0,
+    val longitude: Double = 0.0,
+    val imageUrl: String = "" // Added for image support
 )
