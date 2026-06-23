@@ -1,5 +1,10 @@
 package com.example.smart_city
 
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import kotlinx.coroutines.launch
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
@@ -72,6 +77,54 @@ fun CreateAccountScreen(viewModel: AuthViewModel, activity: Activity) {
     LaunchedEffect(errorMessage) {
         if (errorMessage.isNotEmpty()) {
             Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+        }
+    }
+    val registerState by viewModel.registerState.collectAsStateWithLifecycle()
+    LaunchedEffect(registerState) {
+        if (registerState is RegisterUiState.Success) {
+
+            val intent = Intent(context, HomeScreen::class.java)
+
+            context.startActivity(intent)
+            activity.finish()
+        }
+    }
+    val credentialManager = remember { CredentialManager.create(context) }
+    val coroutineScope = rememberCoroutineScope()
+
+    fun startGoogleRegister() {
+        coroutineScope.launch {
+            try {
+                val googleIdOption = GetGoogleIdOption.Builder()
+                    .setFilterByAuthorizedAccounts(false)
+                    .setServerClientId(
+                        "370184886750-dmmpsqps6mih9equadgiu8fqu6rpesc0.apps.googleusercontent.com"
+                    ).build()
+
+                val request = GetCredentialRequest.Builder()
+                    .addCredentialOption(googleIdOption)
+                    .build()
+
+                val result = credentialManager.getCredential(
+                    context = context,
+                    request = request
+                )
+
+                val googleCredential =
+                    GoogleIdTokenCredential.createFrom(result.credential.data)
+
+                viewModel.signInWithGoogle(
+                    idToken = googleCredential.idToken,
+                    userType = userType
+                )
+
+            } catch (e: Exception) {
+                Toast.makeText(
+                    context,
+                    e.message ?: "Google registration failed",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
         }
     }
 
@@ -289,7 +342,7 @@ fun CreateAccountScreen(viewModel: AuthViewModel, activity: Activity) {
 
                             OutlinedButton(
                                 onClick = {
-                                    Toast.makeText(context, "Google Sign-In coming soon", Toast.LENGTH_SHORT).show()
+                                    startGoogleRegister()
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()

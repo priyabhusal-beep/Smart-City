@@ -1,5 +1,5 @@
 package com.example.smart_city.repo
-
+import com.google.firebase.auth.GoogleAuthProvider
 import android.util.Log
 import com.example.smart_city.model.User
 import com.google.firebase.auth.EmailAuthProvider
@@ -60,6 +60,57 @@ class AuthRepository {
             user
 
         } catch (e: Exception) {
+            throw e
+        }
+    }
+    // GOOGLE SIGN-IN - Authenticate user with Google
+    suspend fun signInWithGoogle(
+        idToken: String,
+        userType: String = "user"
+    ): User {
+        return try {
+            // Step 1: Convert Google ID token into Firebase credential
+            val credential = GoogleAuthProvider.getCredential(idToken, null)
+
+            // Step 2: Sign in to Firebase Auth using Google credential
+            val authResult = auth.signInWithCredential(credential).await()
+            val firebaseUser = authResult.user ?: throw Exception("Google user not found")
+
+            val uid = firebaseUser.uid
+
+            // Step 3: Check if this Google user already exists in Realtime Database
+            val snapshot = database.child("users").child(uid).get().await()
+            val existingUser = snapshot.getValue(User::class.java)
+
+            if (existingUser != null) {
+                // Step 4A: Existing user - update last login only
+                val updatedUser = existingUser.copy(
+                    lastLogin = System.currentTimeMillis()
+                )
+
+                database.child("users").child(uid).setValue(updatedUser).await()
+                updatedUser
+
+            } else {
+                // Step 4B: New Google user - create user data
+                val newUser = User(
+                    uid = uid,
+                    email = firebaseUser.email ?: "",
+                    name = firebaseUser.displayName ?: "",
+                    phone = firebaseUser.phoneNumber ?: "",
+                    userType = userType,
+                    profilePicture = firebaseUser.photoUrl?.toString() ?: "",
+                    createdAt = System.currentTimeMillis(),
+                    isEmailVerified = firebaseUser.isEmailVerified,
+                    lastLogin = System.currentTimeMillis()
+                )
+
+                database.child("users").child(uid).setValue(newUser).await()
+                newUser
+            }
+
+        } catch (e: Exception) {
+            Log.e("AuthRepo", "Google sign-in failed: ${e.message}")
             throw e
         }
     }
