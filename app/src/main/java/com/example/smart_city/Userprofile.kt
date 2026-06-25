@@ -187,14 +187,22 @@ fun UserprofileBody(
         }
     }
 
-    Scaffold { innerPadding ->
+    Scaffold (
+        // 1. Give the Scaffold itself the background color so the window underneath matches
+        containerColor = backgroundColor
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
                 .background(color = backgroundColor)
                 .verticalScroll(scrollState)
-                .padding(horizontal = 16.dp)
+                // 2. Only use the innerPadding where necessary, or map it safely:
+                .padding(
+                    top = innerPadding.calculateTopPadding(),
+                    bottom = innerPadding.calculateBottomPadding(),
+                    start = 16.dp,
+                    end = 16.dp
+                )
         ) {
             Row(
                 modifier = Modifier
@@ -425,10 +433,10 @@ fun UserprofileBody(
             // Logout Button
             Card(
                 modifier = Modifier.fillMaxWidth().clickable {
-                     authViewModel?.logout()
-                     val intent = Intent(context, LoginActivity::class.java)
-                     context.startActivity(intent)
-                     (context as? Activity)?.finish()
+                    authViewModel?.logout()
+                    val intent = Intent(context, LoginActivity::class.java)
+                    context.startActivity(intent)
+                    (context as? Activity)?.finish()
                 },
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = cardColor),
@@ -470,15 +478,15 @@ fun UserprofileBody(
                         ListItem(
                             headlineContent = { Text("Camera") },
                             leadingContent = { Icon(Icons.Default.PhotoCamera, null) },
-                            modifier = Modifier.clickable { 
+                            modifier = Modifier.clickable {
                                 showImageSourceDialog = false
-                                cameraLauncher.launch() 
+                                cameraLauncher.launch()
                             }
                         )
                         ListItem(
                             headlineContent = { Text("Gallery") },
                             leadingContent = { Icon(Icons.Default.PhotoLibrary, null) },
-                            modifier = Modifier.clickable { 
+                            modifier = Modifier.clickable {
                                 showImageSourceDialog = false
                                 galleryLauncher.launch("image/*")
                             }
