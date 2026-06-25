@@ -1,5 +1,6 @@
 package com.example.smart_city
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
@@ -51,7 +52,8 @@ import com.example.smart_city.viewmodel.ReportViewModel
 import com.example.smart_city.viewmodel.TrafficViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
 
 class Report : ComponentActivity() {
     private val permissionLauncher =
@@ -86,6 +88,22 @@ class Report : ComponentActivity() {
     }
 }
 
+// ✅ Safer Image Uri Helper for Reports
+fun getReportImageUri(context: Context, bitmap: Bitmap): Uri? {
+    return try {
+        val folder = File(context.cacheDir, "report_images")
+        if (!folder.exists()) folder.mkdirs()
+        val file = File(folder, "report_${System.currentTimeMillis()}.jpg")
+        val out = FileOutputStream(file)
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+        out.flush()
+        out.close()
+        Uri.fromFile(file)
+    } catch (e: Exception) {
+        null
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Reported(
@@ -93,7 +111,7 @@ fun Reported(
     category: String = "Road",
     viewModel: ReportViewModel = viewModel(),
     imageViewModel: ImageViewModel = viewModel(),
-    isDarkMode: Boolean = false, // ✅ FIXED: Added this parameter
+    isDarkMode: Boolean = false, 
     backgroundColor: Color = Color.White,
     cardBackgroundColor: Color = Color(0xFFF5F5F5),
     textColor: Color = Color.Black,
@@ -109,19 +127,11 @@ fun Reported(
     val context = LocalContext.current
     val trafficViewModel: TrafficViewModel = viewModel()
 
-    // Helper to get Uri from Bitmap
-    fun getImageUri(bitmap: Bitmap): Uri? {
-        val bytes = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bytes)
-        val path = MediaStore.Images.Media.insertImage(context.contentResolver, bitmap, "Title", null)
-        return if (path != null) Uri.parse(path) else null
-    }
-
     // Launchers
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
         if (bitmap != null) {
             viewModel.capturedImage = bitmap
-            getImageUri(bitmap)?.let { uri ->
+            getReportImageUri(context, bitmap)?.let { uri ->
                 imageViewModel.uploadImage(context, uri) { url -> if (url != null) viewModel.imageUrl = url }
             }
         }
@@ -281,8 +291,14 @@ fun Reported(
                 title = { Text("Choose Source") },
                 text = {
                     Column {
-                        ListItem(headlineContent = { Text("Camera") }, leadingContent = { Icon(Icons.Default.PhotoCamera, null) }, modifier = Modifier.clickable { showImageSourceDialog = false; cameraLauncher.launch() })
-                        ListItem(headlineContent = { Text("Gallery") }, leadingContent = { Icon(Icons.Default.PhotoLibrary, null) }, modifier = Modifier.clickable { showImageSourceDialog = false; galleryLauncher.launch("image/*") })
+                        ListItem(headlineContent = { Text("Camera") }, leadingContent = { Icon(Icons.Default.PhotoCamera, null) }, modifier = Modifier.clickable { 
+                            showImageSourceDialog = false
+                            cameraLauncher.launch()
+                        })
+                        ListItem(headlineContent = { Text("Gallery") }, leadingContent = { Icon(Icons.Default.PhotoLibrary, null) }, modifier = Modifier.clickable { 
+                            showImageSourceDialog = false
+                            galleryLauncher.launch("image/*") 
+                        })
                     }
                 },
                 confirmButton = { TextButton(onClick = { showImageSourceDialog = false }) { Text("Cancel") } }
