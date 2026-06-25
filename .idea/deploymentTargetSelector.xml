@@ -8,7 +8,7 @@
       </SelectionState>
       <SelectionState runConfigName="SplashScreen">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-06-21T05:23:46.935196200Z">
+        <DropdownSelection timestamp="2026-06-21T08:50:26.071855900Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\Asus\.android\avd\Pixel_8.avd" />
