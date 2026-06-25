@@ -1,5 +1,6 @@
 package com.example.smart_city
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -363,10 +364,10 @@ fun UserprofileBody(
             // Logout Button
             Card(
                 modifier = Modifier.fillMaxWidth().clickable {
-                    // authViewModel?.logout()
-                    // val intent = Intent(context, LoginActivity::class.java)
-                    // context.startActivity(intent)
-                    // (context as? Activity)?.finish()
+                     authViewModel?.logout()
+                     val intent = Intent(context, LoginActivity::class.java)
+                     context.startActivity(intent)
+                     (context as? Activity)?.finish()
                 },
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = cardColor),
