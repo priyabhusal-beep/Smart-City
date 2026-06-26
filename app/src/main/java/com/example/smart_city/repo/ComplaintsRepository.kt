@@ -136,4 +136,21 @@ class ComplaintsRepository {
             }
         })
     }
+
+    fun getComplaintsByWard(wardNo: Int, onResult: (List<ReportModel>) -> Unit) {
+        database.get().addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val complaints = mutableListOf<ReportModel>()
+                for (snapshot in task.result.children) {
+                    val complaint = snapshot.getValue(ReportModel::class.java)
+                    if (complaint != null && complaint.ward == wardNo.toString()) {
+                        complaints.add(complaint)
+                    }
+                }
+                onResult(complaints.sortedByDescending { it.timestamp })
+            } else {
+                onResult(emptyList())
+            }
+        }
+    }
 }

@@ -45,7 +45,7 @@ class ComplaintsViewModel(
         isLoading = true
         errorMessage = ""
 
-        repository.getComplaintsByWard(wardNo) { fetchedComplaints ->
+        repository.getComplaintsByWard(wardNo) { fetchedComplaints: List<ReportModel> ->
             complaints = fetchedComplaints
             isLoading = false
         }
