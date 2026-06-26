@@ -140,9 +140,11 @@ fun UserprofileBody(
     // ✅ FETCH user complaints to update stats
     LaunchedEffect(Unit) {
         reportViewModel.fetchUserComplaints()
+        reportViewModel.fetchTotalUserVotes()
     }
 
     val userComplaints = reportViewModel.userComplaints
+    val totalUpvotes = reportViewModel.totalUserVotes
     val totalReports = userComplaints.size
     val resolvedReports = userComplaints.count { it.status.lowercase() == "resolved" }
 
@@ -320,7 +322,7 @@ fun UserprofileBody(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 StatItem(totalReports.toString(), "REPORTS", Color.Blue)
-                StatItem("0", "UPVOTES", Color.Blue)
+                StatItem(totalUpvotes.toString(), "UPVOTES", Color.Blue)
                 StatItem(resolvedReports.toString(), "RESOLVED", Color(0xFF4CAF50))
             }
 
