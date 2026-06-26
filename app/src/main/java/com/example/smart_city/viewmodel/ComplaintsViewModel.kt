@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.example.smart_city.model.ReportModel
 import com.example.smart_city.repo.ComplaintsRepository
+import com.google.firebase.auth.FirebaseAuth
 
 class ComplaintsViewModel(
     private val repository: ComplaintsRepository = ComplaintsRepository()
@@ -26,6 +27,17 @@ class ComplaintsViewModel(
             )
             complaints = fetchedComplaints
             isLoading = false
+        }
+    }
+    fun toggleVote(complaintId: String) {
+
+        val currentUser = FirebaseAuth.getInstance().currentUser ?: return
+
+        repository.toggleVote(
+            complaintId,
+            currentUser.uid
+        ) {
+            fetchAllComplaints()
         }
     }
 

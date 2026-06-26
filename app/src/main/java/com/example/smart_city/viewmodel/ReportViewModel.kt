@@ -1,5 +1,6 @@
 package com.example.smart_city.viewmodel
 
+import android.graphics.Bitmap
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -8,34 +9,47 @@ import com.example.smart_city.model.ReportModel
 import com.example.smart_city.repo.ReportRepository
 import com.google.firebase.auth.FirebaseAuth
 
-open class ReportViewModel(
-    private val repository: ReportRepository = ReportRepository()
-) : ViewModel() {
-
-    var userComplaints by mutableStateOf<List<ReportModel>>(emptyList())
+open class ReportViewModel(private val repository: ReportRepository = ReportRepository()) : ViewModel() {
     var searchArea by mutableStateOf("")
     var description by mutableStateOf("")
     var ward by mutableStateOf("")
     var issueType by mutableStateOf("")
     var isLoading by mutableStateOf(false)
+    
+    // IMAGE STATES
+    var capturedImage by mutableStateOf<Bitmap?>(null)
+    var imageUrl by mutableStateOf("")
 
-    val areaSuggestions = listOf(
-        "Baneshwor",
-        "Kalanki",
-        "Koteshwor",
-        "Patan",
-        "Thamel",
-        "Maitidevi",
-        "Baluwatar"
-    )
+    var userComplaints by mutableStateOf<List<ReportModel>>(emptyList())
+    var totalUserVotes by mutableStateOf(0)
+
+    var latitude by mutableStateOf(0.0)
+    var longitude by mutableStateOf(0.0)
+
+    val areaSuggestions = listOf("Baneshwor", "Kalanki", "Koteshwor", "Patan", "Thamel", "Maitidevi", "Baluwatar")
 
     fun getFilteredAreas(): List<String> {
-        return if (searchArea.isEmpty()) {
-            emptyList()
-        } else {
-            areaSuggestions.filter {
-                it.contains(searchArea, ignoreCase = true)
+        return if (searchArea.isEmpty()) emptyList()
+        else areaSuggestions.filter { it.contains(searchArea, ignoreCase = true) }
+    }
+
+    fun fetchUserComplaints() {
+        val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        isLoading = true
+        repository.getUserComplaints(userId) { complaints ->
+            userComplaints = complaints
+            isLoading = false
+        }
+    }
+    fun fetchTotalUserVotes() {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        repository.getAllComplaints { complaints ->
+
+            totalUserVotes = complaints.count { complaint ->
+                complaint.votes.containsKey(currentUserId)
             }
+
         }
     }
 
@@ -44,54 +58,59 @@ open class ReportViewModel(
         val currentUser = auth.currentUser
 
         if (currentUser == null) {
-            onResult("Please login first!")
+            onResult("❌ ERROR: NOT LOGGED IN - Please login first!")
             return
         }
 
-        if (ward.isBlank()) {
-            onResult("Please select a Ward!")
+        // Validate fields
+        if (ward.isEmpty()) {
+            onResult("❌ Please select a Ward!")
+            return
+        }
+        if (issueType.isEmpty()) {
+            onResult("❌ Please select an Issue Type!")
+            return
+        }
+        if (searchArea.isEmpty()) {
+            onResult("❌ Please enter Area/Locality!")
+            return
+        }
+        if (description.isEmpty()) {
+            onResult("❌ Please describe the issue!")
             return
         }
 
-        if (issueType.isBlank()) {
-            onResult("Please select an Issue Type!")
-            return
-        }
-
-        if (searchArea.isBlank()) {
-            onResult("Please enter Area!")
-            return
-        }
-
-        if (description.isBlank()) {
-            onResult("Please enter Description!")
+        if (latitude == 0.0 || longitude == 0.0) {
+            onResult("❌ Please detect location first!")
             return
         }
 
         isLoading = true
 
-        val wardNumber = ward.filter { it.isDigit() }.toIntOrNull() ?: 0
-
+        // Create report model including the imageUrl
         val report = ReportModel(
+            id = System.currentTimeMillis().toString(),
             category = category,
             ward = ward,
-            wardNo = wardNumber,
             issueType = issueType,
             area = searchArea,
             description = description,
             timestamp = System.currentTimeMillis(),
             userId = currentUser.uid,
-            status = "Pending"
+            status = "pending",
+            latitude = latitude,
+            longitude = longitude,
+            imageUrl = imageUrl
         )
 
+        // Submit to Firebase
         repository.submitReport(report) { success ->
             isLoading = false
-
             if (success) {
-                onResult("Report Submitted Successfully!")
+                onResult("✅ Report Submitted Successfully!")
                 resetForm()
             } else {
-                onResult("Failed to submit report!")
+                onResult("❌ Failed to Submit - Try Again!")
             }
         }
     }
@@ -101,15 +120,7 @@ open class ReportViewModel(
         issueType = ""
         searchArea = ""
         description = ""
-    }
-
-    fun fetchUserComplaints() {
-        val auth = FirebaseAuth.getInstance()
-        val currentUser = auth.currentUser
-        if (currentUser != null) {
-            repository.getUserComplaints(currentUser.uid) { complaints ->
-                userComplaints = complaints
-            }
-        }
+        capturedImage = null
+        imageUrl = ""
     }
 }

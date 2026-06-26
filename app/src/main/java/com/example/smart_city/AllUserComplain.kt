@@ -186,7 +186,7 @@ fun ComplaintCardItem(
     }
 }
 
-@Preview(showBackground = true)
+@Preview
 @Composable
 fun ComplainActivityPreview() {
     SmartCityTheme {
