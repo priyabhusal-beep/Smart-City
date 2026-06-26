@@ -12,6 +12,7 @@ open class ReportViewModel(
     private val repository: ReportRepository = ReportRepository()
 ) : ViewModel() {
 
+    var userComplaints by mutableStateOf<List<ReportModel>>(emptyList())
     var searchArea by mutableStateOf("")
     var description by mutableStateOf("")
     var ward by mutableStateOf("")
@@ -100,5 +101,15 @@ open class ReportViewModel(
         issueType = ""
         searchArea = ""
         description = ""
+    }
+
+    fun fetchUserComplaints() {
+        val auth = FirebaseAuth.getInstance()
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            repository.getUserComplaints(currentUser.uid) { complaints ->
+                userComplaints = complaints
+            }
+        }
     }
 }
