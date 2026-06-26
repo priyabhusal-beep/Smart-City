@@ -22,6 +22,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,24 +35,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.smart_city.repo.AuthRepository
 import com.example.smart_city.viewmodel.AuthViewModel
 import com.example.smart_city.viewmodel.AuthViewModelFactory
-import com.example.smart_city.repo.AuthRepository
 
 class Userprofile : ComponentActivity() {
+
     private val authViewModel: AuthViewModel by viewModels {
         AuthViewModelFactory(application)
     }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
         setContent {
             UserprofileApp(authViewModel = authViewModel)
         }
     }
 }
 
-// ✅ ADD THIS: Function to load current user when profile opens
 @Composable
 fun LoadUserForProfileEffect(authViewModel: AuthViewModel?) {
     LaunchedEffect(Unit) {
@@ -68,40 +71,33 @@ fun LoadUserForProfileEffect(authViewModel: AuthViewModel?) {
 
 @Composable
 fun UserprofileApp(authViewModel: AuthViewModel? = null) {
-    // ✅ ADD THIS: Load user when profile opens
     LoadUserForProfileEffect(authViewModel)
 
     var isDarkMode by remember { mutableStateOf(false) }
 
-    val lightBackground = Color(0xFFF8F9FA)
-    val darkBackground = Color(0xFF121212)
-    val lightText = Color.Black
-    val darkText = Color(0xFFE0E0E0)
-
     val colors = if (isDarkMode) {
         darkColorScheme(
             primary = Color(0xFF1A237E),
-            surface = darkBackground,
-            onSurface = darkText
+            surface = Color(0xFF121212),
+            onSurface = Color(0xFFE0E0E0)
         )
     } else {
         lightColorScheme(
             primary = Color(0xFF1A237E),
-            surface = lightBackground,
-            onSurface = lightText
+            surface = Color(0xFFF8F9FA),
+            onSurface = Color.Black
         )
     }
 
     MaterialTheme(colorScheme = colors) {
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = if (isDarkMode) darkBackground else lightBackground
+            color = if (isDarkMode) Color(0xFF121212) else Color(0xFFF8F9FA)
         ) {
-            // ✅ FIXED: Pass authViewModel to UserprofileBody
             UserprofileBody(
-                isDarkMode,
+                isDarkMode = isDarkMode,
                 onDarkModeToggle = { isDarkMode = it },
-                authViewModel = authViewModel  // ← ADD THIS
+                authViewModel = authViewModel
             )
         }
     }
@@ -113,24 +109,24 @@ fun UserprofileBody(
     onDarkModeToggle: (Boolean) -> Unit,
     authViewModel: AuthViewModel? = null
 ) {
-    // ✅ COLLECT current user from ViewModel
     val currentUser by authViewModel?.currentUser?.collectAsState()
         ?: remember { mutableStateOf(null) }
 
+    val context = LocalContext.current
     val scrollState = rememberScrollState()
+    var showLogoutDialog by rememberSaveable { mutableStateOf(false) }
+
     val backgroundColor = if (isDarkMode) Color(0xFF121212) else Color(0xFFF8F9FA)
     val cardColor = if (isDarkMode) Color(0xFF1E1E1E) else Color.White
     val textColor = if (isDarkMode) Color(0xFFE0E0E0) else Color.Black
     val secondaryTextColor = if (isDarkMode) Color(0xFFB0B0B0) else Color.Gray
-
-    val context = LocalContext.current
 
     Scaffold { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(color = backgroundColor)
+                .background(backgroundColor)
                 .verticalScroll(scrollState)
                 .padding(horizontal = 16.dp)
         ) {
@@ -143,11 +139,9 @@ fun UserprofileBody(
             ) {
                 Text(
                     text = "SmartCity",
-                    style = TextStyle(
-                        fontSize = 20.sp,
-                        color = Color(0xFF1A237E),
-                        fontWeight = FontWeight.Bold
-                    )
+                    fontSize = 20.sp,
+                    color = Color(0xFF1A237E),
+                    fontWeight = FontWeight.Bold
                 )
 
                 Icon(
@@ -160,7 +154,6 @@ fun UserprofileBody(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Profile Section
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -169,7 +162,7 @@ fun UserprofileBody(
                     Box(
                         modifier = Modifier
                             .size(115.dp)
-                            .border(width = 3.dp, color = Color(0xFF00B8D4), shape = CircleShape)
+                            .border(3.dp, Color(0xFF00B8D4), CircleShape)
                             .padding(6.dp)
                     ) {
                         Image(
@@ -185,7 +178,7 @@ fun UserprofileBody(
                         modifier = Modifier
                             .size(30.dp)
                             .background(Color(0xFF4CAF50), CircleShape)
-                            .border(width = 3.dp, color = Color.White, shape = CircleShape),
+                            .border(3.dp, Color.White, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -199,14 +192,11 @@ fun UserprofileBody(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // ✅ SHOWS ACTUAL USER NAME
                 Text(
                     text = currentUser?.name ?: "User",
-                    style = TextStyle(
-                        fontSize = 24.sp,
-                        color = textColor,
-                        fontWeight = FontWeight.Bold
-                    )
+                    fontSize = 24.sp,
+                    color = textColor,
+                    fontWeight = FontWeight.Bold
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -218,24 +208,20 @@ fun UserprofileBody(
                     )
                 ) {
                     Text(
-                        text = "Top Contributor",
+                        text = currentUser?.userType ?: "Citizen",
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                        style = TextStyle(
-                            fontSize = 12.sp,
-                            color = Color(0xFF3F51B5),
-                            fontWeight = FontWeight.Bold
-                        )
+                        fontSize = 12.sp,
+                        color = Color(0xFF3F51B5),
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Statistics Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 StatItem("12", "REPORTS", Color.Blue)
                 StatItem("45", "UPVOTES", Color.Blue)
@@ -244,7 +230,6 @@ fun UserprofileBody(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Menu Items Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -252,25 +237,17 @@ fun UserprofileBody(
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column {
-                    // My Complaints
                     MenuRowNavigate(
                         icon = painterResource(R.drawable.baseline_report_24),
                         title = "My Complaints",
                         iconContainerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color(0xFFF5F5F5),
                         iconColor = secondaryTextColor,
                         textColor = textColor,
-                        onClick = {
-                            // TODO: Navigate to My Complaints screen
-                        }
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        thickness = 1.dp,
-                        color = if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE)
+                        onClick = {}
                     )
 
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
 
-                    // Settings & Privacy
                     MenuRowNavigate(
                         icon = painterResource(R.drawable.baseline_settings_24),
                         title = "Settings & Privacy",
@@ -278,17 +255,12 @@ fun UserprofileBody(
                         iconColor = secondaryTextColor,
                         textColor = textColor,
                         onClick = {
-                            val intent = Intent(context, SettingPrivacyActivity::class.java)
-                            context.startActivity(intent)
+                            context.startActivity(Intent(context, SettingPrivacyActivity::class.java))
                         }
                     )
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        thickness = 1.dp,
-                        color = if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE)
-                    )
 
-                    // Dark Mode Toggle
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -311,7 +283,9 @@ fun UserprofileBody(
                                 modifier = Modifier.size(20.dp)
                             )
                         }
+
                         Spacer(modifier = Modifier.width(16.dp))
+
                         Text(
                             text = "Dark Mode",
                             modifier = Modifier.weight(1f),
@@ -319,18 +293,15 @@ fun UserprofileBody(
                             fontWeight = FontWeight.Medium,
                             color = textColor
                         )
+
                         Switch(
                             checked = isDarkMode,
                             onCheckedChange = { onDarkModeToggle(it) }
                         )
                     }
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        thickness = 0.5.dp,
-                        color = if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE)
-                    )
 
-                    // Help & Support
+                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+
                     MenuRowNavigate(
                         icon = painterResource(R.drawable.baseline_help_24),
                         title = "Help & Support",
@@ -338,8 +309,7 @@ fun UserprofileBody(
                         iconColor = secondaryTextColor,
                         textColor = textColor,
                         onClick = {
-                            val intent = Intent(context, HelpSupportActivity::class.java)
-                            context.startActivity(intent)
+                            context.startActivity(Intent(context, HelpSupportActivity::class.java))
                         }
                     )
                 }
@@ -347,9 +317,12 @@ fun UserprofileBody(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Logout Button
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        showLogoutDialog = true
+                    },
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = cardColor),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -362,12 +335,14 @@ fun UserprofileBody(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        Icons.AutoMirrored.Filled.ArrowForward,
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                         contentDescription = null,
                         tint = Color.Red,
                         modifier = Modifier.size(20.dp)
                     )
+
                     Spacer(modifier = Modifier.width(8.dp))
+
                     Text(
                         text = "Logout",
                         color = Color.Red,
@@ -380,6 +355,46 @@ fun UserprofileBody(
             Spacer(modifier = Modifier.height(20.dp))
         }
     }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showLogoutDialog = false
+            },
+            title = {
+                Text("Logout")
+            },
+            text = {
+                Text("Are you sure you want to logout?")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        authViewModel?.logout()
+
+                        val intent = Intent(context, LoginActivity::class.java).apply {
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                                    Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        }
+
+                        context.startActivity(intent)
+                        showLogoutDialog = false
+                    }
+                ) {
+                    Text("Logout", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showLogoutDialog = false
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -387,19 +402,16 @@ fun StatItem(count: String, label: String, countColor: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = count,
-            style = TextStyle(
-                fontSize = 24.sp,
-                color = countColor,
-                fontWeight = FontWeight.ExtraBold
-            )
+            fontSize = 24.sp,
+            color = countColor,
+            fontWeight = FontWeight.ExtraBold
         )
+
         Text(
             text = label,
-            style = TextStyle(
-                fontSize = 11.sp,
-                color = Color.Gray,
-                fontWeight = FontWeight.Bold
-            )
+            fontSize = 11.sp,
+            color = Color.Gray,
+            fontWeight = FontWeight.Bold
         )
     }
 }
@@ -433,7 +445,9 @@ fun MenuRowNavigate(
                 modifier = Modifier.size(20.dp)
             )
         }
+
         Spacer(modifier = Modifier.width(16.dp))
+
         Text(
             text = title,
             modifier = Modifier.weight(1f),
@@ -441,8 +455,9 @@ fun MenuRowNavigate(
             fontWeight = FontWeight.Medium,
             color = textColor
         )
+
         Icon(
-            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = null,
             tint = Color.LightGray
         )
@@ -453,6 +468,7 @@ fun MenuRowNavigate(
 @Composable
 fun UserprofilePreview() {
     var isDarkMode by remember { mutableStateOf(false) }
+
     UserprofileBody(
         isDarkMode = isDarkMode,
         onDarkModeToggle = { isDarkMode = it }

@@ -86,11 +86,15 @@ fun LoginScreen(viewModel: AuthViewModel) {
     // Handle successful login - navigate
     LaunchedEffect(loginState) {
         if (loginState is LoginUiState.Success) {
-            val userType = currentUser?.userType
-            val intent = when (userType) {
-                "admin" -> Intent(context, AdminDashboard::class.java)
+            val user = currentUser
+
+            val intent = when (user?.userType) {
+                "admin" -> Intent(context, AdminDashboard::class.java).apply {
+                    putExtra("wardNo", user.wardNo)
+                }
                 else -> Intent(context, HomeScreen::class.java)
             }
+
             context.startActivity(intent)
             activity?.finish()
         }
@@ -240,11 +244,8 @@ fun LoginScreen(viewModel: AuthViewModel) {
                         // Forgot Password
                         TextButton(
                             onClick = {
-                                android.widget.Toast.makeText(
-                                    context,
-                                    "Reset link will be sent to your email",
-                                    android.widget.Toast.LENGTH_SHORT
-                                ).show()
+                                val intent = Intent(context, ForgotPassword::class.java)
+                                context.startActivity(intent)
                             },
                             modifier = Modifier.align(Alignment.End),
                             contentPadding = PaddingValues(0.dp),

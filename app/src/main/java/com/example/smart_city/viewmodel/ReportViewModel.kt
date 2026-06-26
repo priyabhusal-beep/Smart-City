@@ -8,18 +8,34 @@ import com.example.smart_city.model.ReportModel
 import com.example.smart_city.repo.ReportRepository
 import com.google.firebase.auth.FirebaseAuth
 
-open class ReportViewModel(private val repository: ReportRepository = ReportRepository()) : ViewModel() {
+open class ReportViewModel(
+    private val repository: ReportRepository = ReportRepository()
+) : ViewModel() {
+
     var searchArea by mutableStateOf("")
     var description by mutableStateOf("")
     var ward by mutableStateOf("")
     var issueType by mutableStateOf("")
     var isLoading by mutableStateOf(false)
 
-    val areaSuggestions = listOf("Baneshwor", "Kalanki", "Koteshwor", "Patan", "Thamel", "Maitidevi", "Baluwatar")
+    val areaSuggestions = listOf(
+        "Baneshwor",
+        "Kalanki",
+        "Koteshwor",
+        "Patan",
+        "Thamel",
+        "Maitidevi",
+        "Baluwatar"
+    )
 
     fun getFilteredAreas(): List<String> {
-        return if (searchArea.isEmpty()) emptyList()
-        else areaSuggestions.filter { it.contains(searchArea, ignoreCase = true) }
+        return if (searchArea.isEmpty()) {
+            emptyList()
+        } else {
+            areaSuggestions.filter {
+                it.contains(searchArea, ignoreCase = true)
+            }
+        }
     }
 
     open fun submit(category: String, onResult: (String) -> Unit) {
@@ -27,51 +43,54 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
         val currentUser = auth.currentUser
 
         if (currentUser == null) {
-            onResult("❌ ERROR: NOT LOGGED IN - Please login first!")
+            onResult("Please login first!")
             return
         }
 
-        // Validate fields
-        if (ward.isEmpty()) {
-            onResult("❌ Please select a Ward!")
+        if (ward.isBlank()) {
+            onResult("Please select a Ward!")
             return
         }
-        if (issueType.isEmpty()) {
-            onResult("❌ Please select an Issue Type!")
+
+        if (issueType.isBlank()) {
+            onResult("Please select an Issue Type!")
             return
         }
-        if (searchArea.isEmpty()) {
-            onResult("❌ Please enter Area/Locality!")
+
+        if (searchArea.isBlank()) {
+            onResult("Please enter Area!")
             return
         }
-        if (description.isEmpty()) {
-            onResult("❌ Please describe the issue!")
+
+        if (description.isBlank()) {
+            onResult("Please enter Description!")
             return
         }
 
         isLoading = true
 
-        // Create report model
+        val wardNumber = ward.filter { it.isDigit() }.toIntOrNull() ?: 0
+
         val report = ReportModel(
-            id = System.currentTimeMillis().toString(),
             category = category,
             ward = ward,
+            wardNo = wardNumber,
             issueType = issueType,
             area = searchArea,
             description = description,
             timestamp = System.currentTimeMillis(),
             userId = currentUser.uid,
-            status = "pending"
+            status = "Pending"
         )
 
-        // Submit to Firebase
         repository.submitReport(report) { success ->
             isLoading = false
+
             if (success) {
-                onResult("✅ Report Submitted Successfully!")
+                onResult("Report Submitted Successfully!")
                 resetForm()
             } else {
-                onResult("❌ Failed to Submit - Try Again!")
+                onResult("Failed to submit report!")
             }
         }
     }

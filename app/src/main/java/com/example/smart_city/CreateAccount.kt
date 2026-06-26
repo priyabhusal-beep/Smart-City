@@ -253,8 +253,9 @@ fun CreateAccountScreen(viewModel: AuthViewModel, activity: Activity) {
                                         password = password,
                                         confirmPassword = confirmPassword,
                                         name = fullName,
-                                        userType = userType
+                                        phone = phone
                                     )
+
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()

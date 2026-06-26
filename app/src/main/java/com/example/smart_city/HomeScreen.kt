@@ -130,6 +130,7 @@ fun HomeActivity(
                             TextButton(onClick = { selectedIndex = 3 }) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     Icon(painter = painterResource(R.drawable.baseline_person_outline_24), contentDescription = "Profile", tint = if (selectedIndex == 3) PrimaryBlue else Color.Gray, modifier = Modifier.size(24.dp))
+
                                     Text("Profile", fontSize = 10.sp, color = if (selectedIndex == 3) PrimaryBlue else Color.Gray, fontWeight = if (selectedIndex == 3) FontWeight.Bold else FontWeight.Normal)
                                 }
                             }
