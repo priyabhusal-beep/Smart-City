@@ -17,4 +17,7 @@
     <string name="title_activity_full_map_screen">FullMapScreen</string>
     <string name="title_activity_setting_privacy">SettingPrivacyActivity</string>
     <string name="title_activity_help_support">HelpSupportActivity</string>
+    <string name="title_activity_traffic_map_screen.kt">TrafficMapScreen.kt</string>
+    <string name="title_activity_trrafficfullmap">Trrafficfullmap</string>
+    <string name="title_activity_traffic_full_map_screen">TrafficFullMapScreen</string>
 </resources>

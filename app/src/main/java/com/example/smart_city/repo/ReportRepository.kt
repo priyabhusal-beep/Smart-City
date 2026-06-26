@@ -41,4 +41,19 @@ class ReportRepository {
             }
         }
     }
+
+    fun getUserComplaints(userId: String, onResult: (List<ReportModel>) -> Unit) {
+        database.orderByChild("userId").equalTo(userId).get().addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val complaints = mutableListOf<ReportModel>()
+                for (snapshot in task.result.children) {
+                    val complaint = snapshot.getValue(ReportModel::class.java)
+                    if (complaint != null) complaints.add(complaint)
+                }
+                onResult(complaints)
+            } else {
+                onResult(emptyList())
+            }
+        }
+    }
 }

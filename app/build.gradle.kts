@@ -37,16 +37,27 @@ android {
     
     packaging {
         jniLibs {
-            // This ensures native libraries are aligned and uncompressed for 16 KB page support
             useLegacyPackaging = false
         }
     }
 }
 
 dependencies {
-    implementation("androidx.compose.material:material-icons-extended")
+    // Import the BoM for the Firebase platform
+    implementation(platform("com.google.firebase:firebase-bom:34.15.0"))
+
+    // Add the dependency for the Firebase Authentication library
+    // When using the BoM, you don't specify versions in Firebase library dependencies
+    implementation("com.google.firebase:firebase-auth")
+
+    // Also add the dependencies for the Credential Manager libraries and specify their versions
+    implementation("androidx.credentials:credentials:1.3.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.foundation)
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
@@ -54,23 +65,19 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.database)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.camera.camera2.pipe)
-    implementation("androidx.compose.material3:material3:1.2.0")
-    implementation("androidx.navigation:navigation-compose:2.7.0")
+    implementation(libs.googleid)
     implementation(libs.play.services.location)
+    
+    implementation(libs.cloudinary.android)
+    implementation(libs.coil.compose)
+    implementation(libs.maplibre.android.sdk)
+
     testImplementation(libs.junit)
-
-    // Updated to 13.2.0 which supports 16 KB page sizes
-
-    implementation("org.maplibre.gl:android-sdk:13.2.0")
-
-    implementation("com.google.android.gms:play-services-location:21.3.0")
-
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

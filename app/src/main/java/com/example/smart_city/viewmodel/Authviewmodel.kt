@@ -102,6 +102,36 @@ class AuthViewModel (application: Application) : AndroidViewModel(application) {
             }
         }
     }
+    // ================== GOOGLE SIGN-IN FUNCTION ==================
+    fun signInWithGoogle(
+        idToken: String,
+        userType: String = "user"
+    ) {
+        _loginState.value = LoginUiState.Loading
+        _registerState.value = RegisterUiState.Loading
+        _isLoading.value = true
+
+        viewModelScope.launch {
+            try {
+                val user = authRepository.signInWithGoogle(
+                    idToken = idToken,
+                    userType = userType
+                )
+
+                _currentUser.value = user
+                _loginState.value = LoginUiState.Success(user)
+                _registerState.value = RegisterUiState.Success(user)
+                _isLoading.value = false
+
+            } catch (e: Exception) {
+                val errorMsg = e.message ?: "Google Sign-In failed"
+                _errorMessage.value = errorMsg
+                _loginState.value = LoginUiState.Error(errorMsg)
+                _registerState.value = RegisterUiState.Error(errorMsg)
+                _isLoading.value = false
+            }
+        }
+    }
 
     // ================== LOGOUT FUNCTION ==================
     fun logout() {
@@ -206,6 +236,7 @@ sealed class LoginUiState {
     data class Success(val user: User) : LoginUiState()
     data class Error(val message: String) : LoginUiState()
 }
+
 
 sealed class RegisterUiState {
     object Idle : RegisterUiState()

@@ -20,6 +20,10 @@ class ComplaintsViewModel(
         errorMessage = ""
 
         repository.getAllComplaints { fetchedComplaints ->
+            android.util.Log.d(
+                "VIEWMODEL",
+                "Fetched complaints = ${fetchedComplaints.size}"
+            )
             complaints = fetchedComplaints
             isLoading = false
         }

@@ -29,12 +29,27 @@ object LocationHelper {
                             onFailure()
                         }
                     }
-                    .addOnFailureListener {
+                    .addOnFailureListener {e ->
+
+                        android.util.Log.e(
+                            "LOCATION_DEBUG",
+                            e.message ?: "Unknown Error"
+                        )
+
                         onFailure()
+
                     }
             }
-        }.addOnFailureListener {
+        }.addOnFailureListener {e ->
+
+            android.util.Log.e(
+                "LOCATION_DEBUG",
+                e.message ?: "Unknown Error"
+            )
+
             onFailure()
+
+
         }
     }
 }
