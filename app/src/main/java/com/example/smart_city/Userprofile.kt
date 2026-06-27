@@ -1,11 +1,21 @@
 package com.example.smart_city
 
+import android.app.Activity
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.launch
 import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -20,13 +30,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -38,7 +52,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.smart_city.viewmodel.AuthViewModel
 import com.example.smart_city.viewmodel.AuthViewModelFactory
 import com.example.smart_city.repo.AuthRepository
+import com.example.smart_city.viewmodel.ImageViewModel
 import com.example.smart_city.viewmodel.ReportViewModel
+import java.io.ByteArrayOutputStream
 
 class Userprofile : ComponentActivity() {
     private val authViewModel: AuthViewModel by viewModels {
@@ -114,7 +130,8 @@ fun UserprofileBody(
     isDarkMode: Boolean,
     onDarkModeToggle: (Boolean) -> Unit,
     authViewModel: AuthViewModel? = null,
-    reportViewModel: ReportViewModel = viewModel()
+    reportViewModel: ReportViewModel = viewModel(),
+    imageViewModel: ImageViewModel = viewModel() // ✅ ADDED
 ) {
     // ✅ COLLECT current user from ViewModel
     val currentUser by authViewModel?.currentUser?.collectAsState()
@@ -123,9 +140,11 @@ fun UserprofileBody(
     // ✅ FETCH user complaints to update stats
     LaunchedEffect(Unit) {
         reportViewModel.fetchUserComplaints()
+        reportViewModel.fetchTotalUserVotes()
     }
 
     val userComplaints = reportViewModel.userComplaints
+    val totalUpvotes = reportViewModel.totalUserVotes
     val totalReports = userComplaints.size
     val resolvedReports = userComplaints.count { it.status.lowercase() == "resolved" }
 
@@ -137,14 +156,55 @@ fun UserprofileBody(
 
     val context = LocalContext.current
 
-    Scaffold { innerPadding ->
+    // ✅ ADDED: Image Picker Logic
+    var showImageSourceDialog by remember { mutableStateOf(false) }
+    var profileBitmap by remember { mutableStateOf<Bitmap?>(null) }
+
+    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
+        if (bitmap != null) {
+            profileBitmap = bitmap
+            val bytes = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bytes)
+            val path = MediaStore.Images.Media.insertImage(context.contentResolver, bitmap, "Profile_${System.currentTimeMillis()}", null)
+            val uri = if (path != null) Uri.parse(path) else null
+            uri?.let { imageViewModel.uploadImage(context, it) { url ->
+                if (url != null) Toast.makeText(context, "Profile Updated", Toast.LENGTH_SHORT).show()
+            }}
+        }
+    }
+
+    val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let {
+            val bitmap = if (Build.VERSION.SDK_INT < 28) {
+                @Suppress("DEPRECATION")
+                MediaStore.Images.Media.getBitmap(context.contentResolver, it)
+            } else {
+                val source = ImageDecoder.createSource(context.contentResolver, it)
+                ImageDecoder.decodeBitmap(source)
+            }
+            profileBitmap = bitmap
+            imageViewModel.uploadImage(context, it) { url ->
+                if (url != null) Toast.makeText(context, "Profile Updated", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    Scaffold (
+        // 1. Give the Scaffold itself the background color so the window underneath matches
+        containerColor = backgroundColor
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
                 .background(color = backgroundColor)
                 .verticalScroll(scrollState)
-                .padding(horizontal = 16.dp)
+                // 2. Only use the innerPadding where necessary, or map it safely:
+                .padding(
+                    top = innerPadding.calculateTopPadding(),
+                    bottom = innerPadding.calculateBottomPadding(),
+                    start = 16.dp,
+                    end = 16.dp
+                )
         ) {
             Row(
                 modifier = Modifier
@@ -183,14 +243,26 @@ fun UserprofileBody(
                             .size(115.dp)
                             .border(width = 3.dp, color = Color(0xFF00B8D4), shape = CircleShape)
                             .padding(6.dp)
+                            .clickable { showImageSourceDialog = true } // ✅ CLICKABLE TO CHANGE IMAGE
                     ) {
-                        Image(
-                            painter = painterResource(R.drawable.user),
-                            contentDescription = "Profile Picture",
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(CircleShape)
-                        )
+                        if (profileBitmap != null) {
+                            Image(
+                                bitmap = profileBitmap!!.asImageBitmap(),
+                                contentDescription = "Profile Picture",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Image(
+                                painter = painterResource(R.drawable.user),
+                                contentDescription = "Profile Picture",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape)
+                            )
+                        }
                     }
 
                     Box(
@@ -250,7 +322,7 @@ fun UserprofileBody(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 StatItem(totalReports.toString(), "REPORTS", Color.Blue)
-                StatItem("0", "UPVOTES", Color.Blue)
+                StatItem(totalUpvotes.toString(), "UPVOTES", Color.Blue)
                 StatItem(resolvedReports.toString(), "RESOLVED", Color(0xFF4CAF50))
             }
 
@@ -363,10 +435,10 @@ fun UserprofileBody(
             // Logout Button
             Card(
                 modifier = Modifier.fillMaxWidth().clickable {
-                    // authViewModel?.logout()
-                    // val intent = Intent(context, LoginActivity::class.java)
-                    // context.startActivity(intent)
-                    // (context as? Activity)?.finish()
+                    authViewModel?.logout()
+                    val intent = Intent(context, LoginActivity::class.java)
+                    context.startActivity(intent)
+                    (context as? Activity)?.finish()
                 },
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = cardColor),
@@ -396,6 +468,35 @@ fun UserprofileBody(
             }
 
             Spacer(modifier = Modifier.height(20.dp))
+        }
+
+        // ✅ ADDED: Selection Dialog
+        if (showImageSourceDialog) {
+            AlertDialog(
+                onDismissRequest = { showImageSourceDialog = false },
+                title = { Text("Choose Profile Picture") },
+                text = {
+                    Column {
+                        ListItem(
+                            headlineContent = { Text("Camera") },
+                            leadingContent = { Icon(Icons.Default.PhotoCamera, null) },
+                            modifier = Modifier.clickable {
+                                showImageSourceDialog = false
+                                cameraLauncher.launch()
+                            }
+                        )
+                        ListItem(
+                            headlineContent = { Text("Gallery") },
+                            leadingContent = { Icon(Icons.Default.PhotoLibrary, null) },
+                            modifier = Modifier.clickable {
+                                showImageSourceDialog = false
+                                galleryLauncher.launch("image/*")
+                            }
+                        )
+                    }
+                },
+                confirmButton = { TextButton(onClick = { showImageSourceDialog = false }) { Text("Cancel") } }
+            )
         }
     }
 }

@@ -21,6 +21,7 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
     var imageUrl by mutableStateOf("")
 
     var userComplaints by mutableStateOf<List<ReportModel>>(emptyList())
+    var totalUserVotes by mutableStateOf(0)
 
     var latitude by mutableStateOf(0.0)
     var longitude by mutableStateOf(0.0)
@@ -38,6 +39,17 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
         repository.getUserComplaints(userId) { complaints ->
             userComplaints = complaints
             isLoading = false
+        }
+    }
+    fun fetchTotalUserVotes() {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        repository.getAllComplaints { complaints ->
+
+            totalUserVotes = complaints.count { complaint ->
+                complaint.votes.containsKey(currentUserId)
+            }
+
         }
     }
 

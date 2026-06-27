@@ -72,30 +72,61 @@ class AuthViewModel (application: Application) : AndroidViewModel(application) {
         password: String,
         confirmPassword: String,
         name: String,
-        userType: String
+        phone: String
     ) {
-        // Step 1: Validate inputs
         if (!validateRegisterInputs(email, password, confirmPassword, name)) {
             return
         }
 
-        // Step 2: Start loading
         _registerState.value = RegisterUiState.Loading
         _isLoading.value = true
 
-        // Step 3: Call repository in background
         viewModelScope.launch {
             try {
-                val user = authRepository.register(email, password, name, userType)
+                val user = authRepository.register(
+                    email = email,
+                    password = password,
+                    name = name,
+                    phone = phone
+                )
 
                 _currentUser.value = user
                 _registerState.value = RegisterUiState.Success(user)
-                _isLoading.value = false
-                _errorMessage.value = "Registration successful! You can now login."
-
+                _errorMessage.value = "Registration successful! Please login."
             } catch (e: Exception) {
                 val errorMsg = e.message ?: "Registration failed"
                 _errorMessage.value = errorMsg
+                _registerState.value = RegisterUiState.Error(errorMsg)
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+    // ================== GOOGLE SIGN-IN FUNCTION ==================
+    fun signInWithGoogle(
+        idToken: String,
+        userType: String = "user"
+    ) {
+        _loginState.value = LoginUiState.Loading
+        _registerState.value = RegisterUiState.Loading
+        _isLoading.value = true
+
+        viewModelScope.launch {
+            try {
+                val user = authRepository.signInWithGoogle(
+                    idToken = idToken,
+                    userType = userType
+                )
+
+                _currentUser.value = user
+                _loginState.value = LoginUiState.Success(user)
+                _registerState.value = RegisterUiState.Success(user)
+                _isLoading.value = false
+
+            } catch (e: Exception) {
+                val errorMsg = e.message ?: "Google Sign-In failed"
+                _errorMessage.value = errorMsg
+                _loginState.value = LoginUiState.Error(errorMsg)
                 _registerState.value = RegisterUiState.Error(errorMsg)
                 _isLoading.value = false
             }
@@ -205,6 +236,7 @@ sealed class LoginUiState {
     data class Success(val user: User) : LoginUiState()
     data class Error(val message: String) : LoginUiState()
 }
+
 
 sealed class RegisterUiState {
     object Idle : RegisterUiState()
