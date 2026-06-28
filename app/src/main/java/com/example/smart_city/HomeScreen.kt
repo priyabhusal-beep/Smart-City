@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,6 +14,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -38,8 +41,13 @@ import com.example.smart_city.viewmodel.AuthViewModel
 import com.example.smart_city.viewmodel.AuthViewModelFactory
 import com.example.smart_city.model.ReportModel
 import com.example.smart_city.viewmodel.ComplaintsViewModel
+import com.google.firebase.auth.FirebaseAuth
 import java.text.SimpleDateFormat
 import java.util.Date
+import androidx.compose.runtime.*
+import kotlinx.coroutines.delay
+import androidx.compose.ui.draw.scale
+import androidx.compose.animation.core.spring
 
 
 val PrimaryBlue = Color(0xFF0046B1)
@@ -126,6 +134,7 @@ fun HomeActivity(
                             TextButton(onClick = { selectedIndex = 3 }) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     Icon(painter = painterResource(R.drawable.baseline_person_outline_24), contentDescription = "Profile", tint = if (selectedIndex == 3) PrimaryBlue else Color.Gray, modifier = Modifier.size(24.dp))
+
                                     Text("Profile", fontSize = 10.sp, color = if (selectedIndex == 3) PrimaryBlue else Color.Gray, fontWeight = if (selectedIndex == 3) FontWeight.Bold else FontWeight.Normal)
                                 }
                             }
@@ -271,7 +280,8 @@ fun ComplaintItemCard(
     complaint: ReportModel,
     cardBackgroundColor: Color,
     textColor: Color,
-    secondaryTextColor: Color
+    secondaryTextColor: Color,
+    viewModel: ComplaintsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
@@ -280,13 +290,48 @@ fun ComplaintItemCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
+            val currentUserID = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+            val alreadyVoted = complaint.votes.containsKey(currentUserID)
+            val iconScale by animateFloatAsState(
+                targetValue = if (alreadyVoted) 1.25f else 1f,
+                animationSpec = spring(
+                    dampingRatio = 0.4f,
+                    stiffness = 300f
+                ),
+                label = "VoteAnimation"
+            )
+            var isVoting by remember { mutableStateOf(false) }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = complaint.category, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = PrimaryBlue)
+                    if (complaint.voteCount >= 20) {
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Text(
+                            text = "🔥 Highly Supported",
+                            color = Color(0xFFE65100),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                    }
+                    else if (complaint.voteCount >= 10) {
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Text(
+                            text = "⭐ Popular",
+                            color = Color(0xFFFFA000),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                    }
                     Text(text = "Issue: ${complaint.issueType}", fontSize = 13.sp, color = secondaryTextColor)
                 }
                 AssistChip(onClick = {}, label = { Text(complaint.category, fontSize = 11.sp) })
@@ -297,7 +342,78 @@ fun ComplaintItemCard(
             Spacer(modifier = Modifier.height(6.dp))
             Text(text = "Description: ${complaint.description}", fontSize = 12.sp, color = textColor, maxLines = 2)
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = SimpleDateFormat("dd/MM/yyyy HH:mm").format(Date(complaint.timestamp)), fontSize = 11.sp, color = secondaryTextColor)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                AssistChip(
+                    enabled = !isVoting,
+                    onClick = {
+                        Log.d("VOTE", "Complaint id = ${complaint.id}")
+                        if (isVoting) return@AssistChip
+
+                        isVoting = true
+                        viewModel.toggleVote(complaint.id)
+                    },
+
+
+                    label = {
+                        Column(
+                            horizontalAlignment = Alignment.End
+                        ) {
+
+                            Text(
+                                text = "${complaint.voteCount} Citizens Support",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = PrimaryBlue
+                            )
+
+                            Text(
+                                text = SimpleDateFormat("dd/MM/yyyy HH:mm")
+                                    .format(Date(complaint.timestamp)),
+                                fontSize = 10.sp,
+                                color = secondaryTextColor
+                            )
+                        }
+                    },
+                    leadingIcon = {
+                        Icon(
+                            modifier = Modifier.scale(iconScale),
+                            imageVector = Icons.Default.ThumbUp,
+                            contentDescription = null,
+                            tint = if (alreadyVoted)
+                                Color(0xFF1565C0)
+                            else
+                                Color.Gray
+                        )
+                    },
+                    colors = AssistChipDefaults.assistChipColors(
+                        containerColor = if (alreadyVoted)
+                            Color(0xFFE3F2FD)
+                        else
+                            Color.White
+                    )
+                )
+
+                Text(
+                    text = SimpleDateFormat("dd/MM/yyyy HH:mm")
+                        .format(Date(complaint.timestamp)),
+                    fontSize = 11.sp,
+                    color = secondaryTextColor
+                )
+            }
+            LaunchedEffect(isVoting) {
+
+                if (isVoting) {
+                    delay(1000)
+                    isVoting = false
+                }
+
+            }
+
         }
     }
 }

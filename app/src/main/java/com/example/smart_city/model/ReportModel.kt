@@ -12,5 +12,7 @@ data class ReportModel(
     val id: String = "",
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
-    val imageUrl: String = "" // Added for image support
+    val imageUrl: String = "", // Added for image support
+    val voteCount: Int = 0,
+    val votes: Map<String, Boolean> = emptyMap()
 )
