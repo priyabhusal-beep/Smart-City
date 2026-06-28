@@ -82,6 +82,22 @@ class AuthRepository {
         }
     }
 
+    // Update User Profile Picture
+    suspend fun updateProfilePicture(url: String): User {
+        return try {
+            val uid = auth.currentUser?.uid ?: throw Exception("No user logged in")
+            val snapshot = database.child("users").child(uid).get().await()
+            val user = snapshot.getValue(User::class.java) ?: throw Exception("User not found")
+            
+            val updatedUser = user.copy(profilePicture = url)
+            database.child("users").child(uid).setValue(updatedUser).await()
+            updatedUser
+        } catch (e: Exception) {
+            Log.e("AuthRepo", "Failed to update profile picture: ${e.message}")
+            throw e
+        }
+    }
+
     // ✅ UPDATED: Update User Profile with proper email handling
     suspend fun updateUserProfile(
         name: String,

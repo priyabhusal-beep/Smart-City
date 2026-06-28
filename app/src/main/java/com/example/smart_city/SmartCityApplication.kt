@@ -10,18 +10,17 @@ class SmartCityApplication : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        // Initialize MapLibre
         MapLibre.getInstance(
             this,
             null,
             WellKnownTileServer.MapLibre
         )
 
-        // Initialize Cloudinary MediaManager
-        // Note: Ensure your cloudinary credentials are in AndroidManifest.xml 
-        // or passed here in a configuration map.
         try {
-            MediaManager.init(this)
+            val config = hashMapOf<String, Any>(
+                "cloud_name" to "dyanvmmkj"
+            )
+            MediaManager.init(this, config)
         } catch (e: Exception) {
             e.printStackTrace()
         }

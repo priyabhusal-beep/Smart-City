@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -30,7 +31,9 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.smart_city.repo.AuthRepository
+import coil3.compose.AsyncImage
+import coil3.request.CachePolicy
+import coil3.request.ImageRequest
 import com.example.smart_city.viewmodel.AuthViewModel
 import com.example.smart_city.viewmodel.AuthViewModelFactory
 import com.example.smart_city.model.ReportModel
@@ -70,14 +73,7 @@ class HomeScreen : ComponentActivity() {
 @Composable
 fun LoadCurrentUserEffect(authViewModel: AuthViewModel?) {
     LaunchedEffect(Unit) {
-        try {
-            val authRepository = AuthRepository()
-            val currentUser = authRepository.getCurrentUser()
-            authViewModel?.setCurrentUser(currentUser)
-            Log.d("HomeScreen", "User loaded: ${currentUser.name}")
-        } catch (e: Exception) {
-            Log.d("HomeScreen", "No user logged in - using guest mode")
-        }
+        authViewModel?.loadCurrentUserIfNeeded()
     }
 }
 
@@ -154,23 +150,23 @@ fun HomeActivity(
 
         composable("report/{category}") { backStackEntry ->
             val category = backStackEntry.arguments?.getString("category") ?: "Traffic"
-            Reported(navController = innerNavController, category = category, isDarkMode = isDarkMode) // ✅ FIXED: Added isDarkMode
+            Reported(navController = innerNavController, category = category, isDarkMode = isDarkMode)
         }
 
         composable("FullMap") {
-                val complaintsViewModel: ComplaintsViewModel =
-                    androidx.lifecycle.viewmodel.compose.viewModel()
+            val complaintsViewModel: ComplaintsViewModel =
+                androidx.lifecycle.viewmodel.compose.viewModel()
 
-                LaunchedEffect(Unit) {
-                    complaintsViewModel.fetchAllComplaints()
-                }
-
-                FullMapscreen(
-                    complaints = complaintsViewModel.complaints
-                )
+            LaunchedEffect(Unit) {
+                complaintsViewModel.fetchAllComplaints()
             }
+
+            FullMapscreen(
+                complaints = complaintsViewModel.complaints
+            )
         }
     }
+}
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -321,6 +317,7 @@ fun DashboardContents(
     val currentUser by authViewModel?.currentUser?.collectAsState() ?: remember { mutableStateOf(null) }
     val complaints = viewModel.complaints
     val isLoading = viewModel.isLoading
+    val context = LocalContext.current
 
     val expandedCategories = remember { mutableStateOf(setOf<String>()) }
 
@@ -338,7 +335,27 @@ fun DashboardContents(
         item {
             Spacer(modifier = Modifier.height(20.dp))
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Image(painter = painterResource(R.drawable.lana), contentDescription = null, modifier = Modifier.size(48.dp).clip(RoundedCornerShape(50.dp)))
+                if (!currentUser?.profilePicture.isNullOrEmpty()) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(currentUser?.profilePicture)
+                            .diskCachePolicy(CachePolicy.DISABLED)
+                            .memoryCachePolicy(CachePolicy.DISABLED)
+                            .build(),
+                        contentDescription = "Profile Picture",
+                        modifier = Modifier.size(48.dp).clip(RoundedCornerShape(50.dp)),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                        placeholder = painterResource(R.drawable.user),
+                        error = painterResource(R.drawable.user)
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(R.drawable.user),
+                        contentDescription = null,
+                        modifier = Modifier.size(48.dp).clip(RoundedCornerShape(50.dp))
+                    )
+                }
+
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = "Hello", color = secondaryTextColor)
@@ -393,11 +410,14 @@ fun DashboardContents(
                         complaintsViewModel.fetchAllComplaints()
                     }
 
-                    FullMapscreen(
-                        complaints = complaintsViewModel.complaints
-                    )
+                    FullMapscreen(complaints = complaintsViewModel.complaints)
 
-                    Button(onClick = { navController.navigate("FullMap") }, modifier = Modifier.align(Alignment.BottomEnd).padding(10.dp), colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue), shape = RoundedCornerShape(50)) {
+                    Button(
+                        onClick = { navController.navigate("FullMap") },
+                        modifier = Modifier.align(Alignment.BottomEnd).padding(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                        shape = RoundedCornerShape(50)
+                    ) {
                         Text("View Full Map")
                     }
                 }
@@ -456,7 +476,9 @@ fun DashboardContents(
 
                 if (expandedCategories.value.contains(category)) {
                     items(categoryComplaints) { complaint ->
-                        RecentReportCardClickable(complaint, cardBackgroundColor, textColor, secondaryTextColor) { navController.navigate("all_complaints") }
+                        RecentReportCardClickable(complaint, cardBackgroundColor, textColor, secondaryTextColor) {
+                            navController.navigate("all_complaints")
+                        }
                     }
                 }
             }
@@ -467,9 +489,9 @@ fun DashboardContents(
 }
 
 @Composable
-fun ReportCard(modifier: Modifier, image: Int, label: String, backgroundColor: Color = Color.White, textColor: Color = Color.Black, onClick:() ->Unit ={}) {
+fun ReportCard(modifier: Modifier, image: Int, label: String, backgroundColor: Color = Color.White, textColor: Color = Color.Black, onClick: () -> Unit = {}) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Card(modifier = Modifier.size(50.dp), onClick= onClick, shape = RoundedCornerShape(18.dp), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)) {
+        Card(modifier = Modifier.size(50.dp), onClick = onClick, shape = RoundedCornerShape(18.dp), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Image(painter = painterResource(image), contentDescription = null, modifier = Modifier.size(60.dp))
             }
