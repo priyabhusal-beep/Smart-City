@@ -1,17 +1,25 @@
 package com.example.smart_city.model
 
 data class ReportModel(
-    val id: String = "",
     val category: String = "",
     val ward: String = "",
-    val wardNo: Int = 0,
     val issueType: String = "",
     val area: String = "",
     val description: String = "",
     val timestamp: Long = System.currentTimeMillis(),
     val userId: String = "",
     val status: String = "Pending",
+<<<<<<< HEAD
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
     val imageUrl: String = ""
 )
+=======
+    val id: String = "",
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0,
+    val imageUrl: String = "", // Added for image support
+    val voteCount: Int = 0,
+    val votes: Map<String, Boolean> = emptyMap()
+)
+>>>>>>> fcf9db22a2e2face594702de430ba4b4923cbf06

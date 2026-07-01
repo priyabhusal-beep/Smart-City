@@ -2,26 +2,31 @@ package com.example.smart_city
 
 import android.app.Application
 import com.cloudinary.android.MediaManager
+import com.example.smart_city.viewmodel.AuthViewModel
 import org.maplibre.android.MapLibre
 import org.maplibre.android.WellKnownTileServer
 
 class SmartCityApplication : Application() {
 
+    // Single shared instance across the whole app
+    val authViewModel: AuthViewModel by lazy {
+        AuthViewModel(this)
+    }
+
     override fun onCreate() {
         super.onCreate()
 
-        // Initialize MapLibre
         MapLibre.getInstance(
             this,
             null,
             WellKnownTileServer.MapLibre
         )
 
-        // Initialize Cloudinary MediaManager
-        // Note: Ensure your cloudinary credentials are in AndroidManifest.xml 
-        // or passed here in a configuration map.
         try {
-            MediaManager.init(this)
+            val config = hashMapOf<String, Any>(
+                "cloud_name" to "dyanvmmkj"
+            )
+            MediaManager.init(this, config)
         } catch (e: Exception) {
             e.printStackTrace()
         }

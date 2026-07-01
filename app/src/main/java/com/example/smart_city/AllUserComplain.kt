@@ -185,3 +185,11 @@ fun ComplaintCardItem(
         }
     }
 }
+
+@Preview
+@Composable
+fun ComplainActivityPreview() {
+    SmartCityTheme {
+        ComplainActivity()
+    }
+}

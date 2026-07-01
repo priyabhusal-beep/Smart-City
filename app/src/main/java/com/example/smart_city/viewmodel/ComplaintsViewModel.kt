@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.example.smart_city.model.ReportModel
 import com.example.smart_city.repo.ComplaintsRepository
+import com.google.firebase.auth.FirebaseAuth
 
 class ComplaintsViewModel(
     private val repository: ComplaintsRepository = ComplaintsRepository()
@@ -29,11 +30,32 @@ class ComplaintsViewModel(
         }
     }
 
+    fun updateStatus(complaintId: String, newStatus: String, onComplete: (Boolean) -> Unit = {}) {
+        repository.updateComplaintStatus(complaintId, newStatus) { success ->
+            if (success) {
+                // List will automatically update because repository uses addValueEventListener
+                onComplete(true)
+            } else {
+                onComplete(false)
+            }
+        }
+    }
+
+    fun toggleVote(complaintId: String) {
+        val currentUser = FirebaseAuth.getInstance().currentUser ?: return
+        repository.toggleVote(
+            complaintId,
+            currentUser.uid
+        ) {
+            fetchAllComplaints()
+        }
+    }
+
     fun fetchComplaintsByWard(wardNo: Int) {
         isLoading = true
         errorMessage = ""
 
-        repository.getComplaintsByWard(wardNo) { fetchedComplaints ->
+        repository.getComplaintsByWard(wardNo) { fetchedComplaints: List<ReportModel> ->
             complaints = fetchedComplaints
             isLoading = false
         }
