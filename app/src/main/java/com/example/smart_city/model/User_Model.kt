@@ -5,6 +5,7 @@ data class User(
     val email: String = "",
     val name: String = "",
     val phone: String = "",
+    val profilePicture: String = "",
     val userType: String = "citizen", // citizen or admin
     val wardNo: Int = 0,              // 0 for citizen, 1-6 for ward admin
     val createdAt: Long = System.currentTimeMillis(),

@@ -15,13 +15,16 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
     var ward by mutableStateOf("")
     var issueType by mutableStateOf("")
     var isLoading by mutableStateOf(false)
-    
+
     // IMAGE STATES
     var capturedImage by mutableStateOf<Bitmap?>(null)
     var imageUrl by mutableStateOf("")
 
     var userComplaints by mutableStateOf<List<ReportModel>>(emptyList())
     var totalUserVotes by mutableStateOf(0)
+
+    // NEW: tracks how many of the current user's complaints have been resolved
+    var totalUserResolved by mutableStateOf(0)
 
     var latitude by mutableStateOf(0.0)
     var longitude by mutableStateOf(0.0)
@@ -41,15 +44,27 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
             isLoading = false
         }
     }
+
     fun fetchTotalUserVotes() {
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
         repository.getAllComplaints { complaints ->
-
             totalUserVotes = complaints.count { complaint ->
                 complaint.votes.containsKey(currentUserId)
             }
+        }
+    }
 
+    // NEW: counts how many of the current user's own complaints have status "Resolved"
+    fun fetchTotalUserResolved() {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        repository.getAllComplaints { complaints ->
+            totalUserResolved = complaints.count { complaint ->
+                complaint.userId == currentUserId &&
+                        (complaint.status.equals("Resolved", ignoreCase = true) ||
+                                complaint.status.equals("Completed", ignoreCase = true)) // covers old data too
+            }
         }
     }
 
@@ -62,7 +77,6 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
             return
         }
 
-        // Validate fields
         if (ward.isEmpty()) {
             onResult("❌ Please select a Ward!")
             return
@@ -87,7 +101,6 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
 
         isLoading = true
 
-        // Create report model including the imageUrl
         val report = ReportModel(
             id = System.currentTimeMillis().toString(),
             category = category,
@@ -103,7 +116,6 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
             imageUrl = imageUrl
         )
 
-        // Submit to Firebase
         repository.submitReport(report) { success ->
             isLoading = false
             if (success) {

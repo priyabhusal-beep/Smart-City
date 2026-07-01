@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.smart_city.model.User
 import com.example.smart_city.repo.AuthRepository
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,46 +18,94 @@ class AuthViewModel (application: Application) : AndroidViewModel(application) {
 
     private val authRepository = AuthRepository()
 
-    // Login State
     private val _loginState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
     val loginState: StateFlow<LoginUiState> = _loginState.asStateFlow()
 
-    // Register State
     private val _registerState = MutableStateFlow<RegisterUiState>(RegisterUiState.Idle)
     val registerState: StateFlow<RegisterUiState> = _registerState.asStateFlow()
 
-    // Current Logged-in User
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
 
-    // Error Message
     private val _errorMessage = MutableStateFlow<String>("")
     val errorMessage: StateFlow<String> = _errorMessage.asStateFlow()
 
-    // Loading State
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    // ================== LOAD USER FUNCTION ==================
+    private var userLoadJob: Job? = null
+    private var profilePictureUpdatePending = false
+
+    fun loadCurrentUserIfNeeded() {
+        if (_currentUser.value != null) return
+        if (userLoadJob?.isActive == true) return
+
+        if (authRepository.isUserLoggedIn()) {
+            userLoadJob = viewModelScope.launch {
+                try {
+                    val user = authRepository.getCurrentUser()
+                    // Guard: don't overwrite if a profile picture update happened
+                    // while this fetch was in flight
+                    if (!profilePictureUpdatePending) {
+                        _currentUser.value = user
+                    } else {
+                        Log.d("AuthViewModel", "Skipped stale user load - profile picture update in progress")
+                    }
+                } catch (e: Exception) {
+                    Log.e("AuthViewModel", "Error loading user: ${e.message}")
+                }
+            }
+        }
+    }
+
+    // ================== UPDATE PROFILE PICTURE ==================
+    fun updateProfilePicture(url: String) {
+        println("PRINTLN_TEST: updateProfilePicture STARTED with url=$url")
+        profilePictureUpdatePending = true
+        viewModelScope.launch {
+            try {
+                // Ensure we have the current user before updating - load if missing
+                if (_currentUser.value == null) {
+                    try {
+                        val freshUser = authRepository.getCurrentUser()
+                        _currentUser.value = freshUser
+                    } catch (e: Exception) {
+                        Log.e("ProfileDebug", "Could not load user before picture update: ${e.message}")
+                    }
+                }
+
+                // Update local state immediately so UI reflects change right away
+                println("PRINTLN_TEST: currentUser BEFORE update is null? ${_currentUser.value == null}, old pic=${_currentUser.value?.profilePicture}")
+                _currentUser.value = _currentUser.value?.copy(profilePicture = url)
+                println("PRINTLN_TEST: currentUser AFTER update, new pic=${_currentUser.value?.profilePicture}")
+
+                // Save to Firebase
+                authRepository.updateProfilePicture(url)
+                Log.d("ProfileDebug", "Firebase saved successfully")
+            } catch (e: Exception) {
+                Log.e("ProfileDebug", "Failed to save to Firebase: ${e.message}")
+            } finally {
+                profilePictureUpdatePending = false
+            }
+        }
+    }
+
     // ================== LOGIN FUNCTION ==================
     fun login(email: String, password: String) {
-        // Step 1: Validate inputs
         if (!validateLoginInputs(email, password)) {
             return
         }
 
-        // Step 2: Start loading
         _loginState.value = LoginUiState.Loading
         _isLoading.value = true
 
-        // Step 3: Call repository in background
         viewModelScope.launch {
             try {
                 val user = authRepository.login(email, password)
-
                 _currentUser.value = user
                 _loginState.value = LoginUiState.Success(user)
                 _isLoading.value = false
-
             } catch (e: Exception) {
                 val errorMsg = e.message ?: "Login failed"
                 _errorMessage.value = errorMsg
@@ -102,6 +151,7 @@ class AuthViewModel (application: Application) : AndroidViewModel(application) {
             }
         }
     }
+
     // ================== GOOGLE SIGN-IN FUNCTION ==================
     fun signInWithGoogle(
         idToken: String,
@@ -122,7 +172,6 @@ class AuthViewModel (application: Application) : AndroidViewModel(application) {
                 _loginState.value = LoginUiState.Success(user)
                 _registerState.value = RegisterUiState.Success(user)
                 _isLoading.value = false
-
             } catch (e: Exception) {
                 val errorMsg = e.message ?: "Google Sign-In failed"
                 _errorMessage.value = errorMsg
@@ -141,6 +190,7 @@ class AuthViewModel (application: Application) : AndroidViewModel(application) {
         _registerState.value = RegisterUiState.Idle
         _errorMessage.value = ""
     }
+
     fun setCurrentUser(user: User) {
         _currentUser.value = user
         Log.d("AuthVM", "Current user set to: ${user.name}")
@@ -228,15 +278,12 @@ class AuthViewModel (application: Application) : AndroidViewModel(application) {
     }
 }
 
-// ================== UI STATE CLASSES ==================
-
 sealed class LoginUiState {
     object Idle : LoginUiState()
     object Loading : LoginUiState()
     data class Success(val user: User) : LoginUiState()
     data class Error(val message: String) : LoginUiState()
 }
-
 
 sealed class RegisterUiState {
     object Idle : RegisterUiState()

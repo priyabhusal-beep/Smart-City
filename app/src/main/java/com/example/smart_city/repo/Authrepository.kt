@@ -26,6 +26,7 @@ class AuthRepository {
             email = email,
             name = name,
             phone = phone,
+            profilePicture = "",
             userType = "citizen",
             wardNo = 0,
             createdAt = System.currentTimeMillis()
@@ -68,6 +69,7 @@ class AuthRepository {
                 email = firebaseUser.email ?: "",
                 name = firebaseUser.displayName ?: "",
                 phone = firebaseUser.phoneNumber ?: "",
+                profilePicture = firebaseUser.photoUrl?.toString() ?: "",
                 userType = userType,
                 wardNo = 0,
                 createdAt = System.currentTimeMillis(),
@@ -76,6 +78,11 @@ class AuthRepository {
             database.child("users").child(uid).setValue(newUser).await()
             newUser
         }
+    }
+
+    suspend fun updateProfilePicture(url: String) {
+        val user = auth.currentUser ?: throw Exception("No user logged in")
+        database.child("users").child(user.uid).child("profilePicture").setValue(url).await()
     }
 
     suspend fun updateUserProfile(name: String, email: String, password: String) {

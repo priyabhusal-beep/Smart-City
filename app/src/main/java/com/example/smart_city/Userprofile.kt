@@ -16,7 +16,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.launch
-import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -49,17 +48,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil3.compose.AsyncImage
+import coil3.request.CachePolicy
+import coil3.request.ImageRequest
 import com.example.smart_city.viewmodel.AuthViewModel
-import com.example.smart_city.viewmodel.AuthViewModelFactory
-import com.example.smart_city.repo.AuthRepository
 import com.example.smart_city.viewmodel.ImageViewModel
 import com.example.smart_city.viewmodel.ReportViewModel
 import java.io.ByteArrayOutputStream
 
 class Userprofile : ComponentActivity() {
-    private val authViewModel: AuthViewModel by viewModels {
-        AuthViewModelFactory(application)
+
+    private val authViewModel: AuthViewModel by lazy {
+        (application as SmartCityApplication).authViewModel
     }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -69,24 +71,15 @@ class Userprofile : ComponentActivity() {
     }
 }
 
-// ✅ ADD THIS: Function to load current user when profile opens
 @Composable
 fun LoadUserForProfileEffect(authViewModel: AuthViewModel?) {
     LaunchedEffect(Unit) {
-        try {
-            val authRepository = AuthRepository()
-            val currentUser = authRepository.getCurrentUser()
-            authViewModel?.setCurrentUser(currentUser)
-            Log.d("Userprofile", "User loaded: ${currentUser.name}")
-        } catch (e: Exception) {
-            Log.e("Userprofile", "Failed to load user: ${e.message}")
-        }
+         authViewModel?.loadCurrentUserIfNeeded()
     }
 }
 
 @Composable
 fun UserprofileApp(authViewModel: AuthViewModel? = null) {
-    // ✅ ADD THIS: Load user when profile opens
     LoadUserForProfileEffect(authViewModel)
 
     var isDarkMode by remember { mutableStateOf(false) }
@@ -115,11 +108,10 @@ fun UserprofileApp(authViewModel: AuthViewModel? = null) {
             modifier = Modifier.fillMaxSize(),
             color = if (isDarkMode) darkBackground else lightBackground
         ) {
-            // ✅ FIXED: Pass authViewModel to UserprofileBody
             UserprofileBody(
                 isDarkMode,
                 onDarkModeToggle = { isDarkMode = it },
-                authViewModel = authViewModel  // ← ADD THIS
+                authViewModel = authViewModel
             )
         }
     }
@@ -131,13 +123,15 @@ fun UserprofileBody(
     onDarkModeToggle: (Boolean) -> Unit,
     authViewModel: AuthViewModel? = null,
     reportViewModel: ReportViewModel = viewModel(),
-    imageViewModel: ImageViewModel = viewModel() // ✅ ADDED
+    imageViewModel: ImageViewModel = viewModel()
 ) {
-    // ✅ COLLECT current user from ViewModel
     val currentUser by authViewModel?.currentUser?.collectAsState()
         ?: remember { mutableStateOf(null) }
 
-    // ✅ FETCH user complaints to update stats
+    LaunchedEffect(currentUser?.profilePicture) {
+        println("PRINTLN_TEST: UI recomposed, profilePicture=${currentUser?.profilePicture}")
+    }
+
     LaunchedEffect(Unit) {
         reportViewModel.fetchUserComplaints()
         reportViewModel.fetchTotalUserVotes()
@@ -156,24 +150,42 @@ fun UserprofileBody(
 
     val context = LocalContext.current
 
-    // ✅ ADDED: Image Picker Logic
     var showImageSourceDialog by remember { mutableStateOf(false) }
     var profileBitmap by remember { mutableStateOf<Bitmap?>(null) }
 
-    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
+    val cameraLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicturePreview()
+    ) { bitmap ->
         if (bitmap != null) {
             profileBitmap = bitmap
-            val bytes = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bytes)
-            val path = MediaStore.Images.Media.insertImage(context.contentResolver, bitmap, "Profile_${System.currentTimeMillis()}", null)
+            val path = MediaStore.Images.Media.insertImage(
+                context.contentResolver,
+                bitmap,
+                "Profile_${System.currentTimeMillis()}",
+                null
+            )
             val uri = if (path != null) Uri.parse(path) else null
-            uri?.let { imageViewModel.uploadImage(context, it) { url ->
-                if (url != null) Toast.makeText(context, "Profile Updated", Toast.LENGTH_SHORT).show()
-            }}
+            if (uri != null) {
+                imageViewModel.uploadImage(context, uri) { url ->
+                    if (url != null) {
+                        authViewModel?.updateProfilePicture(url)
+                        profileBitmap = null
+                        Toast.makeText(context, "Profile Updated", Toast.LENGTH_SHORT).show()
+                    } else {
+                        profileBitmap = null
+                        Toast.makeText(context, "Upload failed, try again", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } else {
+                profileBitmap = null
+                Toast.makeText(context, "Could not get image", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
-    val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+    val galleryLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
         uri?.let {
             val bitmap = if (Build.VERSION.SDK_INT < 28) {
                 @Suppress("DEPRECATION")
@@ -184,21 +196,26 @@ fun UserprofileBody(
             }
             profileBitmap = bitmap
             imageViewModel.uploadImage(context, it) { url ->
-                if (url != null) Toast.makeText(context, "Profile Updated", Toast.LENGTH_SHORT).show()
+                Log.d("GalleryDebug", "Callback fired. url=$url, authViewModel null? ${authViewModel == null}")
+                if (url != null) {
+                    Log.d("GalleryDebug", "About to call updateProfilePicture")
+                    authViewModel?.updateProfilePicture(url)
+                    profileBitmap = null
+                    Toast.makeText(context, "Profile Updated", Toast.LENGTH_SHORT).show()
+                } else {
+                    profileBitmap = null
+                    Toast.makeText(context, "Upload failed, try again", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
 
-    Scaffold (
-        // 1. Give the Scaffold itself the background color so the window underneath matches
-        containerColor = backgroundColor
-    ) { innerPadding ->
+    Scaffold(containerColor = backgroundColor) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(color = backgroundColor)
                 .verticalScroll(scrollState)
-                // 2. Only use the innerPadding where necessary, or map it safely:
                 .padding(
                     top = innerPadding.calculateTopPadding(),
                     bottom = innerPadding.calculateBottomPadding(),
@@ -221,7 +238,6 @@ fun UserprofileBody(
                         fontWeight = FontWeight.Bold
                     )
                 )
-
                 Icon(
                     painter = painterResource(R.drawable.baseline_notifications_24),
                     contentDescription = "Notifications",
@@ -232,7 +248,6 @@ fun UserprofileBody(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Profile Section
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
@@ -243,25 +258,44 @@ fun UserprofileBody(
                             .size(115.dp)
                             .border(width = 3.dp, color = Color(0xFF00B8D4), shape = CircleShape)
                             .padding(6.dp)
-                            .clickable { showImageSourceDialog = true } // ✅ CLICKABLE TO CHANGE IMAGE
+                            .clickable { showImageSourceDialog = true }
                     ) {
-                        if (profileBitmap != null) {
-                            Image(
-                                bitmap = profileBitmap!!.asImageBitmap(),
-                                contentDescription = "Profile Picture",
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .clip(CircleShape),
-                                contentScale = ContentScale.Crop
-                            )
-                        } else {
-                            Image(
-                                painter = painterResource(R.drawable.user),
-                                contentDescription = "Profile Picture",
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .clip(CircleShape)
-                            )
+                        when {
+                            profileBitmap != null -> {
+                                Image(
+                                    bitmap = profileBitmap!!.asImageBitmap(),
+                                    contentDescription = "Profile Picture",
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(CircleShape),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+                            !currentUser?.profilePicture.isNullOrEmpty() -> {
+                                AsyncImage(
+                                    model = ImageRequest.Builder(context)
+                                        .data(currentUser?.profilePicture)
+                                        .diskCachePolicy(CachePolicy.DISABLED)
+                                        .memoryCachePolicy(CachePolicy.DISABLED)
+                                        .build(),
+                                    contentDescription = "Profile Picture",
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(CircleShape),
+                                    contentScale = ContentScale.Crop,
+                                    placeholder = painterResource(R.drawable.user),
+                                    error = painterResource(R.drawable.user)
+                                )
+                            }
+                            else -> {
+                                Image(
+                                    painter = painterResource(R.drawable.user),
+                                    contentDescription = "Profile Picture",
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(CircleShape)
+                                )
+                            }
                         }
                     }
 
@@ -283,7 +317,6 @@ fun UserprofileBody(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // ✅ SHOWS ACTUAL USER NAME
                 Text(
                     text = currentUser?.name ?: "User",
                     style = TextStyle(
@@ -315,7 +348,6 @@ fun UserprofileBody(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // ✅ Dynamic Statistics Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
@@ -328,7 +360,6 @@ fun UserprofileBody(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Menu Items Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -336,7 +367,6 @@ fun UserprofileBody(
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column {
-                    // ✅ FIXED: My Complaints Navigation
                     MenuRowNavigate(
                         icon = painterResource(R.drawable.baseline_report_24),
                         title = "My Complaints",
@@ -354,8 +384,6 @@ fun UserprofileBody(
                         color = if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE)
                     )
 
-
-                    // Settings & Privacy
                     MenuRowNavigate(
                         icon = painterResource(R.drawable.baseline_settings_24),
                         title = "Settings & Privacy",
@@ -373,7 +401,6 @@ fun UserprofileBody(
                         color = if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE)
                     )
 
-                    // Dark Mode Toggle
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -415,7 +442,6 @@ fun UserprofileBody(
                         color = if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE)
                     )
 
-                    // Help & Support
                     MenuRowNavigate(
                         icon = painterResource(R.drawable.baseline_help_24),
                         title = "Help & Support",
@@ -432,14 +458,15 @@ fun UserprofileBody(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Logout Button
             Card(
-                modifier = Modifier.fillMaxWidth().clickable {
-                    authViewModel?.logout()
-                    val intent = Intent(context, LoginActivity::class.java)
-                    context.startActivity(intent)
-                    (context as? Activity)?.finish()
-                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        authViewModel?.logout()
+                        val intent = Intent(context, LoginActivity::class.java)
+                        context.startActivity(intent)
+                        (context as? Activity)?.finish()
+                    },
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = cardColor),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -470,7 +497,6 @@ fun UserprofileBody(
             Spacer(modifier = Modifier.height(20.dp))
         }
 
-        // ✅ ADDED: Selection Dialog
         if (showImageSourceDialog) {
             AlertDialog(
                 onDismissRequest = { showImageSourceDialog = false },
@@ -495,7 +521,11 @@ fun UserprofileBody(
                         )
                     }
                 },
-                confirmButton = { TextButton(onClick = { showImageSourceDialog = false }) { Text("Cancel") } }
+                confirmButton = {
+                    TextButton(onClick = { showImageSourceDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
             )
         }
     }

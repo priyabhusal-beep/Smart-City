@@ -34,7 +34,7 @@ android {
     buildFeatures {
         compose = true
     }
-    
+
     packaging {
         jniLibs {
             useLegacyPackaging = false
@@ -43,17 +43,12 @@ android {
 }
 
 dependencies {
-    // Import the BoM for the Firebase platform
     implementation(platform("com.google.firebase:firebase-bom:34.15.0"))
-
-    // Add the dependency for the Firebase Authentication library
-    // When using the BoM, you don't specify versions in Firebase library dependencies
     implementation("com.google.firebase:firebase-auth")
-
-    // Also add the dependencies for the Credential Manager libraries and specify their versions
     implementation("androidx.credentials:credentials:1.3.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.credentials)
@@ -72,10 +67,13 @@ dependencies {
     implementation(libs.androidx.camera.camera2.pipe)
     implementation(libs.googleid)
     implementation(libs.play.services.location)
-    
+
     implementation(libs.cloudinary.android)
     implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)   // ✅ FIXED: uses same version as coil-compose
+
     implementation(libs.maplibre.android.sdk)
+    implementation(libs.okhttp)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
