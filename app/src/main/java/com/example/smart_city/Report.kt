@@ -1,5 +1,6 @@
 package com.example.smart_city
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
@@ -51,7 +52,8 @@ import com.example.smart_city.viewmodel.ReportViewModel
 import com.example.smart_city.viewmodel.TrafficViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
 
 class Report : ComponentActivity() {
     private val permissionLauncher =
@@ -86,6 +88,22 @@ class Report : ComponentActivity() {
     }
 }
 
+// ✅ Safer Image Uri Helper for Reports
+fun getReportImageUri(context: Context, bitmap: Bitmap): Uri? {
+    return try {
+        val folder = File(context.cacheDir, "report_images")
+        if (!folder.exists()) folder.mkdirs()
+        val file = File(folder, "report_${System.currentTimeMillis()}.jpg")
+        val out = FileOutputStream(file)
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+        out.flush()
+        out.close()
+        Uri.fromFile(file)
+    } catch (e: Exception) {
+        null
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Reported(
@@ -93,7 +111,7 @@ fun Reported(
     category: String = "Road",
     viewModel: ReportViewModel = viewModel(),
     imageViewModel: ImageViewModel = viewModel(),
-    isDarkMode: Boolean = false, // ✅ FIXED: Added this parameter
+    isDarkMode: Boolean = false,
     backgroundColor: Color = Color.White,
     cardBackgroundColor: Color = Color(0xFFF5F5F5),
     textColor: Color = Color.Black,
@@ -109,20 +127,19 @@ fun Reported(
     val context = LocalContext.current
     val trafficViewModel: TrafficViewModel = viewModel()
 
-    // Helper to get Uri from Bitmap
-    fun getImageUri(bitmap: Bitmap): Uri? {
-        val bytes = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bytes)
-        val path = MediaStore.Images.Media.insertImage(context.contentResolver, bitmap, "Title", null)
-        return if (path != null) Uri.parse(path) else null
-    }
-
     // Launchers
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
         if (bitmap != null) {
             viewModel.capturedImage = bitmap
-            getImageUri(bitmap)?.let { uri ->
-                imageViewModel.uploadImage(context, uri) { url -> if (url != null) viewModel.imageUrl = url }
+            viewModel.imageUrl = "" // NEW: clear stale URL until the new upload finishes
+            getReportImageUri(context, bitmap)?.let { uri ->
+                imageViewModel.uploadImage(context, uri) { url ->
+                    if (url != null) {
+                        viewModel.imageUrl = url
+                    } else {
+                        Toast.makeText(context, "Image upload failed, please retry", Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
         }
     }
@@ -137,11 +154,18 @@ fun Reported(
                 ImageDecoder.decodeBitmap(source)
             }
             viewModel.capturedImage = bitmap
-            imageViewModel.uploadImage(context, it) { url -> if (url != null) viewModel.imageUrl = url }
+            viewModel.imageUrl = "" // NEW: clear stale URL until the new upload finishes
+            imageViewModel.uploadImage(context, it) { url ->
+                if (url != null) {
+                    viewModel.imageUrl = url
+                } else {
+                    Toast.makeText(context, "Image upload failed, please retry", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 
-    LaunchedEffect(Unit){
+    LaunchedEffect(Unit) {
         trafficViewModel.fetchTraffic()
     }
     val issueOptions = ReportData.issueOptions[category] ?: emptyList()
@@ -254,10 +278,26 @@ fun Reported(
                         }
                         Card(Modifier.size(110.dp), shape = RoundedCornerShape(8.dp)) {
                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                if (viewModel.capturedImage != null) Image(bitmap = viewModel.capturedImage!!.asImageBitmap(), contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-                                else Image(painterResource(R.drawable.baseline_image_24), null, Modifier.size(40.dp))
+                                if (viewModel.capturedImage != null) {
+                                    Image(bitmap = viewModel.capturedImage!!.asImageBitmap(), contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                                    // NEW: small overlay spinner while this specific image is uploading
+                                    if (imageViewModel.isUploading) {
+                                        Box(
+                                            modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.4f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(28.dp))
+                                        }
+                                    }
+                                } else {
+                                    Image(painterResource(R.drawable.baseline_image_24), null, Modifier.size(40.dp))
+                                }
                             }
                         }
+                    }
+                    // NEW: small status text under the image row
+                    if (imageViewModel.isUploading) {
+                        Text("Uploading image, please wait...", fontSize = 11.sp, color = Color(0xFF1E88E5), modifier = Modifier.padding(top = 6.dp))
                     }
                 }
             }
@@ -268,10 +308,28 @@ fun Reported(
 
             item {
                 Button(
-                    onClick = { viewModel.submit(category) { msg -> successMessage = msg; showSuccessPopup = true; scope.launch { delay(3000); showSuccessPopup = false } } },
+                    onClick = {
+                        viewModel.submit(category) { msg ->
+                            successMessage = msg
+                            showSuccessPopup = true
+                            scope.launch { delay(3000); showSuccessPopup = false }
+                        }
+                    },
+                    enabled = !imageViewModel.isUploading, // NEW: block submit while upload is in flight
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(56.dp),
-                    colors = ButtonDefaults.buttonColors(Color(0xFF0D2A77)), shape = RoundedCornerShape(12.dp)
-                ) { Text("Submit Report", fontWeight = FontWeight.Bold) }
+                    colors = ButtonDefaults.buttonColors(Color(0xFF0D2A77)),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    if (imageViewModel.isUploading) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Uploading image...", fontWeight = FontWeight.Bold)
+                        }
+                    } else {
+                        Text("Submit Report", fontWeight = FontWeight.Bold)
+                    }
+                }
             }
         }
 
@@ -281,8 +339,14 @@ fun Reported(
                 title = { Text("Choose Source") },
                 text = {
                     Column {
-                        ListItem(headlineContent = { Text("Camera") }, leadingContent = { Icon(Icons.Default.PhotoCamera, null) }, modifier = Modifier.clickable { showImageSourceDialog = false; cameraLauncher.launch() })
-                        ListItem(headlineContent = { Text("Gallery") }, leadingContent = { Icon(Icons.Default.PhotoLibrary, null) }, modifier = Modifier.clickable { showImageSourceDialog = false; galleryLauncher.launch("image/*") })
+                        ListItem(headlineContent = { Text("Camera") }, leadingContent = { Icon(Icons.Default.PhotoCamera, null) }, modifier = Modifier.clickable {
+                            showImageSourceDialog = false
+                            cameraLauncher.launch()
+                        })
+                        ListItem(headlineContent = { Text("Gallery") }, leadingContent = { Icon(Icons.Default.PhotoLibrary, null) }, modifier = Modifier.clickable {
+                            showImageSourceDialog = false
+                            galleryLauncher.launch("image/*")
+                        })
                     }
                 },
                 confirmButton = { TextButton(onClick = { showImageSourceDialog = false }) { Text("Cancel") } }

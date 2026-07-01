@@ -34,7 +34,7 @@ android {
     buildFeatures {
         compose = true
     }
-    
+
     packaging {
         jniLibs {
             useLegacyPackaging = false
@@ -43,8 +43,16 @@ android {
 }
 
 dependencies {
+    implementation(platform("com.google.firebase:firebase-bom:34.15.0"))
+    implementation("com.google.firebase:firebase-auth")
+    implementation("androidx.credentials:credentials:1.3.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
@@ -57,11 +65,15 @@ dependencies {
     implementation(libs.firebase.database)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.camera.camera2.pipe)
+    implementation(libs.googleid)
     implementation(libs.play.services.location)
-    
+
     implementation(libs.cloudinary.android)
     implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)   // ✅ FIXED: uses same version as coil-compose
+
     implementation(libs.maplibre.android.sdk)
+    implementation(libs.okhttp)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

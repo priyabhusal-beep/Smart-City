@@ -1,9 +1,12 @@
 package com.example.smart_city.repo
 
-import android.util.Log
 import com.example.smart_city.model.User
-import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
+<<<<<<< HEAD
+=======
+import com.google.firebase.auth.UserProfileChangeRequest
+>>>>>>> fcf9db22a2e2face594702de430ba4b4923cbf06
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.tasks.await
 
@@ -12,151 +15,158 @@ class AuthRepository {
     private val auth = FirebaseAuth.getInstance()
     private val database = FirebaseDatabase.getInstance().reference
 
-    // REGISTER - Create new user
     suspend fun register(
         email: String,
         password: String,
         name: String,
-        userType: String
+        phone: String
     ): User {
-        return try {
-            // Step 1: Create user in Firebase Auth
-            val authResult = auth.createUserWithEmailAndPassword(email, password).await()
-            val uid = authResult.user?.uid ?: throw Exception("Failed to get UID")
+        val authResult = auth.createUserWithEmailAndPassword(email, password).await()
+        val uid = authResult.user?.uid ?: throw Exception("Failed to get UID")
 
-            // Step 2: Create User object
+        val user = User(
+            uid = uid,
+            email = email,
+            name = name,
+            phone = phone,
+            profilePicture = "",
+            userType = "citizen",
+            wardNo = 0,
+            createdAt = System.currentTimeMillis()
+        )
+
+        database.child("users").child(uid).setValue(user).await()
+        return user
+    }
+
+    suspend fun login(email: String, password: String): User {
+        val authResult = auth.signInWithEmailAndPassword(email, password).await()
+        val uid = authResult.user?.uid ?: throw Exception("Failed to get UID")
+
+        val snapshot = database.child("users").child(uid).get().await()
+        val user = snapshot.getValue(User::class.java)
+            ?: throw Exception("User data not found")
+
+        database.child("users").child(uid).child("lastLogin")
+            .setValue(System.currentTimeMillis()).await()
+
+        return user
+    }
+
+    suspend fun signInWithGoogle(idToken: String, userType: String): User {
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        val authResult = auth.signInWithCredential(credential).await()
+<<<<<<< HEAD
+        val firebaseUser = authResult.user ?: throw Exception("Google Sign-In failed")
+        val uid = firebaseUser.uid
+
+        val snapshot = database.child("users").child(uid).get().await()
+        return if (snapshot.exists()) {
+            snapshot.getValue(User::class.java) ?: throw Exception("User data not found")
+        } else {
             val user = User(
                 uid = uid,
-                email = email,
-                name = name,
+                email = firebaseUser.email ?: "",
+                name = firebaseUser.displayName ?: "",
                 userType = userType,
                 createdAt = System.currentTimeMillis()
             )
-
-            // Step 3: Save user data to Database
             database.child("users").child(uid).setValue(user).await()
-
-            // Step 4: Return the user
             user
-
-        } catch (e: Exception) {
-            throw e
         }
     }
 
-    // LOGIN - Authenticate user
-    suspend fun login(email: String, password: String): User {
-        return try {
-            // Step 1: Authenticate with Firebase Auth
-            val authResult = auth.signInWithEmailAndPassword(email, password).await()
-            val uid = authResult.user?.uid ?: throw Exception("Failed to get UID")
+    suspend fun updateUserProfile(name: String, email: String, password: String) {
+        val currentUser = auth.currentUser ?: throw Exception("No user logged in")
+        val uid = currentUser.uid
 
-            // Step 2: Fetch user data from Database
-            val snapshot = database.child("users").child(uid).get().await()
-            val user = snapshot.getValue(User::class.java)
-                ?: throw Exception("User not found in database")
-
-            // Step 3: Return success with user object
-            user
-
-        } catch (e: Exception) {
-            throw e
+        // Update email in Auth if changed
+        if (email.isNotBlank() && email != currentUser.email) {
+            if (password.isBlank()) throw Exception("Password required to change email")
+            
+            // Re-authenticate user first
+            val credential = com.google.firebase.auth.EmailAuthProvider.getCredential(currentUser.email!!, password)
+            currentUser.reauthenticate(credential).await()
+            currentUser.updateEmail(email).await()
         }
-    }
 
-    // Get Current Logged-in User
-    suspend fun getCurrentUser(): User {
-        return try {
-            val currentUser = auth.currentUser
-                ?: throw Exception("No user logged in")
+        // Update database
+        val updates = mutableMapOf<String, Any>()
+        if (name.isNotBlank()) updates["name"] = name
+        if (email.isNotBlank()) updates["email"] = email
 
-            val uid = currentUser.uid
-            val snapshot = database.child("users").child(uid).get().await()
-            val user = snapshot.getValue(User::class.java)
-                ?: throw Exception("User not found in database")
+        if (updates.isNotEmpty()) {
+            database.child("users").child(uid).updateChildren(updates).await()
+=======
+        val firebaseUser = authResult.user ?: throw Exception("Google sign-in failed")
 
+        val uid = firebaseUser.uid
+        val snapshot = database.child("users").child(uid).get().await()
+
+        return if (snapshot.exists()) {
+            val user = snapshot.getValue(User::class.java) ?: throw Exception("User data not found")
+            database.child("users").child(uid).child("lastLogin")
+                .setValue(System.currentTimeMillis()).await()
             user
-
-        } catch (e: Exception) {
-            throw e
-        }
-    }
-
-    // ✅ UPDATED: Update User Profile with proper email handling
-    suspend fun updateUserProfile(
-        name: String,
-        email: String,
-        password: String = ""  // Required for email update
-    ): User {
-        return try {
-            val currentUser = auth.currentUser
-                ?: throw Exception("No user logged in")
-
-            val uid = currentUser.uid
-
-            // Step 1: Get current user data
-            val snapshot = database.child("users").child(uid).get().await()
-            val user = snapshot.getValue(User::class.java)
-                ?: throw Exception("User not found in database")
-
-            // Step 2: Create updated user object
-            val updatedUser = user.copy(
-                name = name,
-                email = email
+        } else {
+            val newUser = User(
+                uid = uid,
+                email = firebaseUser.email ?: "",
+                name = firebaseUser.displayName ?: "",
+                phone = firebaseUser.phoneNumber ?: "",
+                profilePicture = firebaseUser.photoUrl?.toString() ?: "",
+                userType = userType,
+                wardNo = 0,
+                createdAt = System.currentTimeMillis(),
+                lastLogin = System.currentTimeMillis()
             )
-
-            // Step 3: Update in Firebase Database
-            database.child("users").child(uid).setValue(updatedUser).await()
-            Log.d("AuthRepo", "User data updated in database")
-
-            // ✅ STEP 4: Update email in Firebase Auth (if changed)
-            if (email != currentUser.email) {
-                try {
-                    // If email is different, need to re-authenticate first
-                    if (password.isNotEmpty()) {
-                        // Re-authenticate with current password
-                        val credential = EmailAuthProvider.getCredential(
-                            currentUser.email ?: "",
-                            password
-                        )
-                        currentUser.reauthenticate(credential).await()
-                        Log.d("AuthRepo", "Re-authentication successful")
-                    }
-
-                    // Now update email
-                    currentUser.updateEmail(email).await()
-                    Log.d("AuthRepo", "Email updated in Firebase Auth: $email")
-
-                } catch (e: Exception) {
-                    Log.e("AuthRepo", "Failed to update email in Auth: ${e.message}")
-                    // Still return success - database is updated
-                    // The email will work after next login
-                }
-            }
-
-            Log.d("AuthRepo", "Profile updated: name=$name, email=$email")
-
-            // Step 5: Return updated user
-            updatedUser
-
-        } catch (e: Exception) {
-            Log.e("AuthRepo", "Update profile failed: ${e.message}")
-            throw e
+            database.child("users").child(uid).setValue(newUser).await()
+            newUser
         }
     }
 
-    // Logout Function
+    suspend fun updateProfilePicture(url: String) {
+        val user = auth.currentUser ?: throw Exception("No user logged in")
+        database.child("users").child(user.uid).child("profilePicture").setValue(url).await()
+    }
+
+    suspend fun updateUserProfile(name: String, email: String, password: String) {
+        val user = auth.currentUser ?: throw Exception("No user logged in")
+
+        if (name.isNotBlank()) {
+            val profileUpdates = UserProfileChangeRequest.Builder()
+                .setDisplayName(name)
+                .build()
+            user.updateProfile(profileUpdates).await()
+            database.child("users").child(user.uid).child("name").setValue(name).await()
+        }
+
+        if (email.isNotBlank() && email != user.email) {
+            @Suppress("DEPRECATION")
+            user.updateEmail(email).await()
+            database.child("users").child(user.uid).child("email").setValue(email).await()
+        }
+
+        if (password.isNotBlank()) {
+            user.updatePassword(password).await()
+>>>>>>> fcf9db22a2e2face594702de430ba4b4923cbf06
+        }
+    }
+
+    suspend fun getCurrentUser(): User {
+        val firebaseUser = auth.currentUser ?: throw Exception("No user logged in")
+        val uid = firebaseUser.uid
+
+        val snapshot = database.child("users").child(uid).get().await()
+        return snapshot.getValue(User::class.java)
+            ?: throw Exception("User data not found")
+    }
+
     fun logout() {
         auth.signOut()
     }
 
-    // Check if User is Already Logged In
     fun isUserLoggedIn(): Boolean {
         return auth.currentUser != null
-    }
-
-    // Get Current User UID
-    fun getCurrentUserUID(): String? {
-        return auth.currentUser?.uid
     }
 }
