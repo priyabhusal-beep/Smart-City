@@ -1,5 +1,6 @@
 package com.example.smart_city.viewmodel
 
+import android.graphics.Bitmap
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -17,6 +18,12 @@ open class ReportViewModel(
     var ward by mutableStateOf("")
     var issueType by mutableStateOf("")
     var isLoading by mutableStateOf(false)
+    var userComplaints by mutableStateOf<List<ReportModel>>(emptyList())
+    
+    var capturedImage by mutableStateOf<Bitmap?>(null)
+    var imageUrl by mutableStateOf("")
+    var latitude by mutableStateOf(0.0)
+    var longitude by mutableStateOf(0.0)
 
     val areaSuggestions = listOf(
         "Baneshwor",
@@ -35,6 +42,21 @@ open class ReportViewModel(
             areaSuggestions.filter {
                 it.contains(searchArea, ignoreCase = true)
             }
+        }
+    }
+
+    fun fetchUserComplaints() {
+        val auth = FirebaseAuth.getInstance()
+        val currentUser = auth.currentUser
+
+        if (currentUser == null) {
+            return
+        }
+
+        isLoading = true
+        repository.getUserComplaints(currentUser.uid) { complaints ->
+            userComplaints = complaints
+            isLoading = false
         }
     }
 
@@ -80,7 +102,10 @@ open class ReportViewModel(
             description = description,
             timestamp = System.currentTimeMillis(),
             userId = currentUser.uid,
-            status = "Pending"
+            status = "Pending",
+            latitude = latitude,
+            longitude = longitude,
+            imageUrl = imageUrl
         )
 
         repository.submitReport(report) { success ->
@@ -100,5 +125,9 @@ open class ReportViewModel(
         issueType = ""
         searchArea = ""
         description = ""
+        capturedImage = null
+        imageUrl = ""
+        latitude = 0.0
+        longitude = 0.0
     }
 }

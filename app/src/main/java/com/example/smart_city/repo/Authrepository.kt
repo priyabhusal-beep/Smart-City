@@ -2,6 +2,7 @@ package com.example.smart_city.repo
 
 import com.example.smart_city.model.User
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.tasks.await
 
@@ -45,6 +46,52 @@ class AuthRepository {
             .setValue(System.currentTimeMillis()).await()
 
         return user
+    }
+
+    suspend fun signInWithGoogle(idToken: String, userType: String): User {
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        val authResult = auth.signInWithCredential(credential).await()
+        val firebaseUser = authResult.user ?: throw Exception("Google Sign-In failed")
+        val uid = firebaseUser.uid
+
+        val snapshot = database.child("users").child(uid).get().await()
+        return if (snapshot.exists()) {
+            snapshot.getValue(User::class.java) ?: throw Exception("User data not found")
+        } else {
+            val user = User(
+                uid = uid,
+                email = firebaseUser.email ?: "",
+                name = firebaseUser.displayName ?: "",
+                userType = userType,
+                createdAt = System.currentTimeMillis()
+            )
+            database.child("users").child(uid).setValue(user).await()
+            user
+        }
+    }
+
+    suspend fun updateUserProfile(name: String, email: String, password: String) {
+        val currentUser = auth.currentUser ?: throw Exception("No user logged in")
+        val uid = currentUser.uid
+
+        // Update email in Auth if changed
+        if (email.isNotBlank() && email != currentUser.email) {
+            if (password.isBlank()) throw Exception("Password required to change email")
+            
+            // Re-authenticate user first
+            val credential = com.google.firebase.auth.EmailAuthProvider.getCredential(currentUser.email!!, password)
+            currentUser.reauthenticate(credential).await()
+            currentUser.updateEmail(email).await()
+        }
+
+        // Update database
+        val updates = mutableMapOf<String, Any>()
+        if (name.isNotBlank()) updates["name"] = name
+        if (email.isNotBlank()) updates["email"] = email
+
+        if (updates.isNotEmpty()) {
+            database.child("users").child(uid).updateChildren(updates).await()
+        }
     }
 
     suspend fun getCurrentUser(): User {

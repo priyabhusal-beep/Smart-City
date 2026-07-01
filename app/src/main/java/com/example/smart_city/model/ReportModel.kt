@@ -10,5 +10,8 @@ data class ReportModel(
     val description: String = "",
     val timestamp: Long = System.currentTimeMillis(),
     val userId: String = "",
-    val status: String = "Pending"
+    val status: String = "Pending",
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0,
+    val imageUrl: String = ""
 )
