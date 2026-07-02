@@ -22,18 +22,8 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
     var latitude by mutableStateOf(0.0)
     var longitude by mutableStateOf(0.0)
 
-    // IMAGE STATES
-    var capturedImage by mutableStateOf<Bitmap?>(null)
-    var imageUrl by mutableStateOf("")
-
-    var userComplaints by mutableStateOf<List<ReportModel>>(emptyList())
     var totalUserVotes by mutableStateOf(0)
-
-    // NEW: tracks how many of the current user's complaints have been resolved
     var totalUserResolved by mutableStateOf(0)
-
-    var latitude by mutableStateOf(0.0)
-    var longitude by mutableStateOf(0.0)
 
     val areaSuggestions = listOf("Baneshwor", "Kalanki", "Koteshwor", "Patan", "Thamel", "Maitidevi", "Baluwatar")
 
@@ -61,7 +51,6 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
         }
     }
 
-    // NEW: counts how many of the current user's own complaints have status "Resolved"
     fun fetchTotalUserResolved() {
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
 
@@ -69,23 +58,8 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
             totalUserResolved = complaints.count { complaint ->
                 complaint.userId == currentUserId &&
                         (complaint.status.equals("Resolved", ignoreCase = true) ||
-                                complaint.status.equals("Completed", ignoreCase = true)) // covers old data too
+                                complaint.status.equals("Completed", ignoreCase = true))
             }
-        }
-    }
-
-    fun fetchUserComplaints() {
-        val auth = FirebaseAuth.getInstance()
-        val currentUser = auth.currentUser
-
-        if (currentUser == null) {
-            return
-        }
-
-        isLoading = true
-        repository.getUserComplaints(currentUser.uid) { complaints ->
-            userComplaints = complaints
-            isLoading = false
         }
     }
 
@@ -131,11 +105,7 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
             description = description,
             timestamp = System.currentTimeMillis(),
             userId = currentUser.uid,
-<<<<<<< HEAD
             status = "Pending",
-=======
-            status = "pending",
->>>>>>> fcf9db22a2e2face594702de430ba4b4923cbf06
             latitude = latitude,
             longitude = longitude,
             imageUrl = imageUrl
@@ -159,10 +129,7 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
         description = ""
         capturedImage = null
         imageUrl = ""
-<<<<<<< HEAD
         latitude = 0.0
         longitude = 0.0
-=======
->>>>>>> fcf9db22a2e2face594702de430ba4b4923cbf06
     }
 }

@@ -1,10 +1,5 @@
 package com.example.smart_city
 
-import androidx.credentials.CredentialManager
-import androidx.credentials.GetCredentialRequest
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
-import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
-import kotlinx.coroutines.launch
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
@@ -12,7 +7,6 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -37,60 +31,70 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.smart_city.viewmodel.AuthViewModel
 import com.example.smart_city.ui.theme.SmartCityTheme
+import com.example.smart_city.viewmodel.AuthViewModel
 import com.example.smart_city.viewmodel.RegisterUiState
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import kotlinx.coroutines.launch
 
 class CreateAccount : ComponentActivity() {
 
-    private val authViewModel: AuthViewModel by viewModels()
+    private val authViewModel: AuthViewModel by lazy {
+        (application as SmartCityApplication).authViewModel
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
         setContent {
             SmartCityTheme {
-                CreateAccountScreen(viewModel = authViewModel, activity = this)
+                CreateAccountScreen(
+                    viewModel = authViewModel,
+                    activity = this
+                )
             }
         }
     }
 }
 
 @Composable
-fun CreateAccountScreen(viewModel: AuthViewModel, activity: Activity) {
+fun CreateAccountScreen(
+    viewModel: AuthViewModel,
+    activity: Activity
+) {
     val context = LocalContext.current
 
-    // State variables
     var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
-    var userType by remember { mutableStateOf("user") }
 
-    // Observe ViewModel state
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
+    val registerState by viewModel.registerState.collectAsStateWithLifecycle()
 
-    // Show error messages
+    val credentialManager = remember { CredentialManager.create(context) }
+    val coroutineScope = rememberCoroutineScope()
+
     LaunchedEffect(errorMessage) {
         if (errorMessage.isNotEmpty()) {
             Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
         }
     }
-    val registerState by viewModel.registerState.collectAsStateWithLifecycle()
+
     LaunchedEffect(registerState) {
         if (registerState is RegisterUiState.Success) {
-
             val intent = Intent(context, HomeScreen::class.java)
-
             context.startActivity(intent)
             activity.finish()
         }
     }
-    val credentialManager = remember { CredentialManager.create(context) }
-    val coroutineScope = rememberCoroutineScope()
 
     fun startGoogleRegister() {
         coroutineScope.launch {
@@ -99,7 +103,8 @@ fun CreateAccountScreen(viewModel: AuthViewModel, activity: Activity) {
                     .setFilterByAuthorizedAccounts(false)
                     .setServerClientId(
                         "370184886750-dmmpsqps6mih9equadgiu8fqu6rpesc0.apps.googleusercontent.com"
-                    ).build()
+                    )
+                    .build()
 
                 val request = GetCredentialRequest.Builder()
                     .addCredentialOption(googleIdOption)
@@ -115,7 +120,7 @@ fun CreateAccountScreen(viewModel: AuthViewModel, activity: Activity) {
 
                 viewModel.signInWithGoogle(
                     idToken = googleCredential.idToken,
-                    userType = userType
+                    userType = "citizen"
                 )
 
             } catch (e: Exception) {
@@ -131,16 +136,21 @@ fun CreateAccountScreen(viewModel: AuthViewModel, activity: Activity) {
     Scaffold(
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        colors = listOf(Color(0xFF154385), Color(0xFF0B2D5E))
+                        colors = listOf(
+                            Color(0xFF154385),
+                            Color(0xFF0B2D5E)
+                        )
                     )
                 )
                 .padding(innerPadding)
         ) {
+
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -148,6 +158,7 @@ fun CreateAccountScreen(viewModel: AuthViewModel, activity: Activity) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 contentPadding = PaddingValues(bottom = 40.dp)
             ) {
+
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -155,7 +166,10 @@ fun CreateAccountScreen(viewModel: AuthViewModel, activity: Activity) {
                         modifier = Modifier.size(60.dp),
                         shape = RoundedCornerShape(16.dp),
                         color = Color.White.copy(alpha = 0.15f),
-                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f))
+                        border = BorderStroke(
+                            1.dp,
+                            Color.White.copy(alpha = 0.2f)
+                        )
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.smartcity),
@@ -166,6 +180,7 @@ fun CreateAccountScreen(viewModel: AuthViewModel, activity: Activity) {
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
+
                     Text(
                         text = "Create Account",
                         color = Color.White,
@@ -179,128 +194,130 @@ fun CreateAccountScreen(viewModel: AuthViewModel, activity: Activity) {
                         fontSize = 14.sp
                     )
 
-                    Spacer(modifier = Modifier.height(7.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(10.dp),
-                        color = Color.White
+                        shape = RoundedCornerShape(16.dp),
+                        color = Color(0xFFFDFDFD)
                     ) {
+
                         Column(
-                            modifier = Modifier.padding(10.dp),
+                            modifier = Modifier.padding(18.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
+
                             CustomInputField(
-                                "FULL NAME",
-                                fullName,
-                                { fullName = it },
-                                Icons.Default.Person,
-                                "John Doe",
+                                label = "FULL NAME",
+                                value = fullName,
+                                onValueChange = { fullName = it },
+                                icon = Icons.Default.Person,
+                                placeholder = "John Doe",
                                 enabled = !isLoading
                             )
+
                             CustomInputField(
-                                "EMAIL",
-                                email,
-                                { email = it },
-                                Icons.Default.Email,
-                                "user@example.com",
-                                KeyboardType.Email,
+                                label = "EMAIL",
+                                value = email,
+                                onValueChange = { email = it },
+                                icon = Icons.Default.Email,
+                                placeholder = "user@example.com",
+                                keyboardType = KeyboardType.Email,
                                 enabled = !isLoading
                             )
+
                             CustomInputField(
-                                "PHONE NUMBER",
-                                phone,
-                                { phone = it },
-                                Icons.Default.Phone,
-                                "+977 9701234567",
-                                KeyboardType.Phone,
+                                label = "PHONE NUMBER",
+                                value = phone,
+                                onValueChange = { phone = it },
+                                icon = Icons.Default.Phone,
+                                placeholder = "+977 9701234567",
+                                keyboardType = KeyboardType.Phone,
                                 enabled = !isLoading
                             )
+
                             CustomInputField(
-                                "PASSWORD",
-                                password,
-                                { password = it },
-                                Icons.Default.Lock,
-                                "••••••••",
-                                isPassword = true,
-                                enabled = !isLoading
-                            )
-                            CustomInputField(
-                                "CONFIRM PASSWORD",
-                                confirmPassword,
-                                { confirmPassword = it },
-                                Icons.Default.Lock,
-                                "••••••••",
+                                label = "PASSWORD",
+                                value = password,
+                                onValueChange = { password = it },
+                                icon = Icons.Default.Lock,
+                                placeholder = "••••••••",
+                                keyboardType = KeyboardType.Password,
                                 isPassword = true,
                                 enabled = !isLoading
                             )
 
-                            Spacer(modifier = Modifier.height(12.dp))
+                            CustomInputField(
+                                label = "CONFIRM PASSWORD",
+                                value = confirmPassword,
+                                onValueChange = { confirmPassword = it },
+                                icon = Icons.Default.Lock,
+                                placeholder = "••••••••",
+                                keyboardType = KeyboardType.Password,
+                                isPassword = true,
+                                enabled = !isLoading
+                            )
 
-                            // User Type Selection
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text("Account Type:", fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
-                                Spacer(modifier = Modifier.width(16.dp))
+                            Spacer(modifier = Modifier.height(22.dp))
 
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    RadioButton(
-                                        selected = userType == "user",
-                                        onClick = { userType = "user" },
-                                        enabled = !isLoading
-                                    )
-                                    Text("User", fontSize = 12.sp, modifier = Modifier.padding(start = 4.dp))
-                                }
-
-                                Spacer(modifier = Modifier.width(16.dp))
-
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    RadioButton(
-                                        selected = userType == "admin",
-                                        onClick = { userType = "admin" },
-                                        enabled = !isLoading
-                                    )
-                                    Text("Admin", fontSize = 12.sp, modifier = Modifier.padding(start = 4.dp))
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(24.dp))
-
-                            // Loading indicator
                             if (isLoading) {
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(24.dp),
                                     color = Color(0xFF005ED2)
                                 )
+
                                 Spacer(modifier = Modifier.height(8.dp))
                             }
 
-                            // Sign Up Button
                             Button(
                                 onClick = {
-                                    // Validate
-                                    if (fullName.isEmpty()) {
-                                        Toast.makeText(context, "Please enter full name", Toast.LENGTH_SHORT).show()
-                                        return@Button
-                                    }
-                                    if (email.isEmpty()) {
-                                        Toast.makeText(context, "Please enter email", Toast.LENGTH_SHORT).show()
-                                        return@Button
-                                    }
-                                    if (password.isEmpty()) {
-                                        Toast.makeText(context, "Please enter password", Toast.LENGTH_SHORT).show()
-                                        return@Button
-                                    }
-                                    if (password != confirmPassword) {
-                                        Toast.makeText(context, "Passwords don't match", Toast.LENGTH_SHORT).show()
-                                        return@Button
+                                    when {
+                                        fullName.isBlank() -> {
+                                            Toast.makeText(
+                                                context,
+                                                "Please enter full name",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                            return@Button
+                                        }
+
+                                        email.isBlank() -> {
+                                            Toast.makeText(
+                                                context,
+                                                "Please enter email",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                            return@Button
+                                        }
+
+                                        phone.isBlank() -> {
+                                            Toast.makeText(
+                                                context,
+                                                "Please enter phone number",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                            return@Button
+                                        }
+
+                                        password.isBlank() -> {
+                                            Toast.makeText(
+                                                context,
+                                                "Please enter password",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                            return@Button
+                                        }
+
+                                        password != confirmPassword -> {
+                                            Toast.makeText(
+                                                context,
+                                                "Passwords don't match",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                            return@Button
+                                        }
                                     }
 
-                                    // Call register
                                     viewModel.register(
                                         email = email,
                                         password = password,
@@ -308,31 +325,41 @@ fun CreateAccountScreen(viewModel: AuthViewModel, activity: Activity) {
                                         name = fullName,
                                         phone = phone
                                     )
-
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(54.dp),
                                 shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF005ED2)),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFF005ED2)
+                                ),
                                 enabled = !isLoading
                             ) {
-                                Text("Sign Up", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                                Text(
+                                    text = "Sign Up",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
                             }
 
                             Spacer(modifier = Modifier.height(20.dp))
 
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 HorizontalDivider(
                                     modifier = Modifier.weight(1f),
                                     color = Color.LightGray.copy(alpha = 0.5f)
                                 )
+
                                 Text(
-                                    "  OR CONTINUE WITH  ",
+                                    text = "  OR CONTINUE WITH  ",
                                     fontSize = 10.sp,
                                     color = Color.Gray,
                                     fontWeight = FontWeight.Bold
                                 )
+
                                 HorizontalDivider(
                                     modifier = Modifier.weight(1f),
                                     color = Color.LightGray.copy(alpha = 0.5f)
@@ -347,21 +374,28 @@ fun CreateAccountScreen(viewModel: AuthViewModel, activity: Activity) {
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(40.dp),
+                                    .height(44.dp),
                                 shape = RoundedCornerShape(12.dp),
-                                border = BorderStroke(1.dp, Color.LightGray),
+                                border = BorderStroke(
+                                    1.dp,
+                                    Color(0xFFC8C8C8)
+                                ),
                                 enabled = !isLoading
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
                                     Icon(
                                         painter = painterResource(id = R.drawable.google),
                                         contentDescription = null,
                                         modifier = Modifier.size(20.dp),
                                         tint = Color.Unspecified
                                     )
+
                                     Spacer(modifier = Modifier.width(12.dp))
+
                                     Text(
-                                        "Continue with Google",
+                                        text = "Continue with Google",
                                         color = Color.DarkGray,
                                         fontWeight = FontWeight.SemiBold
                                     )
@@ -377,14 +411,19 @@ fun CreateAccountScreen(viewModel: AuthViewModel, activity: Activity) {
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+
                         Text(
                             text = "Already have an account? ",
                             color = Color.White.copy(alpha = 0.9f),
                             fontSize = 15.sp
                         )
+
                         TextButton(
                             onClick = {
-                                val intent = android.content.Intent(context, LoginActivity::class.java)
+                                val intent = Intent(
+                                    context,
+                                    LoginActivity::class.java
+                                )
                                 context.startActivity(intent)
                                 activity.finish()
                             },
@@ -417,39 +456,64 @@ fun CustomInputField(
     isPassword: Boolean = false,
     enabled: Boolean = true
 ) {
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp)
+            .padding(vertical = 7.dp)
     ) {
+
         Text(
             text = label,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.Gray,
+            color = Color(0xFF666666),
             modifier = Modifier.padding(start = 4.dp, bottom = 6.dp)
         )
+
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp),
-            placeholder = { Text(placeholder, color = Color.LightGray) },
+                .height(58.dp),
+            placeholder = {
+                Text(
+                    text = placeholder,
+                    color = Color(0xFF9E9E9E)
+                )
+            },
             leadingIcon = {
                 Icon(
-                    icon,
+                    imageVector = icon,
                     contentDescription = null,
-                    tint = Color.Gray,
+                    tint = Color(0xFF6D6D6D),
                     modifier = Modifier.size(20.dp)
                 )
             },
-            visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
-            keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-            shape = RoundedCornerShape(12.dp),
+            visualTransformation = if (isPassword) {
+                PasswordVisualTransformation()
+            } else {
+                VisualTransformation.None
+            },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = keyboardType
+            ),
+            shape = RoundedCornerShape(14.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = Color.LightGray.copy(alpha = 0.7f),
-                focusedBorderColor = Color(0xFF005ED2)
+                focusedContainerColor = Color(0xFFF3F4F6),
+                unfocusedContainerColor = Color(0xFFF3F4F6),
+                disabledContainerColor = Color(0xFFF3F4F6),
+
+                focusedBorderColor = Color(0xFFB5B5B5),
+                unfocusedBorderColor = Color(0xFFC8C8C8),
+                disabledBorderColor = Color(0xFFD0D0D0),
+
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black,
+                disabledTextColor = Color.DarkGray,
+
+                cursorColor = Color(0xFF005ED2)
             ),
             singleLine = true,
             enabled = enabled

@@ -5,11 +5,13 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,11 +19,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smart_city.ui.theme.SmartCityTheme
-import com.google.firebase.auth.FirebaseAuth
+import kotlin.random.Random
 
 class ForgotPassword : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,11 +41,16 @@ class ForgotPassword : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ForgetPasswordScreen(onBackClick: () -> Unit) {
-    var email by remember { mutableStateOf("") }
-    var isLoading by remember { mutableStateOf(false) }
-
     val context = LocalContext.current
-    val auth = FirebaseAuth.getInstance()
+
+    var email by remember { mutableStateOf("") }
+    var generatedOtp by remember { mutableStateOf("") }
+    var enteredOtp by remember { mutableStateOf("") }
+    var otpSent by remember { mutableStateOf(false) }
+    var otpVerified by remember { mutableStateOf(false) }
+
+    var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -107,14 +114,13 @@ fun ForgetPasswordScreen(onBackClick: () -> Unit) {
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Enter your email address below. We will send you a reset link to create a new password.",
+                text = "Enter your email address. An OTP will appear below the email field.",
                 color = Color.Gray,
                 fontSize = 14.sp,
-                modifier = Modifier.padding(horizontal = 8.dp),
                 lineHeight = 20.sp
             )
 
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(36.dp))
 
             OutlinedTextField(
                 value = email,
@@ -123,63 +129,128 @@ fun ForgetPasswordScreen(onBackClick: () -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Email,
-                        contentDescription = null
-                    )
+                    Icon(Icons.Default.Email, contentDescription = null)
                 },
+                singleLine = true,
+                enabled = !otpVerified,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color(0xFF1E3A8A),
                     focusedLabelColor = Color(0xFF1E3A8A)
-                ),
-                singleLine = true,
-                enabled = !isLoading
+                )
             )
+
+            if (otpSent) {
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = "Your OTP is: $generatedOtp",
+                    color = Color(0xFF1E3A8A),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = Color(0xFFE8EAF6),
+                            shape = RoundedCornerShape(10.dp)
+                        )
+                        .padding(12.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = enteredOtp,
+                    onValueChange = { enteredOtp = it },
+                    label = { Text("Enter OTP") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
+                    enabled = !otpVerified
+                )
+            }
+
+            if (otpVerified) {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = newPassword,
+                    onValueChange = { newPassword = it },
+                    label = { Text("New Password") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    leadingIcon = {
+                        Icon(Icons.Default.Lock, contentDescription = null)
+                    },
+                    visualTransformation = PasswordVisualTransformation(),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it },
+                    label = { Text("Confirm Password") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    leadingIcon = {
+                        Icon(Icons.Default.Lock, contentDescription = null)
+                    },
+                    visualTransformation = PasswordVisualTransformation(),
+                    singleLine = true
+                )
+            }
 
             Spacer(modifier = Modifier.height(32.dp))
 
             Button(
                 onClick = {
-                    if (email.isBlank()) {
-                        Toast.makeText(
-                            context,
-                            "Please enter your email",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        return@Button
-                    }
-
-                    if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                        Toast.makeText(
-                            context,
-                            "Please enter a valid email",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        return@Button
-                    }
-
-                    isLoading = true
-
-                    auth.sendPasswordResetEmail(email)
-                        .addOnCompleteListener { task ->
-                            isLoading = false
-
-                            if (task.isSuccessful) {
-                                Toast.makeText(
-                                    context,
-                                    "Reset link sent to your email",
-                                    Toast.LENGTH_LONG
-                                ).show()
-
-                                onBackClick()
-                            } else {
-                                Toast.makeText(
-                                    context,
-                                    task.exception?.message ?: "Failed to send reset email",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
+                    if (!otpSent) {
+                        if (email.isBlank()) {
+                            Toast.makeText(context, "Please enter email", Toast.LENGTH_SHORT).show()
+                            return@Button
                         }
+
+                        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                            Toast.makeText(context, "Please enter valid email", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+
+                        generatedOtp = Random.nextInt(100000, 999999).toString()
+                        otpSent = true
+
+                        Toast.makeText(context, "OTP generated", Toast.LENGTH_SHORT).show()
+                    } else if (!otpVerified) {
+                        if (enteredOtp == generatedOtp) {
+                            otpVerified = true
+                            Toast.makeText(context, "OTP verified", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(context, "Invalid OTP", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        if (newPassword.isBlank() || confirmPassword.isBlank()) {
+                            Toast.makeText(context, "Please enter password", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+
+                        if (newPassword.length < 6) {
+                            Toast.makeText(context, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+
+                        if (newPassword != confirmPassword) {
+                            Toast.makeText(context, "Passwords do not match", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+
+                        Toast.makeText(
+                            context,
+                            "Password reset successful for demo",
+                            Toast.LENGTH_LONG
+                        ).show()
+
+                        onBackClick()
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -187,31 +258,18 @@ fun ForgetPasswordScreen(onBackClick: () -> Unit) {
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF1E3A8A)
-                ),
-                enabled = !isLoading
+                )
             ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(22.dp),
-                        color = Color.White,
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Text(
-                        text = "Send Reset Link",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                Text(
+                    text = when {
+                        !otpSent -> "Generate OTP"
+                        !otpVerified -> "Verify OTP"
+                        else -> "Reset Password"
+                    },
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun ForgetPasswordPreview() {
-    SmartCityTheme {
-        ForgetPasswordScreen(onBackClick = {})
     }
 }
