@@ -74,6 +74,7 @@ dependencies {
 
     implementation(libs.maplibre.android.sdk)
     implementation(libs.okhttp)
+    implementation(libs.volley)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

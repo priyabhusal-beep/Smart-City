@@ -1,12 +1,10 @@
 package com.example.smart_city.repo
 
 import com.example.smart_city.model.User
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
-<<<<<<< HEAD
-=======
 import com.google.firebase.auth.UserProfileChangeRequest
->>>>>>> fcf9db22a2e2face594702de430ba4b4923cbf06
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.tasks.await
 
@@ -32,7 +30,8 @@ class AuthRepository {
             profilePicture = "",
             userType = "citizen",
             wardNo = 0,
-            createdAt = System.currentTimeMillis()
+            createdAt = System.currentTimeMillis(),
+            lastLogin = System.currentTimeMillis()
         )
 
         database.child("users").child(uid).setValue(user).await()
@@ -53,60 +52,21 @@ class AuthRepository {
         return user
     }
 
-    suspend fun signInWithGoogle(idToken: String, userType: String): User {
+    suspend fun signInWithGoogle(idToken: String, userType: String = "citizen"): User {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         val authResult = auth.signInWithCredential(credential).await()
-<<<<<<< HEAD
-        val firebaseUser = authResult.user ?: throw Exception("Google Sign-In failed")
-        val uid = firebaseUser.uid
-
-        val snapshot = database.child("users").child(uid).get().await()
-        return if (snapshot.exists()) {
-            snapshot.getValue(User::class.java) ?: throw Exception("User data not found")
-        } else {
-            val user = User(
-                uid = uid,
-                email = firebaseUser.email ?: "",
-                name = firebaseUser.displayName ?: "",
-                userType = userType,
-                createdAt = System.currentTimeMillis()
-            )
-            database.child("users").child(uid).setValue(user).await()
-            user
-        }
-    }
-
-    suspend fun updateUserProfile(name: String, email: String, password: String) {
-        val currentUser = auth.currentUser ?: throw Exception("No user logged in")
-        val uid = currentUser.uid
-
-        // Update email in Auth if changed
-        if (email.isNotBlank() && email != currentUser.email) {
-            if (password.isBlank()) throw Exception("Password required to change email")
-            
-            // Re-authenticate user first
-            val credential = com.google.firebase.auth.EmailAuthProvider.getCredential(currentUser.email!!, password)
-            currentUser.reauthenticate(credential).await()
-            currentUser.updateEmail(email).await()
-        }
-
-        // Update database
-        val updates = mutableMapOf<String, Any>()
-        if (name.isNotBlank()) updates["name"] = name
-        if (email.isNotBlank()) updates["email"] = email
-
-        if (updates.isNotEmpty()) {
-            database.child("users").child(uid).updateChildren(updates).await()
-=======
         val firebaseUser = authResult.user ?: throw Exception("Google sign-in failed")
 
         val uid = firebaseUser.uid
         val snapshot = database.child("users").child(uid).get().await()
 
         return if (snapshot.exists()) {
-            val user = snapshot.getValue(User::class.java) ?: throw Exception("User data not found")
+            val user = snapshot.getValue(User::class.java)
+                ?: throw Exception("User data not found")
+
             database.child("users").child(uid).child("lastLogin")
                 .setValue(System.currentTimeMillis()).await()
+
             user
         } else {
             val newUser = User(
@@ -120,6 +80,7 @@ class AuthRepository {
                 createdAt = System.currentTimeMillis(),
                 lastLogin = System.currentTimeMillis()
             )
+
             database.child("users").child(uid).setValue(newUser).await()
             newUser
         }
@@ -137,19 +98,27 @@ class AuthRepository {
             val profileUpdates = UserProfileChangeRequest.Builder()
                 .setDisplayName(name)
                 .build()
+
             user.updateProfile(profileUpdates).await()
             database.child("users").child(user.uid).child("name").setValue(name).await()
         }
 
         if (email.isNotBlank() && email != user.email) {
+            if (password.isBlank()) {
+                throw Exception("Password required to change email")
+            }
+
+            val credential = EmailAuthProvider.getCredential(user.email ?: "", password)
+            user.reauthenticate(credential).await()
+
             @Suppress("DEPRECATION")
             user.updateEmail(email).await()
+
             database.child("users").child(user.uid).child("email").setValue(email).await()
         }
 
         if (password.isNotBlank()) {
             user.updatePassword(password).await()
->>>>>>> fcf9db22a2e2face594702de430ba4b4923cbf06
         }
     }
 
