@@ -113,4 +113,25 @@ class ComplaintsRepository {
             }
         }
     }
+    fun getComplaintById(
+        complaintId: String,
+        onResult: (ReportModel?) -> Unit
+    ) {
+
+        database.child(complaintId)
+            .get()
+            .addOnSuccessListener { snapshot ->
+
+                val complaint = snapshot.getValue(ReportModel::class.java)
+                onResult(complaint)
+
+            }
+            .addOnFailureListener {
+
+                onResult(null)
+
+            }
+
+    }
 }
+

@@ -5,7 +5,6 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,8 +15,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,14 +24,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
 import com.example.smart_city.model.ReportModel
 import com.example.smart_city.viewmodel.ComplaintsViewModel
+import android.content.Intent
+import androidx.compose.material.icons.outlined.BarChart
 
 class AdminManageScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,10 +54,9 @@ fun ManageComplaintsScreen(
     // Dialog state for updating status
     var showStatusDialog by remember { mutableStateOf(false) }
     var selectedComplaint by remember { mutableStateOf<ReportModel?>(null) }
-    val statusOptions = listOf("Pending", "Processing", "Resolved") // CHANGED: "Completed" -> "Resolved"
+    val statusOptions = listOf("Pending", "Processing", "Resolved")
 
-    // State for showing complaint details
-    var showDetailDialog by remember { mutableStateOf(false) }
+
 
     LaunchedEffect(Unit) {
         viewModel.fetchAllComplaints()
@@ -134,8 +130,9 @@ fun ManageComplaintsScreen(
                     ComplaintItemRow(
                         complaint = complaint,
                         onDescriptionClick = {
-                            selectedComplaint = complaint
-                            showDetailDialog = true
+                            val intent = Intent(context, ComplaintDetails::class.java)
+                            intent.putExtra("complaintId", complaint.id)
+                            context.startActivity(intent)
                         },
                         onStatusClick = {
                             selectedComplaint = complaint
@@ -166,7 +163,7 @@ fun ManageComplaintsScreen(
                                     .padding(vertical = 12.dp, horizontal = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                RadioButton(selected = selectedComplaint?.status?.lowercase() == status.lowercase(), onClick = null)
+                                RadioButton(selected = selectedComplaint?.status?.equals(status, ignoreCase = true) == true, onClick = null)
                                 Text(text = status, modifier = Modifier.padding(start = 12.dp))
                             }
                         }
@@ -174,35 +171,6 @@ fun ManageComplaintsScreen(
                 },
                 confirmButton = {},
                 dismissButton = { TextButton(onClick = { showStatusDialog = false }) { Text("Cancel") } }
-            )
-        }
-
-        // --- DETAIL VIEW DIALOG ---
-        if (showDetailDialog && selectedComplaint != null) {
-            AlertDialog(
-                onDismissRequest = { showDetailDialog = false },
-                title = { Text(selectedComplaint!!.issueType, fontWeight = FontWeight.Bold) },
-                text = {
-                    Column {
-                        AsyncImage(
-                            model = ImageRequest.Builder(LocalContext.current)
-                                .data(selectedComplaint!!.imageUrl.ifEmpty { null })
-                                .build(),
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxWidth().height(180.dp).clip(RoundedCornerShape(8.dp)),
-                            contentScale = ContentScale.Crop,
-                            placeholder = painterResource(id = R.drawable.smartcity),
-                            error = painterResource(id = R.drawable.smartcity)
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text("Area: ${selectedComplaint!!.area}", fontWeight = FontWeight.SemiBold)
-                        Text("Ward: ${selectedComplaint!!.ward}")
-                        Text("Description: ${selectedComplaint!!.description}", color = Color.Gray)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("Status: ${selectedComplaint!!.status.uppercase()}", color = Color(0xFF1E3A8A), fontWeight = FontWeight.Bold)
-                    }
-                },
-                confirmButton = { Button(onClick = { showDetailDialog = false }) { Text("Close") } }
             )
         }
     }
@@ -288,14 +256,20 @@ fun BadgeStatusView(status: String, onClick: () -> Unit) {
     }
 }
 
+
 @Composable
 fun AdminBottomBarNav() {
+    val context = LocalContext.current
     NavigationBar(containerColor = Color.White, tonalElevation = 8.dp) {
         NavigationBarItem(
             icon = { Icon(painterResource(id = R.drawable.baseline_home_24), "Home") },
             label = { Text("HOME", fontSize = 10.sp) },
             selected = false,
-            onClick = { },
+            onClick = {
+                val intent = Intent(context, AdminDashboard::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                context.startActivity(intent)
+            },
             colors = NavigationBarItemDefaults.colors(unselectedIconColor = Color.Gray, unselectedTextColor = Color.Gray)
         )
         NavigationBarItem(
@@ -310,11 +284,24 @@ fun AdminBottomBarNav() {
             )
         )
         NavigationBarItem(
-            icon = { Icon(Icons.Default.BarChart, "Analytics") },
-            label = { Text("Analytics", fontSize = 10.sp) },
             selected = false,
-            onClick = { },
-            colors = NavigationBarItemDefaults.colors(unselectedIconColor = Color.Gray, unselectedTextColor = Color.Gray)
+            onClick = {
+                // TODO: Open Analytics screen later
+            },
+            icon = {
+                Icon(
+                    Icons.Outlined.BarChart,
+                    contentDescription = "Analytics"
+                )
+            },
+            label = {
+                Text("Analytics", fontSize = 10.sp)
+            },
+            colors = NavigationBarItemDefaults.colors(
+                unselectedIconColor = Color.Gray,
+                unselectedTextColor = Color.Gray
+            )
         )
     }
+
 }

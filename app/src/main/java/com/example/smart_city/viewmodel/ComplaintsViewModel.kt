@@ -15,7 +15,8 @@ class ComplaintsViewModel(
     var complaints by mutableStateOf(listOf<ReportModel>())
     var isLoading by mutableStateOf(false)
     var errorMessage by mutableStateOf("")
-
+    var selectedComplaint by mutableStateOf<ReportModel?>(null)
+        private set
     fun fetchAllComplaints() {
         isLoading = true
         errorMessage = ""
@@ -80,6 +81,18 @@ class ComplaintsViewModel(
                         it.description.contains(query, ignoreCase = true) ||
                         it.issueType.contains(query, ignoreCase = true)
             }
+        }
+    }
+    fun fetchComplaintById(complaintId: String) {
+
+        isLoading = true
+
+        repository.getComplaintById(complaintId) { complaint ->
+
+            selectedComplaint = complaint
+
+            isLoading = false
+
         }
     }
 }

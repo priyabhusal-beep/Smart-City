@@ -34,6 +34,8 @@ import com.example.smart_city.viewmodel.ComplaintsViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import android.content.Intent
+
 
 class AdminDashboard : ComponentActivity() {
 
@@ -372,6 +374,7 @@ fun StatBox(
 
 @Composable
 fun CustomBottomNavigation() {
+    val context = androidx.compose.ui.platform.LocalContext.current
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
@@ -404,7 +407,11 @@ fun CustomBottomNavigation() {
 
             NavigationBarItem(
                 selected = false,
-                onClick = {},
+                onClick = {
+                    context.startActivity(
+                        Intent(context, AdminManageScreen::class.java)
+                    )
+                },
                 icon = {
                     Icon(
                         imageVector = Icons.Default.Person,
