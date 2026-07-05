@@ -31,7 +31,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.smart_city.ui.theme.SmartCityTheme
 import com.example.smart_city.viewmodel.AuthViewModel
 import com.example.smart_city.viewmodel.LoginUiState
-
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import kotlinx.coroutines.launch
 class LoginActivity : ComponentActivity() {
 
     private val authViewModel: AuthViewModel by lazy {
@@ -62,6 +66,45 @@ fun LoginScreen(viewModel: AuthViewModel) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    val credentialManager = remember { CredentialManager.create(context) }
+    val coroutineScope = rememberCoroutineScope()
+
+    fun startGoogleLogin() {
+        coroutineScope.launch {
+            try {
+                val googleIdOption = GetGoogleIdOption.Builder()
+                    .setFilterByAuthorizedAccounts(false)
+                    .setServerClientId(
+                        "370184886750-dmmpsqps6mih9equadgiu8fqu6rpesc0.apps.googleusercontent.com"
+                    )
+                    .build()
+
+                val request = GetCredentialRequest.Builder()
+                    .addCredentialOption(googleIdOption)
+                    .build()
+
+                val result = credentialManager.getCredential(
+                    context = context,
+                    request = request
+                )
+
+                val googleCredential =
+                    GoogleIdTokenCredential.createFrom(result.credential.data)
+
+                viewModel.signInWithGoogle(
+                    idToken = googleCredential.idToken,
+                    userType = "citizen"
+                )
+
+            } catch (e: Exception) {
+                Toast.makeText(
+                    context,
+                    e.message ?: "Google Sign-In failed",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
 
     LaunchedEffect(loginState) {
         when (val state = loginState) {
@@ -224,6 +267,7 @@ fun LoginScreen(viewModel: AuthViewModel) {
                             enabled = !isLoading
                         )
 
+
                         TextButton(
                             onClick = {
                                 val intent = Intent(context, ForgotPassword::class.java)
@@ -312,11 +356,7 @@ fun LoginScreen(viewModel: AuthViewModel) {
 
                         OutlinedButton(
                             onClick = {
-                                Toast.makeText(
-                                    context,
-                                    "Google Sign-In coming soon",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                startGoogleLogin()
                             },
                             modifier = Modifier
                                 .fillMaxWidth()

@@ -40,6 +40,7 @@ android {
             useLegacyPackaging = false
         }
     }
+
 }
 
 dependencies {
