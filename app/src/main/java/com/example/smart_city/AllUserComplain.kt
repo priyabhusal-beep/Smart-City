@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -21,12 +22,14 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.smart_city.model.ReportModel
 import com.example.smart_city.ui.theme.SmartCityTheme
+import com.example.smart_city.utils.ThemePreference
 import com.example.smart_city.viewmodel.ReportViewModel
 
 class AllUserComplain : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
         setContent {
             SmartCityTheme {
                 ComplainActivity()
@@ -37,13 +40,19 @@ class AllUserComplain : ComponentActivity() {
 
 @Composable
 fun ComplainActivity(
-    viewModel: ReportViewModel = viewModel(),
-    backgroundColor: Color = Color.White,
-    cardBackgroundColor: Color = Color(0xFFF5F5F5),
-    textColor: Color = Color.Black,
-    secondaryTextColor: Color = Color.Gray
+    viewModel: ReportViewModel = viewModel()
 ) {
-    // Fetch only this user's complaints when the screen opens
+    val context = LocalContext.current
+    val isDarkMode = remember {
+        mutableStateOf(ThemePreference.getDarkMode(context))
+    }
+
+    val backgroundColor = if (isDarkMode.value) Color(0xFF121212) else Color.White
+    val cardBackgroundColor = if (isDarkMode.value) Color(0xFF1F1F1F) else Color(0xFFF5F5F5)
+    val textColor = if (isDarkMode.value) Color.White else Color.Black
+    val secondaryTextColor = if (isDarkMode.value) Color(0xFFBDBDBD) else Color.Gray
+    val titleColor = if (isDarkMode.value) Color(0xFF304FFE) else Color(0xFF1A237E)
+
     LaunchedEffect(Unit) {
         viewModel.fetchUserComplaints()
     }
@@ -70,14 +79,11 @@ fun ComplainActivity(
                     text = "SmartCity",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1A237E)
+                    color = titleColor
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
             }
-
-            // Search bar removed as per request
-            // Stats row (Total, Pending, Resolved) removed as per request
 
             item {
                 Text(
@@ -86,13 +92,19 @@ fun ComplainActivity(
                     fontWeight = FontWeight.Bold,
                     color = textColor
                 )
+
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
             if (isLoading) {
                 item {
-                    Box(modifier = Modifier.fillMaxWidth().padding(top = 40.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = Color(0xFF1A237E))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 40.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = titleColor)
                     }
                 }
             } else if (userComplaints.isEmpty()) {
@@ -112,6 +124,7 @@ fun ComplainActivity(
                         textColor = textColor,
                         secondaryTextColor = secondaryTextColor
                     )
+
                     Spacer(modifier = Modifier.height(10.dp))
                 }
             }
@@ -131,13 +144,17 @@ fun ComplaintCardItem(
     secondaryTextColor: Color
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().height(110.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(110.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = cardBackgroundColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -148,12 +165,15 @@ fun ComplaintCardItem(
                     fontWeight = FontWeight.Bold,
                     color = textColor
                 )
+
                 Text(
                     text = complaint.area,
                     fontSize = 12.sp,
                     color = secondaryTextColor
                 )
+
                 Spacer(modifier = Modifier.height(4.dp))
+
                 Text(
                     text = "ID: ${complaint.id.takeLast(6)}",
                     fontSize = 11.sp,
@@ -161,8 +181,8 @@ fun ComplaintCardItem(
                 )
             }
 
-            // Status badge (Matching your logic)
             val status = complaint.status.replaceFirstChar { it.uppercase() }
+
             val badgeColor = when (status.lowercase()) {
                 "pending" -> Color(0xFFFFB74D)
                 "in progress" -> Color(0xFF1E88E5)
@@ -172,7 +192,9 @@ fun ComplaintCardItem(
 
             Card(
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = badgeColor.copy(alpha = 0.15f))
+                colors = CardDefaults.cardColors(
+                    containerColor = badgeColor.copy(alpha = 0.15f)
+                )
             ) {
                 Text(
                     text = status,
