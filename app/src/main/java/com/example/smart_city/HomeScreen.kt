@@ -220,11 +220,7 @@ fun HomeActivity(
                         1 -> Reported(
                             navController = innerNavController,
                             category = "Traffic",
-                            isDarkMode = isDarkMode,
-                            backgroundColor = backgroundColor,
-                            cardBackgroundColor = cardBackgroundColor,
-                            textColor = textColor,
-                            secondaryTextColor = secondaryTextColor
+                            isDarkMode = isDarkMode
                         )
 
                         2 -> ComplaintsListScreen(

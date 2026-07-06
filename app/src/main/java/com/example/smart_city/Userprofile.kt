@@ -55,7 +55,7 @@ import com.example.smart_city.viewmodel.AuthViewModel
 import com.example.smart_city.viewmodel.ImageViewModel
 import com.example.smart_city.viewmodel.ReportViewModel
 import java.io.ByteArrayOutputStream
-
+import com.example.smart_city.utils.ThemePreference
 class Userprofile : ComponentActivity() {
 
     private val authViewModel: AuthViewModel by lazy {
@@ -74,7 +74,7 @@ class Userprofile : ComponentActivity() {
 @Composable
 fun LoadUserForProfileEffect(authViewModel: AuthViewModel?) {
     LaunchedEffect(Unit) {
-         authViewModel?.loadCurrentUserIfNeeded()
+        authViewModel?.loadCurrentUserIfNeeded()
     }
 }
 
@@ -82,8 +82,11 @@ fun LoadUserForProfileEffect(authViewModel: AuthViewModel?) {
 fun UserprofileApp(authViewModel: AuthViewModel? = null) {
     LoadUserForProfileEffect(authViewModel)
 
-    var isDarkMode by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
+    var isDarkMode by remember {
+        mutableStateOf(ThemePreference.getDarkMode(context))
+    }
     val lightBackground = Color(0xFFF8F9FA)
     val darkBackground = Color(0xFF121212)
     val lightText = Color.Black
