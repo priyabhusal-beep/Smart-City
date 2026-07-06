@@ -35,7 +35,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import android.content.Intent
-
+import androidx.compose.ui.res.painterResource
 
 class AdminDashboard : ComponentActivity() {
 
@@ -117,19 +117,43 @@ fun DashboardContent(
         )
     ) {
         item {
-            Column(modifier = Modifier.padding(bottom = 16.dp)) {
-                Text(
-                    text = "Admin Dashboard",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF0D236D)
-                )
+            val context = androidx.compose.ui.platform.LocalContext.current
 
-                Text(
-                    text = "Ward $wardNo infrastructure oversight",
-                    color = Color.Gray,
-                    fontSize = 14.sp
-                )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Admin Dashboard",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF0D236D)
+                    )
+
+                    Text(
+                        text = "Ward $wardNo infrastructure oversight",
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
+                }
+
+                IconButton(
+                    onClick = {
+                        context.startActivity(
+                            Intent(context, AdminNotificationActivity::class.java)
+                        )
+                    }
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.baseline_notifications_24),
+                        contentDescription = "Admin Notifications",
+                        tint = Color(0xFF0D236D),
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
             }
         }
 

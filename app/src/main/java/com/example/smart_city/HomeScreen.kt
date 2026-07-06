@@ -41,12 +41,15 @@ import com.example.smart_city.model.ReportModel
 import com.example.smart_city.ui.theme.SmartCityTheme
 import com.example.smart_city.viewmodel.AuthViewModel
 import com.example.smart_city.viewmodel.ComplaintsViewModel
+import com.example.smart_city.viewmodel.NotificationViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 val PrimaryBlue = Color(0xFF0046B1)
 
 class HomeScreen : ComponentActivity() {
@@ -344,7 +347,27 @@ fun DashboardContents(
     val context = LocalContext.current
     val expandedCategories = remember { mutableStateOf(setOf<String>()) }
     val complaintsByCategory = remember(complaints) { complaints.groupBy { it.category }.toSortedMap() }
+    val notificationViewModel: NotificationViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    val unreadCount by notificationViewModel.unreadCount.collectAsState()
 
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner, currentUser?.wardNo) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                notificationViewModel.loadUnreadCount(currentUser?.wardNo ?: 0)
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+    LaunchedEffect(currentUser?.wardNo) {
+        notificationViewModel.loadUnreadCount(currentUser?.wardNo ?: 0)
+    }
     LaunchedEffect(Unit) { viewModel.fetchAllComplaints() }
 
     LazyColumn(
@@ -374,7 +397,32 @@ fun DashboardContents(
                     Text(text = "Hello", color = secondaryTextColor)
                     Text(text = currentUser?.name ?: "Guest", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = PrimaryBlue)
                 }
-                Icon(painter = painterResource(R.drawable.baseline_notifications_24), contentDescription = null, tint = PrimaryBlue)
+                BadgedBox(
+                    badge = {
+                        if (unreadCount > 0) {
+                            Badge {
+                                Text(unreadCount.toString())
+                            }
+                        }
+                    }
+                ) {
+                    IconButton(
+                        onClick = {
+                            context.startActivity(
+                                android.content.Intent(
+                                    context,
+                                    UserNotificationActivity::class.java
+                                ).putExtra("wardNo", currentUser?.wardNo ?: 0)
+                            )
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.baseline_notifications_24),
+                            contentDescription = "Notifications",
+                            tint = PrimaryBlue
+                        )
+                    }
+                }
             }
             Spacer(modifier = Modifier.height(20.dp))
         }

@@ -20,4 +20,6 @@
     <string name="title_activity_traffic_map_screen.kt">TrafficMapScreen.kt</string>
     <string name="title_activity_trrafficfullmap">Trrafficfullmap</string>
     <string name="title_activity_traffic_full_map_screen">TrafficFullMapScreen</string>
+    <string name="title_activity_admin_notification">AdminNotificationActivity</string>
+    <string name="title_activity_user_notification">UserNotificationActivity</string>
 </resources>
