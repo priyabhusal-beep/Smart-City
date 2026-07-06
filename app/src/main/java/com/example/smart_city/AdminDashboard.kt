@@ -451,7 +451,11 @@ fun CustomBottomNavigation() {
 
             NavigationBarItem(
                 selected = false,
-                onClick = {},
+                onClick = {
+                    context.startActivity(
+                        Intent(context, AdminAnalyticsActivity::class.java)
+                    )
+                },
                 icon = {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.List,

@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.smart_city.model.Notification
 import com.example.smart_city.ui.theme.SmartCityTheme
+import com.example.smart_city.utils.ThemePreference
 import com.example.smart_city.viewmodel.NotificationViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -35,12 +36,14 @@ class UserNotificationActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val wardNo = intent.getIntExtra("wardNo", 0)
+        val isDarkMode = ThemePreference.getDarkMode(this)
 
         setContent {
             SmartCityTheme {
                 UserNotificationScreen(
                     viewModel = viewModel,
                     wardNo = wardNo,
+                    isDarkMode = isDarkMode,
                     onBack = { finish() }
                 )
             }
@@ -52,10 +55,17 @@ class UserNotificationActivity : ComponentActivity() {
 fun UserNotificationScreen(
     viewModel: NotificationViewModel,
     wardNo: Int,
+    isDarkMode: Boolean,
     onBack: () -> Unit
 ) {
     val notifications by viewModel.notifications.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+
+    val backgroundColor =
+        if (isDarkMode) Color(0xFF121212) else Color(0xFFF6F8FC)
+
+    val emptyTextColor =
+        if (isDarkMode) Color(0xFFB0B0B0) else Color.Gray
 
     LaunchedEffect(Unit) {
         viewModel.loadUserNotifications(wardNo)
@@ -70,7 +80,7 @@ fun UserNotificationScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF6F8FC))
+            .background(backgroundColor)
     ) {
         Row(
             modifier = Modifier
@@ -111,7 +121,7 @@ fun UserNotificationScreen(
                 ) {
                     Text(
                         text = "No notifications yet",
-                        color = Color.Gray
+                        color = emptyTextColor
                     )
                 }
             }
@@ -126,7 +136,10 @@ fun UserNotificationScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(notifications) { notification ->
-                        NotificationCard(notification = notification)
+                        NotificationCard(
+                            notification = notification,
+                            isDarkMode = isDarkMode
+                        )
                     }
                 }
             }
@@ -136,7 +149,8 @@ fun UserNotificationScreen(
 
 @Composable
 fun NotificationCard(
-    notification: Notification
+    notification: Notification,
+    isDarkMode: Boolean
 ) {
     val date = remember(notification.createdAt) {
         SimpleDateFormat(
@@ -145,11 +159,26 @@ fun NotificationCard(
         ).format(Date(notification.createdAt))
     }
 
+    val cardColor =
+        if (isDarkMode) Color(0xFF1E1E1E) else Color.White
+
+    val titleColor =
+        if (isDarkMode) Color.White else Color(0xFF1A1A1A)
+
+    val messageColor =
+        if (isDarkMode) Color(0xFFE0E0E0) else Color.DarkGray
+
+    val dateColor =
+        if (isDarkMode) Color(0xFFB0B0B0) else Color.Gray
+
+    val iconBackground =
+        if (isDarkMode) Color(0xFF26324A) else Color(0xFFEAF1FF)
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = cardColor
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
     ) {
@@ -160,7 +189,7 @@ fun NotificationCard(
             Surface(
                 modifier = Modifier.size(44.dp),
                 shape = CircleShape,
-                color = Color(0xFFEAF1FF)
+                color = iconBackground
             ) {
                 Icon(
                     imageVector = Icons.Default.Notifications,
@@ -176,7 +205,7 @@ fun NotificationCard(
                 Text(
                     text = notification.title,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1A1A1A),
+                    color = titleColor,
                     style = MaterialTheme.typography.titleMedium
                 )
 
@@ -184,7 +213,7 @@ fun NotificationCard(
 
                 Text(
                     text = notification.message,
-                    color = Color.DarkGray,
+                    color = messageColor,
                     style = MaterialTheme.typography.bodyMedium
                 )
 
@@ -192,7 +221,7 @@ fun NotificationCard(
 
                 Text(
                     text = date,
-                    color = Color.Gray,
+                    color = dateColor,
                     style = MaterialTheme.typography.bodySmall
                 )
             }

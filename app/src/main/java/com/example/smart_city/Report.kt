@@ -54,7 +54,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
-
+import com.example.smart_city.utils.ThemePreference
 class Report : ComponentActivity() {
     private val permissionLauncher =
         registerForActivityResult(

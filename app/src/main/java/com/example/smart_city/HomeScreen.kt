@@ -1,12 +1,12 @@
 package com.example.smart_city
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
+import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,60 +14,85 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import coil3.compose.AsyncImage
-import coil3.request.CachePolicy
-import coil3.request.ImageRequest
+
 import com.example.smart_city.model.ReportModel
+import com.example.smart_city.repo.AuthRepository
 import com.example.smart_city.ui.theme.SmartCityTheme
+import com.example.smart_city.utils.ThemePreference
 import com.example.smart_city.viewmodel.AuthViewModel
+import com.example.smart_city.viewmodel.AuthViewModelFactory
 import com.example.smart_city.viewmodel.ComplaintsViewModel
 import com.example.smart_city.viewmodel.NotificationViewModel
-import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.delay
+
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
-import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
+
 val PrimaryBlue = Color(0xFF0046B1)
+val AccentTeal = Color(0xFF00A389)
+val LightBlueBg = Color(0xFFF0F5FF)
+val BackgroundGray = Color(0xFFF8F9FA)
 
 class HomeScreen : ComponentActivity() {
+
+    private val authViewModel: AuthViewModel by viewModels {
+        AuthViewModelFactory(application)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val authViewModel = (application as SmartCityApplication).authViewModel
+
         setContent {
             SmartCityTheme {
-                var isDarkMode by remember { mutableStateOf(false) }
+                var isDarkMode by remember {
+                    mutableStateOf(ThemePreference.getDarkMode(this))
+                }
+
                 val mainNavController = rememberNavController()
+
                 HomeActivity(
                     navController = mainNavController,
                     isDarkMode = isDarkMode,
-                    onDarkModeToggle = { newValue -> isDarkMode = newValue },
+                    onDarkModeToggle = { newValue ->
+                        isDarkMode = newValue
+                        ThemePreference.saveDarkMode(this, newValue)
+                    },
                     authViewModel = authViewModel
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun LoadCurrentUserEffect(authViewModel: AuthViewModel?) {
+    LaunchedEffect(Unit) {
+        try {
+            val authRepository = AuthRepository()
+            val currentUser = authRepository.getCurrentUser()
+            authViewModel?.setCurrentUser(currentUser)
+            Log.d("HomeScreen", "User loaded: ${currentUser.name}")
+        } catch (e: Exception) {
+            Log.d("HomeScreen", "No user logged in - using guest mode")
         }
     }
 }
@@ -79,8 +104,11 @@ fun HomeActivity(
     onDarkModeToggle: (Boolean) -> Unit,
     authViewModel: AuthViewModel? = null
 ) {
-    var selectedIndex by remember { mutableIntStateOf(0) }
+    LoadCurrentUserEffect(authViewModel)
+
+    var selectedIndex by remember { mutableStateOf(0) }
     val innerNavController = rememberNavController()
+
     val backgroundColor = if (isDarkMode) Color(0xFF121212) else Color.White
     val cardBackgroundColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFF5F5F5)
     val textColor = if (isDarkMode) Color(0xFFE0E0E0) else Color.Black
@@ -90,64 +118,166 @@ fun HomeActivity(
         composable("home") {
             Scaffold(
                 bottomBar = {
-                    Surface(shadowElevation = 8.dp, color = backgroundColor) {
+                    Surface(
+                        shadowElevation = 8.dp,
+                        color = backgroundColor
+                    ) {
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 12.dp),
                             horizontalArrangement = Arrangement.SpaceEvenly,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             TextButton(onClick = { selectedIndex = 0 }) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(painter = painterResource(R.drawable.baseline_home_24), contentDescription = "Home", tint = if (selectedIndex == 0) PrimaryBlue else Color.Gray, modifier = Modifier.size(24.dp))
-                                    Text("Home", fontSize = 10.sp, color = if (selectedIndex == 0) PrimaryBlue else Color.Gray, fontWeight = if (selectedIndex == 0) FontWeight.Bold else FontWeight.Normal)
+                                    Icon(
+                                        painter = painterResource(R.drawable.baseline_home_24),
+                                        contentDescription = "Home",
+                                        tint = if (selectedIndex == 0) PrimaryBlue else Color.Gray,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Text(
+                                        text = "Home",
+                                        fontSize = 10.sp,
+                                        color = if (selectedIndex == 0) PrimaryBlue else Color.Gray,
+                                        fontWeight = if (selectedIndex == 0) FontWeight.Bold else FontWeight.Normal
+                                    )
                                 }
                             }
+
                             TextButton(onClick = { selectedIndex = 1 }) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(painter = painterResource(R.drawable.baseline_report_24), contentDescription = "Reports", tint = if (selectedIndex == 1) PrimaryBlue else Color.Gray, modifier = Modifier.size(24.dp))
-                                    Text("Reports", fontSize = 10.sp, color = if (selectedIndex == 1) PrimaryBlue else Color.Gray, fontWeight = if (selectedIndex == 1) FontWeight.Bold else FontWeight.Normal)
+                                    Icon(
+                                        painter = painterResource(R.drawable.baseline_report_24),
+                                        contentDescription = "Reports",
+                                        tint = if (selectedIndex == 1) PrimaryBlue else Color.Gray,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Text(
+                                        text = "Reports",
+                                        fontSize = 10.sp,
+                                        color = if (selectedIndex == 1) PrimaryBlue else Color.Gray,
+                                        fontWeight = if (selectedIndex == 1) FontWeight.Bold else FontWeight.Normal
+                                    )
                                 }
                             }
+
                             TextButton(onClick = { selectedIndex = 2 }) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(painter = painterResource(R.drawable.complaint), contentDescription = "Complaints", tint = if (selectedIndex == 2) PrimaryBlue else Color.Gray, modifier = Modifier.size(24.dp))
-                                    Text("Complaints", fontSize = 10.sp, color = if (selectedIndex == 2) PrimaryBlue else Color.Gray, fontWeight = if (selectedIndex == 2) FontWeight.Bold else FontWeight.Normal)
+                                    Icon(
+                                        painter = painterResource(R.drawable.complaint),
+                                        contentDescription = "Complaints",
+                                        tint = if (selectedIndex == 2) PrimaryBlue else Color.Gray,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Text(
+                                        text = "Complaints",
+                                        fontSize = 10.sp,
+                                        color = if (selectedIndex == 2) PrimaryBlue else Color.Gray,
+                                        fontWeight = if (selectedIndex == 2) FontWeight.Bold else FontWeight.Normal
+                                    )
                                 }
                             }
+
                             TextButton(onClick = { selectedIndex = 3 }) {
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(painter = painterResource(R.drawable.baseline_person_outline_24), contentDescription = "Profile", tint = if (selectedIndex == 3) PrimaryBlue else Color.Gray, modifier = Modifier.size(24.dp))
-                                    Text("Profile", fontSize = 10.sp, color = if (selectedIndex == 3) PrimaryBlue else Color.Gray, fontWeight = if (selectedIndex == 3) FontWeight.Bold else FontWeight.Normal)
+                                    Icon(
+                                        painter = painterResource(R.drawable.baseline_person_outline_24),
+                                        contentDescription = "Profile",
+                                        tint = if (selectedIndex == 3) PrimaryBlue else Color.Gray,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Text(
+                                        text = "Profile",
+                                        fontSize = 10.sp,
+                                        color = if (selectedIndex == 3) PrimaryBlue else Color.Gray,
+                                        fontWeight = if (selectedIndex == 3) FontWeight.Bold else FontWeight.Normal
+                                    )
                                 }
                             }
                         }
                     }
                 }
             ) { innerPadding ->
-                Box(modifier = Modifier.fillMaxSize().padding(innerPadding).background(backgroundColor)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .background(backgroundColor)
+                ) {
                     when (selectedIndex) {
-                        0 -> DashboardContents(innerNavController, isDarkMode, backgroundColor, cardBackgroundColor, textColor, secondaryTextColor, authViewModel)
-                        1 -> Reported(navController = innerNavController, category = "Traffic", isDarkMode = isDarkMode, backgroundColor = backgroundColor, cardBackgroundColor = cardBackgroundColor, textColor = textColor, secondaryTextColor = secondaryTextColor)
-                        2 -> ComplaintsListScreen(innerNavController, isDarkMode, backgroundColor, cardBackgroundColor, textColor, secondaryTextColor)
-                        3 -> UserprofileBody(isDarkMode = isDarkMode, onDarkModeToggle = onDarkModeToggle, authViewModel = authViewModel)
+                        0 -> DashboardContents(
+                            navController = innerNavController,
+                            isDarkMode = isDarkMode,
+                            backgroundColor = backgroundColor,
+                            cardBackgroundColor = cardBackgroundColor,
+                            textColor = textColor,
+                            secondaryTextColor = secondaryTextColor,
+                            authViewModel = authViewModel
+                        )
+
+                        1 -> Reported(
+                            navController = innerNavController,
+                            category = "Traffic",
+                            isDarkMode = isDarkMode,
+                            backgroundColor = backgroundColor,
+                            cardBackgroundColor = cardBackgroundColor,
+                            textColor = textColor,
+                            secondaryTextColor = secondaryTextColor
+                        )
+
+                        2 -> ComplaintsListScreen(
+                            navController = innerNavController,
+                            isDarkMode = isDarkMode,
+                            backgroundColor = backgroundColor,
+                            cardBackgroundColor = cardBackgroundColor,
+                            textColor = textColor,
+                            secondaryTextColor = secondaryTextColor
+                        )
+
+                        3 -> UserprofileBody(
+                            isDarkMode = isDarkMode,
+                            onDarkModeToggle = onDarkModeToggle,
+                            authViewModel = authViewModel
+                        )
                     }
                 }
             }
         }
 
         composable("all_complaints") {
-            AllComplaintsScreen(innerNavController, isDarkMode, backgroundColor, cardBackgroundColor, textColor, secondaryTextColor)
+            AllComplaintsScreen(
+                navController = innerNavController,
+                isDarkMode = isDarkMode,
+                backgroundColor = backgroundColor,
+                cardBackgroundColor = cardBackgroundColor,
+                textColor = textColor,
+                secondaryTextColor = secondaryTextColor
+            )
         }
 
         composable("report/{category}") { backStackEntry ->
             val category = backStackEntry.arguments?.getString("category") ?: "Traffic"
-            Reported(navController = innerNavController, category = category, isDarkMode = isDarkMode)
+
+            Reported(
+                navController = innerNavController,
+                category = category,
+                isDarkMode = isDarkMode
+            )
         }
 
         composable("FullMap") {
-            val complaintsViewModel: ComplaintsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
-            LaunchedEffect(Unit) { complaintsViewModel.fetchAllComplaints() }
-            FullMapscreen(complaints = complaintsViewModel.complaints)
+            val complaintsViewModel: ComplaintsViewModel =
+                androidx.lifecycle.viewmodel.compose.viewModel()
+
+            LaunchedEffect(Unit) {
+                complaintsViewModel.fetchAllComplaints()
+            }
+
+            FullMapscreen(
+                complaints = complaintsViewModel.complaints
+            )
         }
     }
 }
@@ -166,40 +296,73 @@ fun AllComplaintsScreen(
     val complaints = viewModel.complaints
     val isLoading = viewModel.isLoading
 
-    LaunchedEffect(Unit) { viewModel.fetchAllComplaints() }
+    LaunchedEffect(Unit) {
+        viewModel.fetchAllComplaints()
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("All Complaints", color = Color.White, fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        text = "All Complaints",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(painter = painterResource(R.drawable.baseline_arrow_back_24), contentDescription = "Back", tint = Color.White)
+                        Icon(
+                            painter = painterResource(R.drawable.baseline_arrow_back_24),
+                            contentDescription = "Back",
+                            tint = Color.White
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = PrimaryBlue)
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = PrimaryBlue
+                )
             )
         }
     ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(innerPadding).background(backgroundColor).padding(16.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .background(backgroundColor)
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             if (isLoading) {
                 item {
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
                         CircularProgressIndicator(color = PrimaryBlue)
                     }
                 }
             } else if (complaints.isEmpty()) {
                 item {
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Text("No complaints yet", color = secondaryTextColor, fontSize = 16.sp)
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "No complaints yet",
+                            color = secondaryTextColor,
+                            fontSize = 16.sp
+                        )
                     }
                 }
             } else {
                 items(complaints) { complaint ->
-                    ComplaintItemCard(complaint, cardBackgroundColor, textColor, secondaryTextColor)
+                    ComplaintItemCard(
+                        complaint = complaint,
+                        cardBackgroundColor = cardBackgroundColor,
+                        textColor = textColor,
+                        secondaryTextColor = secondaryTextColor
+                    )
                 }
             }
         }
@@ -219,27 +382,47 @@ fun ComplaintsListScreen(
     val complaints = viewModel.complaints
     val isLoading = viewModel.isLoading
 
-    LaunchedEffect(Unit) { viewModel.fetchAllComplaints() }
+    LaunchedEffect(Unit) {
+        viewModel.fetchAllComplaints()
+    }
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize().background(backgroundColor).padding(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(backgroundColor)
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         if (isLoading) {
             item {
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
                     CircularProgressIndicator(color = PrimaryBlue)
                 }
             }
         } else if (complaints.isEmpty()) {
             item {
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    Text("No complaints yet", color = secondaryTextColor, fontSize = 16.sp)
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No complaints yet",
+                        color = secondaryTextColor,
+                        fontSize = 16.sp
+                    )
                 }
             }
         } else {
             items(complaints) { complaint ->
-                ComplaintItemCard(complaint, cardBackgroundColor, textColor, secondaryTextColor)
+                ComplaintItemCard(
+                    complaint = complaint,
+                    cardBackgroundColor = cardBackgroundColor,
+                    textColor = textColor,
+                    secondaryTextColor = secondaryTextColor
+                )
             }
         }
     }
@@ -250,81 +433,75 @@ fun ComplaintItemCard(
     complaint: ReportModel,
     cardBackgroundColor: Color,
     textColor: Color,
-    secondaryTextColor: Color,
-    viewModel: ComplaintsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    secondaryTextColor: Color
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = cardBackgroundColor),
+        colors = CardDefaults.cardColors(
+            containerColor = cardBackgroundColor
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            val currentUserID = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-            val alreadyVoted = complaint.votes.containsKey(currentUserID)
-            val iconScale by animateFloatAsState(
-                targetValue = if (alreadyVoted) 1.25f else 1f,
-                animationSpec = spring(dampingRatio = 0.4f, stiffness = 300f),
-                label = "VoteAnimation"
-            )
-            var isVoting by remember { mutableStateOf(false) }
-
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    if (complaint.voteCount >= 20) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(text = "🔥 Highly Supported", color = Color(0xFFE65100), fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    } else if (complaint.voteCount >= 10) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(text = "⭐ Popular", color = Color(0xFFFFA000), fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    }
-                    Text(text = "Issue: ${complaint.issueType}", fontSize = 13.sp, color = secondaryTextColor)
+                    Text(
+                        text = complaint.category,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = PrimaryBlue
+                    )
+
+                    Text(
+                        text = "Issue: ${complaint.issueType}",
+                        fontSize = 13.sp,
+                        color = secondaryTextColor
+                    )
                 }
-                AssistChip(onClick = {}, label = { Text(complaint.category, fontSize = 11.sp) })
-            }
 
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Location: ${complaint.area}, ${complaint.ward}", fontSize = 12.sp, color = secondaryTextColor)
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(text = "Description: ${complaint.description}", fontSize = 12.sp, color = textColor, maxLines = 2)
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
                 AssistChip(
-                    enabled = !isVoting,
-                    onClick = {
-                        if (isVoting) return@AssistChip
-                        isVoting = true
-                        viewModel.toggleVote(complaint.id)
-                    },
+                    onClick = {},
                     label = {
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text(text = "${complaint.voteCount} Citizens Support", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = PrimaryBlue)
-                            Text(text = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.US).format(Date(complaint.timestamp)), fontSize = 10.sp, color = secondaryTextColor)
-                        }
-                    },
-                    leadingIcon = {
-                        Icon(modifier = Modifier.scale(iconScale), imageVector = Icons.Default.ThumbUp, contentDescription = null, tint = if (alreadyVoted) Color(0xFF1565C0) else Color.Gray)
-                    },
-                    colors = AssistChipDefaults.assistChipColors(containerColor = if (alreadyVoted) Color(0xFFE3F2FD) else Color.White)
+                        Text(
+                            text = complaint.category,
+                            fontSize = 11.sp
+                        )
+                    }
                 )
-                Text(text = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.US).format(Date(complaint.timestamp)), fontSize = 11.sp, color = secondaryTextColor)
             }
 
-            LaunchedEffect(isVoting) {
-                if (isVoting) {
-                    delay(1000)
-                    isVoting = false
-                }
-            }
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Location: ${complaint.area}, ${complaint.ward}",
+                fontSize = 12.sp,
+                color = secondaryTextColor
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = "Description: ${complaint.description}",
+                fontSize = 12.sp,
+                color = textColor,
+                maxLines = 2
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = SimpleDateFormat("dd/MM/yyyy HH:mm")
+                    .format(Date(complaint.timestamp)),
+                fontSize = 11.sp,
+                color = secondaryTextColor
+            )
         }
     }
 }
@@ -341,13 +518,18 @@ fun DashboardContents(
     viewModel: ComplaintsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
     var search by remember { mutableStateOf("") }
-    val currentUser by authViewModel?.currentUser?.collectAsState() ?: remember { mutableStateOf(null) }
+
+    val currentUser by authViewModel?.currentUser?.collectAsState()
+        ?: remember { mutableStateOf(null) }
+
     val complaints = viewModel.complaints
     val isLoading = viewModel.isLoading
-    val context = LocalContext.current
-    val expandedCategories = remember { mutableStateOf(setOf<String>()) }
-    val complaintsByCategory = remember(complaints) { complaints.groupBy { it.category }.toSortedMap() }
-    val notificationViewModel: NotificationViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    val notificationViewModel: NotificationViewModel =
+        androidx.lifecycle.viewmodel.compose.viewModel()
+
     val unreadCount by notificationViewModel.unreadCount.collectAsState()
 
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -365,38 +547,58 @@ fun DashboardContents(
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
+
     LaunchedEffect(currentUser?.wardNo) {
         notificationViewModel.loadUnreadCount(currentUser?.wardNo ?: 0)
     }
-    LaunchedEffect(Unit) { viewModel.fetchAllComplaints() }
+
+    val expandedCategories = remember { mutableStateOf(setOf<String>()) }
+
+    val complaintsByCategory = remember(complaints) {
+        complaints.groupBy { it.category }.toSortedMap()
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchAllComplaints()
+    }
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize().background(backgroundColor).padding(horizontal = 20.dp)
+        modifier = Modifier
+            .fillMaxSize()
+            .background(backgroundColor)
+            .padding(horizontal = 20.dp)
     ) {
         item {
             Spacer(modifier = Modifier.height(20.dp))
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                if (!currentUser?.profilePicture.isNullOrEmpty()) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(context)
-                            .data(currentUser?.profilePicture)
-                            .diskCachePolicy(CachePolicy.DISABLED)
-                            .memoryCachePolicy(CachePolicy.DISABLED)
-                            .build(),
-                        contentDescription = "Profile Picture",
-                        modifier = Modifier.size(48.dp).clip(RoundedCornerShape(50.dp)),
-                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                        placeholder = painterResource(R.drawable.user),
-                        error = painterResource(R.drawable.user)
-                    )
-                } else {
-                    Image(painter = painterResource(R.drawable.user), contentDescription = null, modifier = Modifier.size(48.dp).clip(RoundedCornerShape(50.dp)))
-                }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.lana),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(50.dp))
+                )
+
                 Spacer(modifier = Modifier.width(12.dp))
+
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = "Hello", color = secondaryTextColor)
-                    Text(text = currentUser?.name ?: "Guest", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = PrimaryBlue)
+                    Text(
+                        text = "Hello",
+                        color = secondaryTextColor
+                    )
+
+                    Text(
+                        text = currentUser?.name ?: "Guest",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = PrimaryBlue
+                    )
                 }
+
                 BadgedBox(
                     badge = {
                         if (unreadCount > 0) {
@@ -409,10 +611,13 @@ fun DashboardContents(
                     IconButton(
                         onClick = {
                             context.startActivity(
-                                android.content.Intent(
+                                Intent(
                                     context,
                                     UserNotificationActivity::class.java
-                                ).putExtra("wardNo", currentUser?.wardNo ?: 0)
+                                ).putExtra(
+                                    "wardNo",
+                                    currentUser?.wardNo ?: 0
+                                )
                             )
                         }
                     ) {
@@ -424,6 +629,7 @@ fun DashboardContents(
                     }
                 }
             }
+
             Spacer(modifier = Modifier.height(20.dp))
         }
 
@@ -432,107 +638,289 @@ fun DashboardContents(
                 value = search,
                 onValueChange = { search = it },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Search complaints...") },
-                leadingIcon = { Icon(painter = painterResource(R.drawable.baseline_search_24), contentDescription = null) },
+                placeholder = {
+                    Text("Search complaints...")
+                },
+                leadingIcon = {
+                    Icon(
+                        painter = painterResource(R.drawable.baseline_search_24),
+                        contentDescription = null
+                    )
+                },
                 shape = RoundedCornerShape(20.dp),
-                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = PrimaryBlue, unfocusedBorderColor = Color.LightGray)
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = PrimaryBlue,
+                    unfocusedBorderColor = Color.LightGray
+                )
             )
+
             Spacer(modifier = Modifier.height(20.dp))
         }
 
         item {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                ReportCard(modifier = Modifier.weight(1f), image = R.drawable.others, label = "Report Issue", onClick = { navController.navigate("report/Others") })
-                ReportCard(modifier = Modifier.weight(1f), image = R.drawable.track, label = "Track Issue", onClick = { navController.navigate("all_complaints") })
-                ReportCard(modifier = Modifier.weight(1f), image = R.drawable.map, label = "Nearby Issues", onClick = { navController.navigate("FullMap") })
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                ReportCard(
+                    modifier = Modifier.weight(1f),
+                    image = R.drawable.others,
+                    label = "Report Issue",
+                    onClick = {
+                        navController.navigate("report/Others")
+                    }
+                )
+
+                ReportCard(
+                    modifier = Modifier.weight(1f),
+                    image = R.drawable.track,
+                    label = "Track Issue",
+                    onClick = {
+                        navController.navigate("all_complaints")
+                    }
+                )
+
+                ReportCard(
+                    modifier = Modifier.weight(1f),
+                    image = R.drawable.map,
+                    label = "Nearby Issues",
+                    onClick = {
+                        navController.navigate("FullMap")
+                    }
+                )
             }
+
             Spacer(modifier = Modifier.height(20.dp))
         }
 
         item {
-            Text(text = "Categories", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = PrimaryBlue)
+            Text(
+                text = "Categories",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                color = PrimaryBlue
+            )
+
             Spacer(modifier = Modifier.height(15.dp))
+
             Row(modifier = Modifier.fillMaxWidth()) {
-                ReportCard(Modifier.weight(1f), R.drawable.road, "Road", onClick = { navController.navigate("report/Road") })
-                ReportCard(Modifier.weight(1f), R.drawable.garbage, "Garbage", onClick = { navController.navigate("report/Garbage") })
-                ReportCard(Modifier.weight(1f), R.drawable.traffic, "Traffic", onClick = { navController.navigate("report/Traffic") })
-                ReportCard(Modifier.weight(1f), R.drawable.map, "Others", onClick = { navController.navigate("report/Others") })
+                ReportCard(
+                    Modifier.weight(1f),
+                    R.drawable.road,
+                    "Road",
+                    onClick = {
+                        navController.navigate("report/Road")
+                    }
+                )
+
+                ReportCard(
+                    Modifier.weight(1f),
+                    R.drawable.garbage,
+                    "Garbage",
+                    onClick = {
+                        navController.navigate("report/Garbage")
+                    }
+                )
+
+                ReportCard(
+                    Modifier.weight(1f),
+                    R.drawable.traffic,
+                    "Traffic",
+                    onClick = {
+                        navController.navigate("report/Traffic")
+                    }
+                )
+
+                ReportCard(
+                    Modifier.weight(1f),
+                    R.drawable.map,
+                    "Others",
+                    onClick = {
+                        navController.navigate("report/Others")
+                    }
+                )
             }
+
             Spacer(modifier = Modifier.height(20.dp))
         }
 
         item {
-            Card(modifier = Modifier.fillMaxWidth().height(190.dp), shape = RoundedCornerShape(18.dp)) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(190.dp),
+                shape = RoundedCornerShape(18.dp)
+            ) {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    val complaintsViewModel: ComplaintsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
-                    LaunchedEffect(Unit) { complaintsViewModel.fetchAllComplaints() }
-                    FullMapscreen(complaints = complaintsViewModel.complaints)
-                    Button(onClick = { navController.navigate("FullMap") }, modifier = Modifier.align(Alignment.BottomEnd).padding(10.dp), colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue), shape = RoundedCornerShape(50)) {
+                    val complaintsViewModel: ComplaintsViewModel =
+                        androidx.lifecycle.viewmodel.compose.viewModel()
+
+                    LaunchedEffect(Unit) {
+                        complaintsViewModel.fetchAllComplaints()
+                    }
+
+                    FullMapscreen(
+                        complaints = complaintsViewModel.complaints
+                    )
+
+                    Button(
+                        onClick = {
+                            navController.navigate("FullMap")
+                        },
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = PrimaryBlue
+                        ),
+                        shape = RoundedCornerShape(50)
+                    ) {
                         Text("View Full Map")
                     }
                 }
             }
+
             Spacer(modifier = Modifier.height(20.dp))
         }
 
         item {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(text = "Recent Reports", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = PrimaryBlue)
-                TextButton(onClick = { navController.navigate("all_complaints") }) {
-                    Text(text = "View All", color = PrimaryBlue, fontWeight = FontWeight.Bold)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Recent Reports",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = PrimaryBlue
+                )
+
+                TextButton(
+                    onClick = {
+                        navController.navigate("all_complaints")
+                    }
+                ) {
+                    Text(
+                        text = "View All",
+                        color = PrimaryBlue,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
+
             Spacer(modifier = Modifier.height(12.dp))
         }
 
         if (isLoading) {
             item {
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
                     CircularProgressIndicator(color = PrimaryBlue)
                 }
             }
         } else if (complaintsByCategory.isEmpty()) {
             item {
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    Text("No reports yet", color = secondaryTextColor)
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No reports yet",
+                        color = secondaryTextColor
+                    )
                 }
             }
         } else {
             complaintsByCategory.forEach { (category, categoryComplaints) ->
                 item {
                     Row(
-                        modifier = Modifier.fillMaxWidth().clickable {
-                            val current = expandedCategories.value
-                            expandedCategories.value = if (current.contains(category)) current - category else current + category
-                        }.padding(vertical = 8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                val current = expandedCategories.value
+
+                                expandedCategories.value =
+                                    if (current.contains(category)) {
+                                        current - category
+                                    } else {
+                                        current + category
+                                    }
+                            }
+                            .padding(vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(text = "$category (${categoryComplaints.size})", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = PrimaryBlue)
+                        Text(
+                            text = "$category (${categoryComplaints.size})",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = PrimaryBlue
+                        )
                     }
                 }
+
                 if (expandedCategories.value.contains(category)) {
                     items(categoryComplaints) { complaint ->
-                        RecentReportCardClickable(complaint, cardBackgroundColor, textColor, secondaryTextColor) { navController.navigate("all_complaints") }
+                        RecentReportCardClickable(
+                            complaint = complaint,
+                            cardBackgroundColor = cardBackgroundColor,
+                            textColor = textColor,
+                            secondaryTextColor = secondaryTextColor
+                        ) {
+                            navController.navigate("all_complaints")
+                        }
                     }
                 }
             }
         }
 
-        item { Spacer(modifier = Modifier.height(20.dp)) }
+        item {
+            Spacer(modifier = Modifier.height(20.dp))
+        }
     }
 }
 
 @Composable
-fun ReportCard(modifier: Modifier, image: Int, label: String, backgroundColor: Color = Color.White, textColor: Color = Color.Black, onClick: () -> Unit = {}) {
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Card(modifier = Modifier.size(50.dp), onClick = onClick, shape = RoundedCornerShape(18.dp), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Image(painter = painterResource(image), contentDescription = null, modifier = Modifier.size(60.dp))
+fun ReportCard(
+    modifier: Modifier,
+    image: Int,
+    label: String,
+    backgroundColor: Color = Color.White,
+    textColor: Color = Color.Black,
+    onClick: () -> Unit = {}
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Card(
+            modifier = Modifier.size(50.dp),
+            onClick = onClick,
+            shape = RoundedCornerShape(18.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(image),
+                    contentDescription = null,
+                    modifier = Modifier.size(60.dp)
+                )
             }
         }
+
         Spacer(modifier = Modifier.height(8.dp))
-        Text(text = label, fontSize = 12.sp, color = PrimaryBlue, textAlign = TextAlign.Center)
+
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            color = PrimaryBlue,
+            textAlign = TextAlign.Center
+        )
     }
 }
 
@@ -545,47 +933,137 @@ fun RecentReportCardClickable(
     onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp).clickable(onClick = onClick),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp)
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-        colors = CardDefaults.cardColors(containerColor = cardBackgroundColor)
+        colors = CardDefaults.cardColors(
+            containerColor = cardBackgroundColor
+        )
     ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
             val iconRes = when (complaint.category.lowercase()) {
                 "road" -> R.drawable.road
                 "garbage" -> R.drawable.garbage
                 "traffic" -> R.drawable.traffic
                 else -> R.drawable.map
             }
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Image(painter = painterResource(iconRes), contentDescription = null, modifier = Modifier.size(40.dp).clip(RoundedCornerShape(8.dp)))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Image(
+                    painter = painterResource(iconRes),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                )
+
                 Spacer(modifier = Modifier.width(12.dp))
+
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = complaint.issueType, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = PrimaryBlue)
+                    Text(
+                        text = complaint.issueType,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = PrimaryBlue
+                    )
                 }
             }
+
             Spacer(modifier = Modifier.height(12.dp))
+
             Row(modifier = Modifier.fillMaxWidth()) {
-                Text(text = "Area: ", fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = textColor)
-                Text(text = complaint.area, fontSize = 12.sp, color = secondaryTextColor)
+                Text(
+                    text = "Area: ",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 12.sp,
+                    color = textColor
+                )
+
+                Text(
+                    text = complaint.area,
+                    fontSize = 12.sp,
+                    color = secondaryTextColor
+                )
             }
+
             Spacer(modifier = Modifier.height(6.dp))
+
             Row(modifier = Modifier.fillMaxWidth()) {
-                Text(text = "Ward: ", fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = textColor)
-                Text(text = complaint.ward, fontSize = 12.sp, color = secondaryTextColor)
+                Text(
+                    text = "Ward: ",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 12.sp,
+                    color = textColor
+                )
+
+                Text(
+                    text = complaint.ward,
+                    fontSize = 12.sp,
+                    color = secondaryTextColor
+                )
             }
+
             Spacer(modifier = Modifier.height(6.dp))
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(text = "Status: ", fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = textColor)
-                AssistChip(onClick = {}, label = { Text(complaint.status, fontSize = 11.sp) }, modifier = Modifier.height(28.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Status: ",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 12.sp,
+                    color = textColor
+                )
+
+                AssistChip(
+                    onClick = {},
+                    label = {
+                        Text(
+                            text = complaint.status,
+                            fontSize = 11.sp
+                        )
+                    },
+                    modifier = Modifier.height(28.dp)
+                )
             }
+
             Spacer(modifier = Modifier.height(6.dp))
+
             Row(modifier = Modifier.fillMaxWidth()) {
-                Text(text = "Description: ", fontWeight = FontWeight.SemiBold, fontSize = 12.sp, color = textColor)
+                Text(
+                    text = "Description: ",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 12.sp,
+                    color = textColor
+                )
             }
-            Text(text = complaint.description, fontSize = 12.sp, color = secondaryTextColor, maxLines = 3)
+
+            Text(
+                text = complaint.description,
+                fontSize = 12.sp,
+                color = secondaryTextColor,
+                maxLines = 3
+            )
+
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.US).format(Date(complaint.timestamp)), fontSize = 11.sp, color = secondaryTextColor)
+
+            Text(
+                text = SimpleDateFormat("dd/MM/yyyy HH:mm")
+                    .format(Date(complaint.timestamp)),
+                fontSize = 11.sp,
+                color = secondaryTextColor
+            )
         }
     }
 }
@@ -594,6 +1072,10 @@ fun RecentReportCardClickable(
 @Composable
 fun HomePreview() {
     SmartCityTheme {
-        HomeActivity(navController = rememberNavController(), isDarkMode = false, onDarkModeToggle = {})
+        HomeActivity(
+            navController = rememberNavController(),
+            isDarkMode = false,
+            onDarkModeToggle = {}
+        )
     }
 }

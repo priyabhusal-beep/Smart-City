@@ -32,6 +32,7 @@ import com.example.smart_city.ui.theme.SmartCityTheme
 import com.example.smart_city.viewmodel.AuthViewModel
 import com.example.smart_city.viewmodel.AuthViewModelFactory
 import kotlinx.coroutines.launch
+import com.example.smart_city.utils.ThemePreference
 
 class SettingPrivacyActivity : ComponentActivity() {
     private val authViewModel: AuthViewModel by viewModels {
@@ -41,11 +42,14 @@ class SettingPrivacyActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val isDarkMode = ThemePreference.getDarkMode(this)
+
         setContent {
             SmartCityTheme {
                 SettingPrivacyScreenContent(
                     onBackPressed = { finish() },
-                    authViewModel = authViewModel
+                    authViewModel = authViewModel,
+                    isDarkMode = isDarkMode
                 )
             }
         }
@@ -55,12 +59,11 @@ class SettingPrivacyActivity : ComponentActivity() {
 @Composable
 fun SettingPrivacyScreenContent(
     onBackPressed: () -> Unit = {},
-    authViewModel: AuthViewModel? = null
+    authViewModel: AuthViewModel? = null,
+    isDarkMode: Boolean = false
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-
-    var isDarkMode by remember { mutableStateOf(false) }
 
     val backgroundColor = if (isDarkMode) Color(0xFF121212) else Color(0xFFF8F9FA)
     val cardColor = if (isDarkMode) Color(0xFF1E1E1E) else Color.White
