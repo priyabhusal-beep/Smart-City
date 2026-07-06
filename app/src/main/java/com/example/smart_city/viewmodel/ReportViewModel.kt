@@ -15,15 +15,15 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
     var ward by mutableStateOf("")
     var issueType by mutableStateOf("")
     var isLoading by mutableStateOf(false)
+    var userComplaints by mutableStateOf<List<ReportModel>>(emptyList())
     
-    // IMAGE STATES
     var capturedImage by mutableStateOf<Bitmap?>(null)
     var imageUrl by mutableStateOf("")
-
-    var userComplaints by mutableStateOf<List<ReportModel>>(emptyList())
-
     var latitude by mutableStateOf(0.0)
     var longitude by mutableStateOf(0.0)
+
+    var totalUserVotes by mutableStateOf(0)
+    var totalUserResolved by mutableStateOf(0)
 
     val areaSuggestions = listOf("Baneshwor", "Kalanki", "Koteshwor", "Patan", "Thamel", "Maitidevi", "Baluwatar")
 
@@ -41,6 +41,28 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
         }
     }
 
+    fun fetchTotalUserVotes() {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        repository.getAllComplaints { complaints ->
+            totalUserVotes = complaints.count { complaint ->
+                complaint.votes.containsKey(currentUserId)
+            }
+        }
+    }
+
+    fun fetchTotalUserResolved() {
+        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+
+        repository.getAllComplaints { complaints ->
+            totalUserResolved = complaints.count { complaint ->
+                complaint.userId == currentUserId &&
+                        (complaint.status.equals("Resolved", ignoreCase = true) ||
+                                complaint.status.equals("Completed", ignoreCase = true))
+            }
+        }
+    }
+
     open fun submit(category: String, onResult: (String) -> Unit) {
         val auth = FirebaseAuth.getInstance()
         val currentUser = auth.currentUser
@@ -50,7 +72,6 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
             return
         }
 
-        // Validate fields
         if (ward.isEmpty()) {
             onResult("❌ Please select a Ward!")
             return
@@ -75,7 +96,6 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
 
         isLoading = true
 
-        // Create report model including the imageUrl
         val report = ReportModel(
             id = System.currentTimeMillis().toString(),
             category = category,
@@ -85,13 +105,12 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
             description = description,
             timestamp = System.currentTimeMillis(),
             userId = currentUser.uid,
-            status = "pending",
+            status = "Pending",
             latitude = latitude,
             longitude = longitude,
             imageUrl = imageUrl
         )
 
-        // Submit to Firebase
         repository.submitReport(report) { success ->
             isLoading = false
             if (success) {
@@ -110,5 +129,7 @@ open class ReportViewModel(private val repository: ReportRepository = ReportRepo
         description = ""
         capturedImage = null
         imageUrl = ""
+        latitude = 0.0
+        longitude = 0.0
     }
 }

@@ -1,13 +1,12 @@
 package com.example.smart_city
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,43 +20,67 @@ import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.ThumbUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smart_city.ui.theme.SmartCityTheme
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.smart_city.viewmodel.ComplaintsViewModel
+import com.example.smart_city.model.ReportModel
+import coil3.compose.AsyncImage
 
 class ComplaintDetails : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         enableEdgeToEdge()
+
+        val complaintId = intent.getStringExtra("complaintId") ?: ""
 
         setContent {
             SmartCityTheme {
-                ComplaintDetailsActivity()
+                ComplaintDetailsActivity(
+                    complaintId = complaintId
+                )
             }
         }
     }
 }
 
 @Composable
-fun ComplaintDetailsActivity() {
+fun ComplaintDetailsActivity(
+    complaintId: String = "",
+    viewModel: ComplaintsViewModel = viewModel()
+) {
+    val complaint = viewModel.selectedComplaint
+
+    LaunchedEffect(complaintId) {
+        viewModel.fetchComplaintById(complaintId)
+    }
+
+    if (complaint == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
 
     Scaffold(
         bottomBar = {
             CDBottomNavigationBar()
         }
-
     ) { paddingValues ->
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -66,25 +89,18 @@ fun ComplaintDetailsActivity() {
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
-
             Header()
-
             Spacer(modifier = Modifier.height(20.dp))
-
-            ComplaintImage()
-
+            ComplaintImage(complaint = complaint)
             Spacer(modifier = Modifier.height(20.dp))
+            ComplaintCard(complaint = complaint)
+            Spacer(modifier = Modifier.height(18.dp))
 
-            ComplaintCard()
+            LocationSection(complaint = complaint)
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            LocationSection()
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            MapSection()
-
+            MapSection(complaint = complaint)
             Spacer(modifier = Modifier.height(30.dp))
         }
     }
@@ -92,20 +108,17 @@ fun ComplaintDetailsActivity() {
 
 @Composable
 fun Header() {
-
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-
         Text(
             text = "SmartCity",
             color = Color(0xFF0B2E83),
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold
         )
-
         Icon(
             imageVector = Icons.Default.NotificationsNone,
             contentDescription = "Notifications",
@@ -115,13 +128,11 @@ fun Header() {
 }
 
 @Composable
-fun ComplaintImage() {
-
+fun ComplaintImage(complaint: ReportModel) {
     Box {
-
-        Image(
-            painter = painterResource(id = R.drawable.brokenroad),
-            contentDescription = "Utility Pole",
+        AsyncImage(
+            model = complaint.imageUrl,
+            contentDescription = "Complaint Image",
             modifier = Modifier
                 .fillMaxWidth()
                 .height(210.dp)
@@ -138,18 +149,15 @@ fun ComplaintImage() {
                 .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-
             Icon(
                 imageVector = Icons.Outlined.ThumbUp,
                 contentDescription = "",
                 tint = Color.White,
                 modifier = Modifier.size(18.dp)
             )
-
             Spacer(modifier = Modifier.width(6.dp))
-
             Text(
-                text = "48 Citizens Upvoted",
+                text = "${complaint.voteCount} Citizens Upvoted",
                 color = Color.White,
                 fontSize = 13.sp
             )
@@ -158,11 +166,11 @@ fun ComplaintImage() {
 }
 
 @Composable
-fun ComplaintCard() {
+fun ComplaintCard(complaint: ReportModel) {
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         )
@@ -173,156 +181,202 @@ fun ComplaintCard() {
         ) {
 
             Text(
-                text = "Utility Pole Damage -\nSector 7",
-                color = Color(0xFF0B2E83),
+                text = complaint.issueType,
+                fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
-                fontSize = 28.sp
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Surface(
-                shape = RoundedCornerShape(50.dp),
-                color = Color(0xFFFFF8E1)
-            ) {
-
-                Row(
-                    modifier = Modifier.padding(
-                        horizontal = 14.dp,
-                        vertical = 8.dp
-                    ),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFFFFC107))
-                    )
-
-                    Spacer(modifier = Modifier.width(6.dp))
-
-                    Text(
-                        text = "Pending Review",
-                        color = Color(0xFFDAA520)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text =
-                    "The main utility pole near the central park entrance has developed significant cracks at the base. Visible wiring exposure after the recent storm. Poses an immediate risk to pedestrian safety and power stability in the neighboring block.",
-
-                color = Color.Gray,
-                lineHeight = 26.sp
-            )
-
-        }
-    }
-}
-
-@Composable
-fun LocationSection() {
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-
-        Row {
-
-            Icon(
-                imageVector = Icons.Default.Place,
-                contentDescription = "",
-                tint = Color(0xFF0B2E83)
-            )
-
-            Spacer(modifier = Modifier.width(10.dp))
-
-            Text(
-                text = "Incident\nLocation",
                 color = Color(0xFF0B2E83)
             )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = complaint.category,
+                fontSize = 14.sp,
+                color = Color.Gray
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Surface(
+                shape = RoundedCornerShape(30.dp),
+                color = when (complaint.status.lowercase()) {
+
+                    "resolved" -> Color(0xFFE7F7EC)
+
+                    "processing",
+                    "in progress" -> Color(0xFFE8F0FF)
+
+                    else -> Color(0xFFFFF5D8)
+                }
+            ) {
+
+                Text(
+                    text = complaint.status,
+                    modifier = Modifier.padding(
+                        horizontal = 14.dp,
+                        vertical = 6.dp
+                    ),
+                    color = when (complaint.status.lowercase()) {
+
+                        "resolved" -> Color(0xFF1B8A3D)
+
+                        "processing",
+                        "in progress" -> Color(0xFF2962FF)
+
+                        else -> Color(0xFFDAA520)
+                    },
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 13.sp
+                )
+
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            Text(
+                text = complaint.description,
+                fontSize = 15.sp,
+                lineHeight = 22.sp,
+                color = Color.DarkGray
+            )
+
         }
 
-        Text(
-            text = "DOWNTOWN\nDISTRICT",
-            color = Color.DarkGray,
-            fontWeight = FontWeight.Medium
-        )
     }
+
 }
 
 @Composable
-fun MapSection() {
+fun LocationSection(
+    complaint: ReportModel
+) {
 
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        )
+    ) {
+
+        Column(
+            modifier = Modifier.padding(18.dp)
+        ) {
+
+            Text(
+                text = "Incident Location",
+                color = Color(0xFF0B2E83),
+                fontWeight = FontWeight.Bold,
+                fontSize = 17.sp
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Row(
+                verticalAlignment = Alignment.Top
+            ) {
+
+                Icon(
+                    imageVector = Icons.Default.Place,
+                    contentDescription = null,
+                    tint = Color(0xFF0B2E83),
+                    modifier = Modifier.size(22.dp)
+                )
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column {
+
+                    Text(
+                        text = complaint.area,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = " ${complaint.ward}",
+                        color = Color.Gray,
+                        fontSize = 13.sp
+                    )
+
+                }
+
+            }
+
+        }
+
+    }
+
+}
+
+@Composable
+fun MapSection(complaint: ReportModel) {
+    val context = LocalContext.current
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(120.dp)
+            .height(250.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(Color.LightGray),
-        contentAlignment = Alignment.Center
     ) {
-
-        Text(
-            text = "Map Preview",
-            color = Color.DarkGray
-        )
+        MapScreen(complaints = listOf(complaint))
+        Button(
+            onClick = {
+                context.startActivity(Intent(context, FullMapScreen::class.java))
+            },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(12.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0B2E83))
+        ) {
+            Text("View Full Map")
+        }
     }
 }
 
 @Composable
 fun CDBottomNavigationBar() {
-
-    NavigationBar(
-        containerColor = Color.White
-    ) {
-
+    val context = LocalContext.current
+    NavigationBar(containerColor = Color.White) {
         NavigationBarItem(
             selected = false,
-            onClick = { },
-            icon = {
-                Icon(Icons.Default.Home, null)
+            onClick = {
+                val intent = Intent(context, AdminDashboard::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                context.startActivity(intent)
             },
-            label = {
-                Text("HOME")
-            }
+            icon = { Icon(Icons.Default.Home, null) },
+            label = { Text("HOME") }
         )
-
         NavigationBarItem(
             selected = true,
-            onClick = { },
-            icon = {
-                Icon(Icons.Default.Settings, null)
+            onClick = {
+                val intent = Intent(context, AdminManageScreen::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                context.startActivity(intent)
             },
-            label = {
-                Text("Manage")
-            }
+            icon = { Icon(Icons.Default.Settings, null) },
+            label = { Text("Manage") },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Color(0xFF0B2E83),
+                selectedTextColor = Color(0xFF0B2E83),
+                indicatorColor = Color(0xFFEAF2FF)
+            )
         )
-
         NavigationBarItem(
             selected = false,
             onClick = { },
-            icon = {
-                Icon(Icons.Outlined.BarChart, null)
-            },
-            label = {
-                Text("Analytics")
-            }
+            icon = { Icon(Icons.Outlined.BarChart, null) },
+            label = { Text("Analytics") }
         )
     }
 }
 
-
 @Preview(showBackground = true)
 @Composable
 fun ComplaintDetailsPreview() {
-
     SmartCityTheme {
-        ComplaintDetailsActivity()
+        ComplaintDetailsActivity(complaintId = "")
     }
 }

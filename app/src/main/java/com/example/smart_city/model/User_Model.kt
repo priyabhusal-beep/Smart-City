@@ -5,10 +5,9 @@ data class User(
     val email: String = "",
     val name: String = "",
     val phone: String = "",
-    val userType: String = "user",
     val profilePicture: String = "",
-    val address: String = "",
-    val createdAt: Long = System.currentTimeMillis(),
-    val isEmailVerified: Boolean = false,
-    val lastLogin: Long = System.currentTimeMillis()
+    val userType: String = "citizen",
+    val wardNo: Int = 0,
+    val createdAt: Long = 0,
+    val lastLogin: Long = 0
 )

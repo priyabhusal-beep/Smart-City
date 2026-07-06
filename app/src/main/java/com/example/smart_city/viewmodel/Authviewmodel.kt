@@ -8,139 +8,220 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.smart_city.model.User
 import com.example.smart_city.repo.AuthRepository
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class AuthViewModel (application: Application) : AndroidViewModel(application) {
+class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     private val authRepository = AuthRepository()
 
-    // Login State
     private val _loginState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
     val loginState: StateFlow<LoginUiState> = _loginState.asStateFlow()
 
-    // Register State
     private val _registerState = MutableStateFlow<RegisterUiState>(RegisterUiState.Idle)
     val registerState: StateFlow<RegisterUiState> = _registerState.asStateFlow()
 
-    // Current Logged-in User
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
 
-    // Error Message
-    private val _errorMessage = MutableStateFlow<String>("")
+    private val _errorMessage = MutableStateFlow("")
     val errorMessage: StateFlow<String> = _errorMessage.asStateFlow()
 
-    // Loading State
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    // ================== LOGIN FUNCTION ==================
-    fun login(email: String, password: String) {
-        // Step 1: Validate inputs
-        if (!validateLoginInputs(email, password)) {
-            return
-        }
+    private var userLoadJob: Job? = null
+    private var profilePictureUpdatePending = false
 
-        // Step 2: Start loading
+    fun loadCurrentUserIfNeeded() {
+        if (_currentUser.value != null) return
+        if (userLoadJob?.isActive == true) return
+
+        if (authRepository.isUserLoggedIn()) {
+            userLoadJob = viewModelScope.launch {
+                try {
+                    val user = authRepository.getCurrentUser()
+
+                    if (!profilePictureUpdatePending) {
+                        _currentUser.value = user
+                    }
+                } catch (e: Exception) {
+                    Log.e("AuthViewModel", "Error loading user", e)
+                }
+            }
+        }
+    }
+
+    fun login(email: String, password: String) {
+        if (!validateLoginInputs(email, password)) return
+
         _loginState.value = LoginUiState.Loading
         _isLoading.value = true
+        _errorMessage.value = ""
 
-        // Step 3: Call repository in background
         viewModelScope.launch {
             try {
                 val user = authRepository.login(email, password)
 
+                Log.d("LOGIN_DEBUG", "Login success userType=${user.userType}")
+
                 _currentUser.value = user
                 _loginState.value = LoginUiState.Success(user)
-                _isLoading.value = false
 
             } catch (e: Exception) {
+                Log.e("LOGIN_DEBUG", "Login failed", e)
+
                 val errorMsg = e.message ?: "Login failed"
                 _errorMessage.value = errorMsg
                 _loginState.value = LoginUiState.Error(errorMsg)
+
+            } finally {
                 _isLoading.value = false
             }
         }
     }
 
-    // ================== REGISTER FUNCTION ==================
     fun register(
         email: String,
         password: String,
         confirmPassword: String,
         name: String,
-        userType: String
+        phone: String
     ) {
-        // Step 1: Validate inputs
-        if (!validateRegisterInputs(email, password, confirmPassword, name)) {
-            return
-        }
+        if (!validateRegisterInputs(email, password, confirmPassword, name)) return
 
-        // Step 2: Start loading
         _registerState.value = RegisterUiState.Loading
         _isLoading.value = true
+        _errorMessage.value = ""
 
-        // Step 3: Call repository in background
         viewModelScope.launch {
             try {
-                val user = authRepository.register(email, password, name, userType)
+                val user = authRepository.register(
+                    email = email,
+                    password = password,
+                    name = name,
+                    phone = phone
+                )
 
                 _currentUser.value = user
                 _registerState.value = RegisterUiState.Success(user)
-                _isLoading.value = false
-                _errorMessage.value = "Registration successful! You can now login."
 
             } catch (e: Exception) {
+                Log.e("REGISTER_DEBUG", "Register failed", e)
+
                 val errorMsg = e.message ?: "Registration failed"
                 _errorMessage.value = errorMsg
                 _registerState.value = RegisterUiState.Error(errorMsg)
+
+            } finally {
                 _isLoading.value = false
             }
         }
     }
 
-    // ================== LOGOUT FUNCTION ==================
+    fun signInWithGoogle(
+        idToken: String,
+        userType: String = "citizen"
+    ) {
+        _loginState.value = LoginUiState.Loading
+        _registerState.value = RegisterUiState.Loading
+        _isLoading.value = true
+        _errorMessage.value = ""
+
+        viewModelScope.launch {
+            try {
+                val user = authRepository.signInWithGoogle(
+                    idToken = idToken,
+                    userType = userType
+                )
+
+                _currentUser.value = user
+                _loginState.value = LoginUiState.Success(user)
+                _registerState.value = RegisterUiState.Success(user)
+
+            } catch (e: Exception) {
+                Log.e("GOOGLE_DEBUG", "Google sign-in failed", e)
+
+                val errorMsg = e.message ?: "Google Sign-In failed"
+                _errorMessage.value = errorMsg
+                _loginState.value = LoginUiState.Error(errorMsg)
+                _registerState.value = RegisterUiState.Error(errorMsg)
+
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun updateProfilePicture(url: String) {
+        profilePictureUpdatePending = true
+
+        viewModelScope.launch {
+            try {
+                if (_currentUser.value == null) {
+                    val freshUser = authRepository.getCurrentUser()
+                    _currentUser.value = freshUser
+                }
+
+                _currentUser.value = _currentUser.value?.copy(profilePicture = url)
+
+                authRepository.updateProfilePicture(url)
+
+            } catch (e: Exception) {
+                Log.e("ProfileDebug", "Failed to update profile picture", e)
+                _errorMessage.value = e.message ?: "Failed to update profile picture"
+
+            } finally {
+                profilePictureUpdatePending = false
+            }
+        }
+    }
+
     fun logout() {
         authRepository.logout()
         _currentUser.value = null
         _loginState.value = LoginUiState.Idle
         _registerState.value = RegisterUiState.Idle
         _errorMessage.value = ""
+        _isLoading.value = false
     }
+
     fun setCurrentUser(user: User) {
         _currentUser.value = user
         Log.d("AuthVM", "Current user set to: ${user.name}")
     }
 
-    // ================== VALIDATION FUNCTIONS ==================
-
     private fun validateLoginInputs(email: String, password: String): Boolean {
-        when {
+        return when {
             email.isBlank() -> {
                 _errorMessage.value = "Email cannot be empty"
                 _loginState.value = LoginUiState.Error("Email cannot be empty")
-                return false
+                false
             }
+
             !isValidEmail(email) -> {
                 _errorMessage.value = "Invalid email format"
                 _loginState.value = LoginUiState.Error("Invalid email format")
-                return false
+                false
             }
+
             password.isBlank() -> {
                 _errorMessage.value = "Password cannot be empty"
                 _loginState.value = LoginUiState.Error("Password cannot be empty")
-                return false
+                false
             }
+
             password.length < 6 -> {
                 _errorMessage.value = "Password must be at least 6 characters"
                 _loginState.value = LoginUiState.Error("Password must be at least 6 characters")
-                return false
+                false
             }
+
+            else -> true
         }
-        return true
     }
 
     private fun validateRegisterInputs(
@@ -149,40 +230,52 @@ class AuthViewModel (application: Application) : AndroidViewModel(application) {
         confirmPassword: String,
         name: String
     ): Boolean {
-        when {
+        return when {
             name.isBlank() -> {
                 _errorMessage.value = "Name cannot be empty"
-                return false
+                _registerState.value = RegisterUiState.Error("Name cannot be empty")
+                false
             }
+
             email.isBlank() -> {
                 _errorMessage.value = "Email cannot be empty"
-                return false
+                _registerState.value = RegisterUiState.Error("Email cannot be empty")
+                false
             }
+
             !isValidEmail(email) -> {
                 _errorMessage.value = "Invalid email format"
-                return false
+                _registerState.value = RegisterUiState.Error("Invalid email format")
+                false
             }
+
             password.isBlank() -> {
                 _errorMessage.value = "Password cannot be empty"
-                return false
+                _registerState.value = RegisterUiState.Error("Password cannot be empty")
+                false
             }
+
             password.length < 6 -> {
                 _errorMessage.value = "Password must be at least 6 characters"
-                return false
+                _registerState.value = RegisterUiState.Error("Password must be at least 6 characters")
+                false
             }
+
             password != confirmPassword -> {
                 _errorMessage.value = "Passwords do not match"
-                return false
+                _registerState.value = RegisterUiState.Error("Passwords do not match")
+                false
             }
+
+            else -> true
         }
-        return true
     }
 
     private fun isValidEmail(email: String): Boolean {
-        return email.matches(Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"))
+        return email.matches(
+            Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
+        )
     }
-
-    // ================== STATE MANAGEMENT ==================
 
     fun clearErrorMessage() {
         _errorMessage.value = ""
@@ -196,8 +289,6 @@ class AuthViewModel (application: Application) : AndroidViewModel(application) {
         _registerState.value = RegisterUiState.Idle
     }
 }
-
-// ================== UI STATE CLASSES ==================
 
 sealed class LoginUiState {
     object Idle : LoginUiState()
@@ -213,8 +304,10 @@ sealed class RegisterUiState {
     data class Error(val message: String) : RegisterUiState()
 }
 
-class AuthViewModelFactory(private val application: Application) :
-    ViewModelProvider.Factory {
+class AuthViewModelFactory(
+    private val application: Application
+) : ViewModelProvider.Factory {
+
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return AuthViewModel(application) as T
     }

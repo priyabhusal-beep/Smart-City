@@ -3,10 +3,10 @@ package com.example.smart_city
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,43 +27,30 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.smart_city.viewmodel.AuthViewModel
-import com.example.smart_city.viewmodel.LoginUiState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.smart_city.ui.theme.SmartCityTheme
-
+import com.example.smart_city.viewmodel.AuthViewModel
+import com.example.smart_city.viewmodel.LoginUiState
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import kotlinx.coroutines.launch
 class LoginActivity : ComponentActivity() {
 
-    private val authViewModel: AuthViewModel by viewModels()
+    private val authViewModel: AuthViewModel by lazy {
+        (application as SmartCityApplication).authViewModel
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
-        // Check if already logged in
-        if (authViewModel.currentUser.value != null) {
-            navigateToDashboard()
-            finish()
-            return
-        }
 
         setContent {
             SmartCityTheme {
                 LoginScreen(viewModel = authViewModel)
             }
         }
-    }
-
-    private fun navigateToDashboard() {
-        val userType = authViewModel.currentUser.value?.userType
-
-        val intent = when (userType) {
-            "admin" -> Intent(this, AdminDashboard::class.java)
-            else -> Intent(this, HomeScreen::class.java)
-        }
-
-        startActivity(intent)
-        finish()
     }
 }
 
@@ -72,38 +59,85 @@ fun LoginScreen(viewModel: AuthViewModel) {
     val context = LocalContext.current
     val activity = context as? Activity
 
-    // Observe ViewModel state
     val loginState by viewModel.loginState.collectAsStateWithLifecycle()
     val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
     val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
-    val currentUser by viewModel.currentUser.collectAsStateWithLifecycle()
 
-    // Local UI state
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    val credentialManager = remember { CredentialManager.create(context) }
+    val coroutineScope = rememberCoroutineScope()
 
-    // Handle successful login - navigate
-    LaunchedEffect(loginState) {
-        if (loginState is LoginUiState.Success) {
-            val userType = currentUser?.userType
-            val intent = when (userType) {
-                "admin" -> Intent(context, AdminDashboard::class.java)
-                else -> Intent(context, HomeScreen::class.java)
+    fun startGoogleLogin() {
+        coroutineScope.launch {
+            try {
+                val googleIdOption = GetGoogleIdOption.Builder()
+                    .setFilterByAuthorizedAccounts(false)
+                    .setServerClientId(
+                        "370184886750-dmmpsqps6mih9equadgiu8fqu6rpesc0.apps.googleusercontent.com"
+                    )
+                    .build()
+
+                val request = GetCredentialRequest.Builder()
+                    .addCredentialOption(googleIdOption)
+                    .build()
+
+                val result = credentialManager.getCredential(
+                    context = context,
+                    request = request
+                )
+
+                val googleCredential =
+                    GoogleIdTokenCredential.createFrom(result.credential.data)
+
+                viewModel.signInWithGoogle(
+                    idToken = googleCredential.idToken,
+                    userType = "citizen"
+                )
+
+            } catch (e: Exception) {
+                Toast.makeText(
+                    context,
+                    e.message ?: "Google Sign-In failed",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
-            context.startActivity(intent)
-            activity?.finish()
         }
     }
 
-    // Show error message
+    LaunchedEffect(loginState) {
+        when (val state = loginState) {
+            is LoginUiState.Success -> {
+                val userType = state.user.userType
+
+                Toast.makeText(
+                    context,
+                    "Logged in as: $userType",
+                    Toast.LENGTH_SHORT
+                ).show()
+
+                val intent = when (userType) {
+                    "admin" -> Intent(context, AdminDashboard::class.java)
+                    else -> Intent(context, HomeScreen::class.java)
+                }
+
+                context.startActivity(intent)
+                activity?.finish()
+            }
+
+            is LoginUiState.Error -> {
+                Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
+            }
+
+            else -> Unit
+        }
+    }
+
     LaunchedEffect(errorMessage) {
         if (errorMessage.isNotEmpty()) {
-            android.widget.Toast.makeText(
-                context,
-                errorMessage,
-                android.widget.Toast.LENGTH_SHORT
-            ).show()
+            Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+            viewModel.clearErrorMessage()
         }
     }
 
@@ -117,7 +151,6 @@ fun LoginScreen(viewModel: AuthViewModel) {
                 .imePadding(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Item 1: Header Image
             item {
                 Box(
                     modifier = Modifier
@@ -133,7 +166,6 @@ fun LoginScreen(viewModel: AuthViewModel) {
                 }
             }
 
-            // Item 2: Title and Subtitle
             item {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -145,6 +177,7 @@ fun LoginScreen(viewModel: AuthViewModel) {
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF1E3A8A)
                     )
+
                     Text(
                         text = "Access your dashboard",
                         fontSize = 14.sp,
@@ -153,7 +186,6 @@ fun LoginScreen(viewModel: AuthViewModel) {
                 }
             }
 
-            // Item 3: Main Login Card
             item {
                 Card(
                     modifier = Modifier
@@ -168,10 +200,9 @@ fun LoginScreen(viewModel: AuthViewModel) {
                         modifier = Modifier.padding(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Email Field
                         OutlinedTextField(
                             value = email,
-                            onValueChange = { email = it },
+                            onValueChange = { email = it.trim() },
                             placeholder = { Text("Email Address", color = Color.Gray) },
                             leadingIcon = {
                                 Icon(
@@ -193,7 +224,6 @@ fun LoginScreen(viewModel: AuthViewModel) {
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Password Field
                         OutlinedTextField(
                             value = password,
                             onValueChange = { password = it },
@@ -237,21 +267,18 @@ fun LoginScreen(viewModel: AuthViewModel) {
                             enabled = !isLoading
                         )
 
-                        // Forgot Password
+
                         TextButton(
                             onClick = {
-                                android.widget.Toast.makeText(
-                                    context,
-                                    "Reset link will be sent to your email",
-                                    android.widget.Toast.LENGTH_SHORT
-                                ).show()
+                                val intent = Intent(context, ForgotPassword::class.java)
+                                context.startActivity(intent)
                             },
                             modifier = Modifier.align(Alignment.End),
                             contentPadding = PaddingValues(0.dp),
                             enabled = !isLoading
                         ) {
                             Text(
-                                "FORGOT PASSWORD?",
+                                text = "FORGOT PASSWORD?",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF1E3A8A)
@@ -260,7 +287,6 @@ fun LoginScreen(viewModel: AuthViewModel) {
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Loading indicator
                         if (isLoading) {
                             CircularProgressIndicator(
                                 modifier = Modifier
@@ -270,19 +296,17 @@ fun LoginScreen(viewModel: AuthViewModel) {
                             )
                         }
 
-                        // Sign In Button
                         Button(
                             onClick = {
-                                if (email.isEmpty() || password.isEmpty()) {
-                                    android.widget.Toast.makeText(
+                                if (email.isBlank() || password.isBlank()) {
+                                    Toast.makeText(
                                         context,
                                         "Please enter email and password",
-                                        android.widget.Toast.LENGTH_SHORT
+                                        Toast.LENGTH_SHORT
                                     ).show()
                                     return@Button
                                 }
 
-                                // Call ViewModel login with Firebase
                                 viewModel.login(email, password)
                             },
                             modifier = Modifier
@@ -296,7 +320,7 @@ fun LoginScreen(viewModel: AuthViewModel) {
                             enabled = !isLoading
                         ) {
                             Text(
-                                "Login",
+                                text = "Login",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White
@@ -305,7 +329,6 @@ fun LoginScreen(viewModel: AuthViewModel) {
 
                         Spacer(modifier = Modifier.height(32.dp))
 
-                        // Divider
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.fillMaxWidth()
@@ -314,13 +337,15 @@ fun LoginScreen(viewModel: AuthViewModel) {
                                 modifier = Modifier.weight(1f),
                                 color = Color(0xFFE5E7EB)
                             )
+
                             Text(
-                                "OR CONTINUE WITH",
+                                text = "OR CONTINUE WITH",
                                 modifier = Modifier.padding(horizontal = 12.dp),
                                 fontSize = 10.sp,
                                 color = Color.Gray,
                                 fontWeight = FontWeight.Medium
                             )
+
                             HorizontalDivider(
                                 modifier = Modifier.weight(1f),
                                 color = Color(0xFFE5E7EB)
@@ -329,14 +354,9 @@ fun LoginScreen(viewModel: AuthViewModel) {
 
                         Spacer(modifier = Modifier.height(32.dp))
 
-                        // Google Login Button
                         OutlinedButton(
                             onClick = {
-                                android.widget.Toast.makeText(
-                                    context,
-                                    "Google Sign-In coming soon",
-                                    android.widget.Toast.LENGTH_SHORT
-                                ).show()
+                                startGoogleLogin()
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -354,7 +374,9 @@ fun LoginScreen(viewModel: AuthViewModel) {
                                     contentDescription = "Google Logo",
                                     modifier = Modifier.size(20.dp)
                                 )
+
                                 Spacer(modifier = Modifier.width(12.dp))
+
                                 Text(
                                     text = "Google",
                                     color = Color.Black,
@@ -365,13 +387,13 @@ fun LoginScreen(viewModel: AuthViewModel) {
 
                         Spacer(modifier = Modifier.height(40.dp))
 
-                        // Sign Up Footer
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                "Don't have an account? ",
+                                text = "Don't have an account? ",
                                 color = Color.Gray,
                                 fontSize = 14.sp
                             )
+
                             TextButton(
                                 onClick = {
                                     val intent = Intent(context, CreateAccount::class.java)
@@ -382,7 +404,7 @@ fun LoginScreen(viewModel: AuthViewModel) {
                                 enabled = !isLoading
                             ) {
                                 Text(
-                                    "Sign Up",
+                                    text = "Sign Up",
                                     color = Color(0xFF1E3A8A),
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 14.sp
@@ -403,8 +425,6 @@ fun LoginPreview() {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = Color(0xFFF1F4F8)
-        ) {
-            // Preview
-        }
+        ) {}
     }
 }

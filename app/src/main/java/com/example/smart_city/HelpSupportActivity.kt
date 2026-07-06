@@ -24,24 +24,31 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smart_city.ui.theme.SmartCityTheme
-
+import com.example.smart_city.utils.ThemePreference
 data class FAQItem(val question: String, val answer: String)
 
 class HelpSupportActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val isDarkMode = ThemePreference.getDarkMode(this)
+
         setContent {
             SmartCityTheme {
-                HelpSupportScreenContent(onBackPressed = { finish() })
+                HelpSupportScreenContent(
+                    onBackPressed = { finish() },
+                    isDarkMode = isDarkMode
+                )
             }
         }
     }
 }
 
 @Composable
-fun HelpSupportScreenContent(onBackPressed: () -> Unit = {}) {
-    var isDarkMode by remember { mutableStateOf(false) }
+fun HelpSupportScreenContent(
+    onBackPressed: () -> Unit = {},
+    isDarkMode: Boolean = false
+) {
     var expandedFAQ by remember { mutableStateOf<Int?>(null) }
 
     val backgroundColor = if (isDarkMode) Color(0xFF121212) else Color(0xFFF8F9FA)

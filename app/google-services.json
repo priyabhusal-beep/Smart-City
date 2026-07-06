@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "370184886750",
+    "firebase_url": "https://smart-city-cbdb9-default-rtdb.firebaseio.com",
     "project_id": "smart-city-cbdb9",
     "storage_bucket": "smart-city-cbdb9.firebasestorage.app"
   },
@@ -12,7 +13,20 @@
           "package_name": "com.example.smart_city"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "370184886750-u1g2cv1vuaduaf4esf10eqgdvupilaa2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.smart_city",
+            "certificate_hash": "2b29b05463e5e448d07fed2ba14f16c25484c04d"
+          }
+        },
+        {
+          "client_id": "370184886750-dmmpsqps6mih9equadgiu8fqu6rpesc0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyADAAJ9civC-wOgcJPHSIYd-plfgiLXRgY"
@@ -20,7 +34,41 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "370184886750-7c6mnrakuq736ho3m37mg9p4cmkf5mb5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:370184886750:android:eb4a21380764ad9dbce54f",
+        "android_client_info": {
+          "package_name": "com.novashop.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "370184886750-dmmpsqps6mih9equadgiu8fqu6rpesc0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyADAAJ9civC-wOgcJPHSIYd-plfgiLXRgY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "370184886750-7c6mnrakuq736ho3m37mg9p4cmkf5mb5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

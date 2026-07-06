@@ -8,10 +8,17 @@ class ReportRepository {
 
     fun submitReport(report: ReportModel, onComplete: (Boolean) -> Unit) {
         val id = database.push().key ?: return
-        database.child(id).setValue(report)
+        val reportWithId = report.copy(
+            id = id,
+            voteCount = 0,
+            votes = emptyMap()
+        )
+
+        database.child(id).setValue(reportWithId)
             .addOnCompleteListener { task ->
                 onComplete(task.isSuccessful)
             }
+
     }
 
     fun getAllComplaints(onResult: (List<ReportModel>) -> Unit) {
@@ -43,4 +50,6 @@ class ReportRepository {
             }
         }
     }
+
+
 }
