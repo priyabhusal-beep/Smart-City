@@ -53,6 +53,10 @@ import kotlinx.coroutines.delay
 
 import java.text.SimpleDateFormat
 import java.util.Date
+import androidx.compose.ui.platform.LocalContext
+import coil3.compose.AsyncImage
+import coil3.request.CachePolicy
+import coil3.request.ImageRequest
 
 val PrimaryBlue = Color(0xFF0046B1)
 val AccentTeal = Color(0xFF00A389)
@@ -581,33 +585,27 @@ fun DashboardContents(
     ) {
         item {
             Spacer(modifier = Modifier.height(20.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.lana),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(50.dp))
-                )
-
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                if (!currentUser?.profilePicture.isNullOrEmpty()) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(currentUser?.profilePicture)
+                            .diskCachePolicy(CachePolicy.DISABLED)
+                            .memoryCachePolicy(CachePolicy.DISABLED)
+                            .build(),
+                        contentDescription = "Profile Picture",
+                        modifier = Modifier.size(48.dp).clip(RoundedCornerShape(50.dp)),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                        placeholder = painterResource(R.drawable.user),
+                        error = painterResource(R.drawable.user)
+                    )
+                } else {
+                    Image(painter = painterResource(R.drawable.user), contentDescription = null, modifier = Modifier.size(48.dp).clip(RoundedCornerShape(50.dp)))
+                }
                 Spacer(modifier = Modifier.width(12.dp))
-
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Hello",
-                        color = secondaryTextColor
-                    )
-
-                    Text(
-                        text = currentUser?.name ?: "Guest",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = PrimaryBlue
-                    )
+                    Text(text = "Hello", color = secondaryTextColor)
+                    Text(text = currentUser?.name ?: "Guest", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = PrimaryBlue)
                 }
 
                 BadgedBox(
