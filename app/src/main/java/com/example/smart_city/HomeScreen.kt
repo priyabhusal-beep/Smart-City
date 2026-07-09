@@ -479,6 +479,22 @@ fun ComplaintItemCard(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
+
+            // NEW: complaint image
+            AsyncImage(
+                model = complaint.imageUrl.ifEmpty { null },
+                contentDescription = "Complaint Image",
+                placeholder = painterResource(id = R.drawable.smartcity),
+                error = painterResource(id = R.drawable.smartcity),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(160.dp)
+                    .clip(RoundedCornerShape(10.dp)),
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             Text(text = "Location: ${complaint.area}, ${complaint.ward}", fontSize = 12.sp, color = secondaryTextColor)
             Spacer(modifier = Modifier.height(6.dp))
             Text(text = "Description: ${complaint.description}", fontSize = 12.sp, color = textColor, maxLines = 2)

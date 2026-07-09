@@ -13,13 +13,17 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil3.compose.AsyncImage
 import com.example.smart_city.model.ReportModel
 import com.example.smart_city.ui.theme.SmartCityTheme
 import com.example.smart_city.utils.ThemePreference
@@ -158,6 +162,19 @@ fun ComplaintCardItem(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            AsyncImage(
+                model = complaint.imageUrl.ifEmpty { null },
+                contentDescription = "Complaint Image",
+                placeholder = painterResource(id = R.drawable.smartcity),
+                error = painterResource(id = R.drawable.smartcity),
+                modifier = Modifier
+                    .size(78.dp)
+                    .clip(RoundedCornerShape(10.dp)),
+                contentScale = ContentScale.Crop
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = complaint.issueType,
