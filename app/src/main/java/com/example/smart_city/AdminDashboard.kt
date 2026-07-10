@@ -1,5 +1,6 @@
 package com.example.smart_city
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -11,7 +12,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,8 +26,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
@@ -33,14 +39,12 @@ import com.example.smart_city.ui.theme.SmartCityTheme
 import com.example.smart_city.viewmodel.ComplaintsViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
-import android.content.Intent
-import androidx.compose.ui.res.painterResource
 
 class AdminDashboard : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
 
         val windowInsetsController =
@@ -49,13 +53,13 @@ class AdminDashboard : ComponentActivity() {
         windowInsetsController.systemBarsBehavior =
             WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
 
-        windowInsetsController.hide(WindowInsetsCompat.Type.statusBars())
-
-        val wardNo = intent.getIntExtra("wardNo", 0)
+        windowInsetsController.hide(
+            WindowInsetsCompat.Type.statusBars()
+        )
 
         setContent {
             SmartCityTheme {
-                AdminDashboardScreen(wardNo = wardNo)
+                AdminDashboardScreen()
             }
         }
     }
@@ -63,50 +67,132 @@ class AdminDashboard : ComponentActivity() {
 
 @Composable
 fun AdminDashboardScreen(
-    wardNo: Int,
-    viewModel: ComplaintsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    viewModel: ComplaintsViewModel =
+        androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
+    /*
+     These values must exist inside ComplaintsViewModel.
+
+     var complaints by mutableStateOf<List<ReportModel>>(emptyList())
+     var isLoading by mutableStateOf(false)
+     var adminWardNo by mutableStateOf(0)
+     var errorMessage by mutableStateOf<String?>(null)
+
+     fun loadAdminWardAndComplaints()
+    */
+
     val complaints = viewModel.complaints
     val isLoading = viewModel.isLoading
+    val wardNo = viewModel.adminWardNo
+    val errorMessage = viewModel.errorMessage
 
-    LaunchedEffect(wardNo) {
-        viewModel.fetchComplaintsByWard(wardNo)
+    /*
+     Load the logged-in admin's ward number first.
+
+     After loading the admin ward, the ViewModel should call:
+
+     fetchComplaintsByWard(adminWardNo)
+    */
+    LaunchedEffect(Unit) {
+        viewModel.loadAdminWardAndComplaints()
     }
 
-    val total = complaints.size
-    val pending = complaints.count { it.status.equals("Pending", ignoreCase = true) }
-    val inProgress = complaints.count { it.status.equals("In Progress", ignoreCase = true) }
-    val resolved = complaints.count { it.status.equals("Resolved", ignoreCase = true) }
+    /*
+     These values are calculated from the actual complaints fetched
+     from Firebase for the logged-in admin's ward.
+    */
+    val totalComplaints = complaints.size
+
+    val pendingComplaints = complaints.count {
+        normalizeComplaintStatus(it.status) == "pending"
+    }
+
+    val inProgressComplaints = complaints.count {
+        normalizeComplaintStatus(it.status) == "in_progress"
+    }
+
+    val resolvedComplaints = complaints.count {
+        normalizeComplaintStatus(it.status) == "resolved"
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = Color(0xFFF8F9FA),
-        bottomBar = { CustomBottomNavigation() }
+        bottomBar = {
+            CustomBottomNavigation(
+                wardNo = wardNo
+            )
+        }
     ) { innerPadding ->
-        DashboardContent(
+
+        AdminDashboardContent(
             contentPadding = innerPadding,
             wardNo = wardNo,
             complaints = complaints,
             isLoading = isLoading,
-            total = total,
-            pending = pending,
-            inProgress = inProgress,
-            resolved = resolved
+            errorMessage = errorMessage,
+            total = totalComplaints,
+            pending = pendingComplaints,
+            inProgress = inProgressComplaints,
+            resolved = resolvedComplaints
         )
     }
 }
 
+/*
+ Normalizes Firebase status values.
+
+ For example:
+
+ "In Progress"
+ "in progress"
+ "IN_PROGRESS"
+ "in-progress"
+
+ All become "in_progress".
+*/
+private fun normalizeComplaintStatus(
+    status: String
+): String {
+
+    val normalizedStatus = status
+        .trim()
+        .lowercase()
+        .replace("_", " ")
+        .replace("-", " ")
+        .replace(Regex("\\s+"), " ")
+
+    return when (normalizedStatus) {
+
+        "pending" -> "pending"
+
+        "in progress",
+        "inprogress",
+        "processing",
+        "working" -> "in_progress"
+
+        "resolved",
+        "completed",
+        "complete" -> "resolved"
+
+        else -> "unknown"
+    }
+}
+
 @Composable
-fun DashboardContent(
+fun AdminDashboardContent(
     contentPadding: PaddingValues,
     wardNo: Int,
     complaints: List<ReportModel>,
     isLoading: Boolean,
+    errorMessage: String?,
     total: Int,
     pending: Int,
     inProgress: Int,
     resolved: Int
 ) {
+    val context = LocalContext.current
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -116,16 +202,21 @@ fun DashboardContent(
             bottom = contentPadding.calculateBottomPadding() + 24.dp
         )
     ) {
-        item {
-            val context = androidx.compose.ui.platform.LocalContext.current
 
+        /*
+         Dashboard heading and notification button
+        */
+        item {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
                     Text(
                         text = "Admin Dashboard",
                         fontSize = 28.sp,
@@ -134,7 +225,11 @@ fun DashboardContent(
                     )
 
                     Text(
-                        text = "Ward $wardNo infrastructure oversight",
+                        text = if (wardNo > 0) {
+                            "Ward $wardNo infrastructure oversight"
+                        } else {
+                            "Loading admin ward..."
+                        },
                         color = Color.Gray,
                         fontSize = 14.sp
                     )
@@ -142,13 +237,23 @@ fun DashboardContent(
 
                 IconButton(
                     onClick = {
-                        context.startActivity(
-                            Intent(context, AdminNotificationActivity::class.java)
+                        val intent = Intent(
+                            context,
+                            AdminNotificationActivity::class.java
                         )
+
+                        intent.putExtra(
+                            "wardNo",
+                            wardNo
+                        )
+
+                        context.startActivity(intent)
                     }
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.baseline_notifications_24),
+                        painter = painterResource(
+                            id = R.drawable.baseline_notifications_24
+                        ),
                         contentDescription = "Admin Notifications",
                         tint = Color(0xFF0D236D),
                         modifier = Modifier.size(28.dp)
@@ -157,21 +262,60 @@ fun DashboardContent(
             }
         }
 
+        /*
+         Error message
+        */
+        if (errorMessage != null) {
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFFFEBEE)
+                    )
+                ) {
+                    Text(
+                        text = errorMessage,
+                        color = Color(0xFFC62828),
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }
+        }
+
+        /*
+         Total complaints card
+        */
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF1E3A8A)),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFF1E3A8A)
+                ),
                 shape = RoundedCornerShape(16.dp)
             ) {
-                Column(modifier = Modifier.padding(24.dp)) {
+                Column(
+                    modifier = Modifier.padding(24.dp)
+                ) {
                     Text(
                         text = "Total Complaints",
-                        color = Color.White.copy(alpha = 0.7f),
+                        color = Color.White.copy(alpha = 0.75f),
                         fontSize = 14.sp
                     )
 
+                    Spacer(
+                        modifier = Modifier.height(4.dp)
+                    )
+
                     if (isLoading) {
-                        CircularProgressIndicator(color = Color.White)
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(36.dp),
+                            color = Color.White,
+                            strokeWidth = 3.dp
+                        )
                     } else {
                         Text(
                             text = total.toString(),
@@ -183,47 +327,82 @@ fun DashboardContent(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(
+                modifier = Modifier.height(16.dp)
+            )
         }
 
+        /*
+         Pending and In Progress boxes
+        */
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                StatBox(
-                    value = pending.toString(),
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                AdminStatBox(
+                    value = if (isLoading) "..." else pending.toString(),
                     label = "Pending",
                     icon = Icons.Default.Info,
                     modifier = Modifier.weight(1f),
-                    iconColor = Color(0xFFFF8A65)
+                    iconColor = Color(0xFFFF8A65),
+                    iconBackgroundColor = Color(0xFFFFF3E0)
                 )
 
-                StatBox(
-                    value = inProgress.toString(),
+                AdminStatBox(
+                    value = if (isLoading) "..." else inProgress.toString(),
                     label = "In Progress",
                     icon = Icons.Default.Build,
                     modifier = Modifier.weight(1f),
-                    iconColor = Color(0xFF64B5F6)
+                    iconColor = Color(0xFF1976D2),
+                    iconBackgroundColor = Color(0xFFE3F2FD)
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(
+                modifier = Modifier.height(16.dp)
+            )
         }
 
+        /*
+         Resolved complaint card
+        */
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                ),
                 shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(1.dp)
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 1.dp
+                )
             ) {
                 Row(
-                    modifier = Modifier.padding(20.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Resolved", color = Color.Gray, fontSize = 12.sp)
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = "Resolved",
+                            color = Color.Gray,
+                            fontSize = 12.sp
+                        )
+
+                        Spacer(
+                            modifier = Modifier.height(2.dp)
+                        )
 
                         Text(
-                            text = resolved.toString(),
+                            text = if (isLoading) {
+                                "..."
+                            } else {
+                                resolved.toString()
+                            },
                             color = Color(0xFF2E7D32),
                             fontSize = 26.sp,
                             fontWeight = FontWeight.Bold
@@ -237,7 +416,7 @@ fun DashboardContent(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Check,
-                            contentDescription = null,
+                            contentDescription = "Resolved",
                             tint = Color(0xFF2E7D32),
                             modifier = Modifier.padding(10.dp)
                         )
@@ -245,113 +424,294 @@ fun DashboardContent(
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        item {
-            Text(
-                text = "Ward $wardNo Complaints",
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF0D236D),
-                fontSize = 18.sp,
-                modifier = Modifier.padding(bottom = 12.dp)
+            Spacer(
+                modifier = Modifier.height(20.dp)
             )
         }
 
-        if (isLoading) {
-            item {
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = Color(0xFF1E3A8A))
-                }
-            }
-        } else if (complaints.isEmpty()) {
-            item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    shape = RoundedCornerShape(16.dp)
+        /*
+         Complaint heading
+        */
+        item {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = if (wardNo > 0) {
+                        "Ward $wardNo Complaints"
+                    } else {
+                        "Ward Complaints"
+                    },
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF0D236D),
+                    fontSize = 18.sp,
+                    modifier = Modifier.weight(1f)
+                )
+
+                TextButton(
+                    onClick = {
+                        val intent = Intent(
+                            context,
+                            AdminManageScreen::class.java
+                        )
+
+                        intent.putExtra(
+                            "wardNo",
+                            wardNo
+                        )
+
+                        context.startActivity(intent)
+                    },
+                    enabled = wardNo > 0
                 ) {
                     Text(
-                        text = "No complaints found for Ward $wardNo",
-                        color = Color.Gray,
-                        fontSize = 14.sp,
-                        modifier = Modifier.padding(24.dp)
+                        text = "View All",
+                        color = Color(0xFF1E3A8A),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
+        }
+
+        /*
+         Loading complaints
+        */
+        if (isLoading) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 30.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = Color(0xFF1E3A8A)
+                    )
+                }
+            }
+        } else if (complaints.isEmpty()) {
+
+            /*
+             No complaints
+            */
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 1.dp
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.List,
+                            contentDescription = null,
+                            tint = Color.LightGray,
+                            modifier = Modifier.size(40.dp)
+                        )
+
+                        Spacer(
+                            modifier = Modifier.height(10.dp)
+                        )
+
+                        Text(
+                            text = if (wardNo > 0) {
+                                "No complaints found for Ward $wardNo"
+                            } else {
+                                "No complaints found"
+                            },
+                            color = Color.Gray,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+            }
         } else {
-            items(complaints.take(5)) { complaint ->
-                AdminComplaintCard(complaint)
+
+            /*
+             Show the newest five complaints
+            */
+            items(
+                items = complaints
+                    .sortedByDescending { it.timestamp }
+                    .take(5),
+                key = { complaint ->
+                    /*
+                     Replace this key with complaint.complaintId
+                     or complaint.reportId when your model contains one.
+                    */
+                    "${complaint.userId}_${complaint.timestamp}"
+                }
+            ) { complaint ->
+
+                AdminComplaintCard(
+                    complaint = complaint
+                )
             }
         }
     }
 }
 
 @Composable
-fun AdminComplaintCard(complaint: ReportModel) {
+fun AdminComplaintCard(
+    complaint: ReportModel
+) {
     val locale = LocalConfiguration.current.locales[0]
-    val formattedDate = remember(complaint.timestamp, locale) {
-        SimpleDateFormat("dd/MM/yyyy HH:mm", locale).format(Date(complaint.timestamp))
+
+    val formattedDate = remember(
+        complaint.timestamp,
+        locale
+    ) {
+        if (complaint.timestamp > 0L) {
+            SimpleDateFormat(
+                "dd/MM/yyyy HH:mm",
+                locale
+            ).format(
+                Date(complaint.timestamp)
+            )
+        } else {
+            "Date unavailable"
+        }
     }
-    
+
+    val statusColor = when (
+        normalizeComplaintStatus(complaint.status)
+    ) {
+        "pending" -> Color(0xFFEF6C00)
+        "in_progress" -> Color(0xFF1976D2)
+        "resolved" -> Color(0xFF2E7D32)
+        else -> Color.Gray
+    }
+
+    val statusBackgroundColor = when (
+        normalizeComplaintStatus(complaint.status)
+    ) {
+        "pending" -> Color(0xFFFFF3E0)
+        "in_progress" -> Color(0xFFE3F2FD)
+        "resolved" -> Color(0xFFE8F5E9)
+        else -> Color(0xFFF5F5F5)
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(1.dp)
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 1.dp
+        )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "${complaint.issueType} - Ward ${complaint.ward}",
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                color = Color(0xFF1A1A1A)
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = complaint.issueType.ifBlank {
+                            "Complaint"
+                        },
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = Color(0xFF1A1A1A)
+                    )
+
+                    Spacer(
+                        modifier = Modifier.height(4.dp)
+                    )
+
+                    Text(
+                        text = complaint.category.ifBlank {
+                            "Uncategorized"
+                        },
+                        color = Color(0xFF1E3A8A),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(20.dp),
+                    color = statusBackgroundColor
+                ) {
+                    Text(
+                        text = complaint.status.ifBlank {
+                            "Unknown"
+                        },
+                        color = statusColor,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(
+                            horizontal = 10.dp,
+                            vertical = 6.dp
+                        )
+                    )
+                }
+            }
+
+            Spacer(
+                modifier = Modifier.height(10.dp)
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
-
             Text(
-                text = complaint.category,
-                color = Color(0xFF1E3A8A),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Text(
-                text = "Area: ${complaint.area}",
-                color = Color.Gray,
-                fontSize = 13.sp
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Text(
-                text = "Status: ${complaint.status}",
-                color = Color.Gray,
-                fontSize = 13.sp
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Text(
-                text = complaint.description,
+                text = "Ward: ${complaint.ward}",
                 color = Color.DarkGray,
-                fontSize = 13.sp,
-                maxLines = 2
+                fontSize = 13.sp
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(
+                modifier = Modifier.height(4.dp)
+            )
+
+            Text(
+                text = "Area: ${
+                    complaint.area.ifBlank {
+                        "Not provided"
+                    }
+                }",
+                color = Color.Gray,
+                fontSize = 13.sp
+            )
+
+            if (complaint.description.isNotBlank()) {
+                Spacer(
+                    modifier = Modifier.height(8.dp)
+                )
+
+                Text(
+                    text = complaint.description,
+                    color = Color.DarkGray,
+                    fontSize = 13.sp,
+                    maxLines = 2
+                )
+            }
+
+            Spacer(
+                modifier = Modifier.height(10.dp)
+            )
 
             Text(
                 text = formattedDate,
-                color = Color.LightGray,
+                color = Color.Gray,
                 fontSize = 11.sp
             )
         }
@@ -359,32 +719,49 @@ fun AdminComplaintCard(complaint: ReportModel) {
 }
 
 @Composable
-fun StatBox(
+fun AdminStatBox(
     value: String,
     label: String,
     icon: ImageVector,
-    modifier: Modifier,
-    iconColor: Color
+    modifier: Modifier = Modifier,
+    iconColor: Color,
+    iconBackgroundColor: Color
 ) {
     Card(
         modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(1.dp)
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 1.dp
+        )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = iconColor
-            )
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Surface(
+                modifier = Modifier.size(38.dp),
+                shape = RoundedCornerShape(10.dp),
+                color = iconBackgroundColor
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = label,
+                    tint = iconColor,
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
 
             Text(
                 text = value,
                 fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1A1A1A)
             )
 
             Text(
@@ -397,30 +774,47 @@ fun StatBox(
 }
 
 @Composable
-fun CustomBottomNavigation() {
-    val context = androidx.compose.ui.platform.LocalContext.current
+fun CustomBottomNavigation(
+    wardNo: Int
+) {
+    val context = LocalContext.current
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+        shape = RoundedCornerShape(
+            topStart = 32.dp,
+            topEnd = 32.dp
+        ),
         color = Color.White,
         shadowElevation = 24.dp
     ) {
         NavigationBar(
             containerColor = Color.Transparent,
-            modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars)
+            modifier = Modifier.windowInsetsPadding(
+                WindowInsets.navigationBars
+            )
         ) {
+
+            /*
+             Admin Home
+            */
             NavigationBarItem(
                 selected = true,
-                onClick = {},
+                onClick = {
+                    // Already on the Admin Dashboard.
+                },
                 icon = {
                     Icon(
                         imageVector = Icons.Default.Home,
-                        contentDescription = null,
+                        contentDescription = "Admin Home",
                         modifier = Modifier.size(28.dp)
                     )
                 },
                 label = {
-                    Text("Admin Home", fontWeight = FontWeight.Bold)
+                    Text(
+                        text = "Admin Home",
+                        fontWeight = FontWeight.Bold
+                    )
                 },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = Color(0xFF0D236D),
@@ -429,53 +823,83 @@ fun CustomBottomNavigation() {
                 )
             )
 
+            /*
+             Manage complaints
+            */
             NavigationBarItem(
                 selected = false,
                 onClick = {
-                    context.startActivity(
-                        Intent(context, AdminManageScreen::class.java)
-                    )
+                    if (wardNo > 0) {
+                        val intent = Intent(
+                            context,
+                            AdminManageScreen::class.java
+                        )
+
+                        intent.putExtra(
+                            "wardNo",
+                            wardNo
+                        )
+
+                        context.startActivity(intent)
+                    }
                 },
                 icon = {
                     Icon(
                         imageVector = Icons.Default.Person,
-                        contentDescription = null,
+                        contentDescription = "Manage",
                         modifier = Modifier.size(24.dp)
                     )
                 },
-                label = { Text("Manage") },
+                label = {
+                    Text(
+                        text = "Manage"
+                    )
+                },
                 colors = NavigationBarItemDefaults.colors(
-                    unselectedIconColor = Color.LightGray
+                    unselectedIconColor = Color.Gray,
+                    unselectedTextColor = Color.Gray,
+                    indicatorColor = Color.Transparent
                 )
             )
 
+            /*
+             Analytics
+            */
             NavigationBarItem(
                 selected = false,
                 onClick = {
-                    context.startActivity(
-                        Intent(context, AdminAnalyticsActivity::class.java)
-                    )
+                    if (wardNo > 0) {
+                        val intent = Intent(
+                            context,
+                            AdminAnalyticsActivity::class.java
+                        )
+
+                        intent.putExtra(
+                            "wardNo",
+                            wardNo
+                        )
+
+                        context.startActivity(intent)
+                    }
                 },
                 icon = {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.List,
-                        contentDescription = null,
+                        contentDescription = "Analytics",
                         modifier = Modifier.size(24.dp)
                     )
                 },
-                label = { Text("Analytics") },
+                label = {
+                    Text(
+                        text = "Analytics"
+                    )
+                },
                 colors = NavigationBarItemDefaults.colors(
-                    unselectedIconColor = Color.LightGray
+                    unselectedIconColor = Color.Gray,
+                    unselectedTextColor = Color.Gray,
+                    indicatorColor = Color.Transparent
                 )
             )
         }
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = false)
-@Composable
-fun FullPreview() {
-    SmartCityTheme {
-        AdminDashboardScreen(wardNo = 1)
     }
 }
