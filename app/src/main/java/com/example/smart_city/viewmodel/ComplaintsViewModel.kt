@@ -166,21 +166,16 @@ class ComplaintsViewModel(
         isLoading = true
         errorMessage = ""
 
-        Log.d(
-            "ADMIN_DASHBOARD",
-            "Fetching complaints for Ward $wardNo"
-        )
-
         repository.getComplaintsByWard(wardNo) { fetchedComplaints ->
 
-            Log.d(
+            android.util.Log.d(
                 "ADMIN_DASHBOARD",
-                "Ward $wardNo complaints fetched: ${fetchedComplaints.size}"
+                "Fetched complaints for Ward $wardNo = ${fetchedComplaints.size}"
             )
 
             complaints = fetchedComplaints
                 .filter { complaint ->
-                    complaint.ward.trim().toIntOrNull() == wardNo
+                    complaint.wardNo == wardNo
                 }
                 .sortedByDescending {
                     it.timestamp
