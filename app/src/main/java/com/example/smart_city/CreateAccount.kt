@@ -39,6 +39,7 @@ import com.example.smart_city.viewmodel.AuthViewModel
 import com.example.smart_city.viewmodel.RegisterUiState
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class CreateAccount : ComponentActivity() {
@@ -88,9 +89,18 @@ fun CreateAccountScreen(
         }
     }
 
+    // Show a success message first, then navigate to Login after a short delay
     LaunchedEffect(registerState) {
         if (registerState is RegisterUiState.Success) {
-            val intent = Intent(context, HomeScreen::class.java)
+            Toast.makeText(
+                context,
+                "Account created successfully!",
+                Toast.LENGTH_LONG
+            ).show()
+
+            delay(1500) // let the user see the toast before navigating
+
+            val intent = Intent(context, LoginActivity::class.java)
             context.startActivity(intent)
             activity.finish()
         }
@@ -457,6 +467,8 @@ fun CustomInputField(
     enabled: Boolean = true
 ) {
 
+    var passwordVisible by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -491,7 +503,29 @@ fun CustomInputField(
                     modifier = Modifier.size(20.dp)
                 )
             },
-            visualTransformation = if (isPassword) {
+            trailingIcon = {
+                if (isPassword) {
+                    val eyeIcon = if (passwordVisible) {
+                        Icons.Default.Visibility
+                    } else {
+                        Icons.Default.VisibilityOff
+                    }
+
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            imageVector = eyeIcon,
+                            contentDescription = if (passwordVisible) {
+                                "Hide password"
+                            } else {
+                                "Show password"
+                            },
+                            tint = Color(0xFF6D6D6D),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+            },
+            visualTransformation = if (isPassword && !passwordVisible) {
                 PasswordVisualTransformation()
             } else {
                 VisualTransformation.None
