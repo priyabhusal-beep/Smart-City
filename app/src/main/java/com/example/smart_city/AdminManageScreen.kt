@@ -54,8 +54,8 @@ fun ManageComplaintsScreen(
     // Dialog state for updating status
     var showStatusDialog by remember { mutableStateOf(false) }
     var selectedComplaint by remember { mutableStateOf<ReportModel?>(null) }
-    val statusOptions = listOf("Pending", "Processing", "Resolved")
-
+    val statusOptions =
+        listOf("Pending", "In Progress", "Resolved")
 
 
     LaunchedEffect(Unit) {
@@ -156,7 +156,25 @@ fun ManageComplaintsScreen(
                                     .fillMaxWidth()
                                     .clickable {
                                         viewModel.updateStatus(selectedComplaint!!.id, status) { success ->
-                                            if (success) Toast.makeText(context, "Status updated to $status", Toast.LENGTH_SHORT).show()
+
+                                            if (success) {
+                                                Toast.makeText(
+                                                    context,
+                                                    "Status updated to $status",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+
+                                                // Refresh the complaint list
+                                                viewModel.fetchAllComplaints()
+
+                                            } else {
+                                                Toast.makeText(
+                                                    context,
+                                                    "Failed to update status",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+
                                             showStatusDialog = false
                                         }
                                     }
@@ -235,11 +253,24 @@ fun ComplaintItemRow(
 
 @Composable
 fun BadgeStatusView(status: String, onClick: () -> Unit) {
-    val (bgColor, textColor) = when (status.lowercase()) {
-        "pending" -> Color(0xFFFFE4E6) to Color(0xFFEF4444)
-        "processing" -> Color(0xFFEBF2FF) to Color(0xFF3B82F6)
-        "completed", "resolved" -> Color(0xFFDCFCE7) to Color(0xFF22C55E)
-        else -> Color.LightGray to Color.DarkGray
+    val normalizedStatus = status
+        .trim()
+        .lowercase()
+        .replace("_", " ")
+        .replace("-", " ")
+
+    val (bgColor, textColor) = when (normalizedStatus) {
+        "pending" ->
+            Color(0xFFFFE4E6) to Color(0xFFEF4444)
+
+        "processing", "in progress" ->
+            Color(0xFFEBF2FF) to Color(0xFF3B82F6)
+
+        "completed", "resolved" ->
+            Color(0xFFDCFCE7) to Color(0xFF22C55E)
+
+        else ->
+            Color.LightGray to Color.DarkGray
     }
     Surface(
         modifier = Modifier.clickable { onClick() },
