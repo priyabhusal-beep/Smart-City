@@ -11,9 +11,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.smart_city.ui.theme.SmartCityTheme
-import com.google.firebase.auth.FirebaseAuth
 
 class AdminAnalyticsActivity : ComponentActivity() {
+
+    private val authViewModel by lazy {
+        (application as SmartCityApplication).authViewModel
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -21,15 +25,28 @@ class AdminAnalyticsActivity : ComponentActivity() {
             SmartCityTheme {
                 AdminAnalyticsScreen(
                     onLogoutConfirmed = {
-                        FirebaseAuth.getInstance().signOut()
-
-                        val intent = Intent(this, LoginActivity::class.java)
-                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                        startActivity(intent)
+                        logoutAdmin()
                     }
                 )
             }
         }
+    }
+
+    private fun logoutAdmin() {
+        // This signs out Firebase and resets LoginUiState.Success to Idle
+        authViewModel.logout()
+
+        val intent = Intent(
+            this,
+            LoginActivity::class.java
+        ).apply {
+            flags =
+                Intent.FLAG_ACTIVITY_NEW_TASK or
+                        Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+
+        startActivity(intent)
+        finishAffinity()
     }
 }
 
@@ -37,7 +54,9 @@ class AdminAnalyticsActivity : ComponentActivity() {
 fun AdminAnalyticsScreen(
     onLogoutConfirmed: () -> Unit
 ) {
-    var showLogoutDialog by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember {
+        mutableStateOf(false)
+    }
 
     Column(
         modifier = Modifier
@@ -61,7 +80,7 @@ fun AdminAnalyticsScreen(
                 containerColor = Color(0xFFD32F2F)
             )
         ) {
-            Text("Logout")
+            Text(text = "Logout")
         }
     }
 
@@ -71,10 +90,10 @@ fun AdminAnalyticsScreen(
                 showLogoutDialog = false
             },
             title = {
-                Text("Logout")
+                Text(text = "Logout")
             },
             text = {
-                Text("Do you want to logout?")
+                Text(text = "Do you want to logout?")
             },
             confirmButton = {
                 Button(
@@ -86,7 +105,7 @@ fun AdminAnalyticsScreen(
                         containerColor = Color(0xFFD32F2F)
                     )
                 ) {
-                    Text("Yes")
+                    Text(text = "Yes")
                 }
             },
             dismissButton = {
@@ -95,7 +114,7 @@ fun AdminAnalyticsScreen(
                         showLogoutDialog = false
                     }
                 ) {
-                    Text("Cancel")
+                    Text(text = "Cancel")
                 }
             }
         )

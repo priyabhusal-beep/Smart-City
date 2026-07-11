@@ -51,11 +51,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
+import com.example.smart_city.ui.theme.SmartCityTheme
+import com.example.smart_city.utils.ThemePreference
 import com.example.smart_city.viewmodel.AuthViewModel
 import com.example.smart_city.viewmodel.ImageViewModel
 import com.example.smart_city.viewmodel.ReportViewModel
-import java.io.ByteArrayOutputStream
-import com.example.smart_city.utils.ThemePreference
+
 class Userprofile : ComponentActivity() {
 
     private val authViewModel: AuthViewModel by lazy {
@@ -65,28 +66,62 @@ class Userprofile : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
         setContent {
-            UserprofileApp(authViewModel = authViewModel)
+            SmartCityTheme {
+                UserprofileApp(
+                    authViewModel = authViewModel,
+                    onLogout = {
+                        logoutUser()
+                    }
+                )
+            }
         }
+    }
+
+    private fun logoutUser() {
+        // Logs out Firebase and resets LoginUiState to Idle
+        authViewModel.logout()
+
+        // Opens login page and removes all old user screens
+        val intent = Intent(
+            this,
+            LoginActivity::class.java
+        ).apply {
+            flags =
+                Intent.FLAG_ACTIVITY_NEW_TASK or
+                        Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+
+        startActivity(intent)
+        finishAffinity()
     }
 }
 
 @Composable
-fun LoadUserForProfileEffect(authViewModel: AuthViewModel?) {
+fun LoadUserForProfileEffect(
+    authViewModel: AuthViewModel?
+) {
     LaunchedEffect(Unit) {
         authViewModel?.loadCurrentUserIfNeeded()
     }
 }
 
 @Composable
-fun UserprofileApp(authViewModel: AuthViewModel? = null) {
+fun UserprofileApp(
+    authViewModel: AuthViewModel? = null,
+    onLogout: () -> Unit = {}
+) {
     LoadUserForProfileEffect(authViewModel)
 
     val context = LocalContext.current
 
     var isDarkMode by remember {
-        mutableStateOf(ThemePreference.getDarkMode(context))
+        mutableStateOf(
+            ThemePreference.getDarkMode(context)
+        )
     }
+
     val lightBackground = Color(0xFFF8F9FA)
     val darkBackground = Color(0xFF121212)
     val lightText = Color.Black
@@ -109,12 +144,19 @@ fun UserprofileApp(authViewModel: AuthViewModel? = null) {
     MaterialTheme(colorScheme = colors) {
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = if (isDarkMode) darkBackground else lightBackground
+            color = if (isDarkMode) {
+                darkBackground
+            } else {
+                lightBackground
+            }
         ) {
             UserprofileBody(
-                isDarkMode,
-                onDarkModeToggle = { isDarkMode = it },
-                authViewModel = authViewModel
+                isDarkMode = isDarkMode,
+                onDarkModeToggle = {
+                    isDarkMode = it
+                },
+                authViewModel = authViewModel,
+                onLogout = onLogout
             )
         }
     }
@@ -125,6 +167,7 @@ fun UserprofileBody(
     isDarkMode: Boolean,
     onDarkModeToggle: (Boolean) -> Unit,
     authViewModel: AuthViewModel? = null,
+    onLogout: () -> Unit = {},
     reportViewModel: ReportViewModel = viewModel(),
     imageViewModel: ImageViewModel = viewModel()
 ) {
@@ -132,7 +175,10 @@ fun UserprofileBody(
         ?: remember { mutableStateOf(null) }
 
     LaunchedEffect(currentUser?.profilePicture) {
-        println("PRINTLN_TEST: UI recomposed, profilePicture=${currentUser?.profilePicture}")
+        println(
+            "PRINTLN_TEST: UI recomposed, " +
+                    "profilePicture=${currentUser?.profilePicture}"
+        )
     }
 
     LaunchedEffect(Unit) {
@@ -143,45 +189,108 @@ fun UserprofileBody(
     val userComplaints = reportViewModel.userComplaints
     val totalUpvotes = reportViewModel.totalUserVotes
     val totalReports = userComplaints.size
-    val resolvedReports = userComplaints.count { it.status.lowercase() == "resolved" }
+
+    val resolvedReports = userComplaints.count {
+        it.status.lowercase() == "resolved"
+    }
 
     val scrollState = rememberScrollState()
-    val backgroundColor = if (isDarkMode) Color(0xFF121212) else Color(0xFFF8F9FA)
-    val cardColor = if (isDarkMode) Color(0xFF1E1E1E) else Color.White
-    val textColor = if (isDarkMode) Color(0xFFE0E0E0) else Color.Black
-    val secondaryTextColor = if (isDarkMode) Color(0xFFB0B0B0) else Color.Gray
+
+    val backgroundColor =
+        if (isDarkMode) {
+            Color(0xFF121212)
+        } else {
+            Color(0xFFF8F9FA)
+        }
+
+    val cardColor =
+        if (isDarkMode) {
+            Color(0xFF1E1E1E)
+        } else {
+            Color.White
+        }
+
+    val textColor =
+        if (isDarkMode) {
+            Color(0xFFE0E0E0)
+        } else {
+            Color.Black
+        }
+
+    val secondaryTextColor =
+        if (isDarkMode) {
+            Color(0xFFB0B0B0)
+        } else {
+            Color.Gray
+        }
 
     val context = LocalContext.current
 
-    var showImageSourceDialog by remember { mutableStateOf(false) }
-    var profileBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var showImageSourceDialog by remember {
+        mutableStateOf(false)
+    }
+    var showLogoutDialog by remember {
+        mutableStateOf(false)
+    }
+
+    var profileBitmap by remember {
+        mutableStateOf<Bitmap?>(null)
+    }
 
     val cameraLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.TakePicturePreview()
     ) { bitmap ->
+
         if (bitmap != null) {
             profileBitmap = bitmap
+
             val path = MediaStore.Images.Media.insertImage(
                 context.contentResolver,
                 bitmap,
                 "Profile_${System.currentTimeMillis()}",
                 null
             )
-            val uri = if (path != null) Uri.parse(path) else null
+
+            val uri =
+                if (path != null) {
+                    Uri.parse(path)
+                } else {
+                    null
+                }
+
             if (uri != null) {
-                imageViewModel.uploadImage(context, uri) { url ->
+                imageViewModel.uploadImage(
+                    context,
+                    uri
+                ) { url ->
+
                     if (url != null) {
                         authViewModel?.updateProfilePicture(url)
                         profileBitmap = null
-                        Toast.makeText(context, "Profile Updated", Toast.LENGTH_SHORT).show()
+
+                        Toast.makeText(
+                            context,
+                            "Profile Updated",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     } else {
                         profileBitmap = null
-                        Toast.makeText(context, "Upload failed, try again", Toast.LENGTH_SHORT).show()
+
+                        Toast.makeText(
+                            context,
+                            "Upload failed, try again",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             } else {
                 profileBitmap = null
-                Toast.makeText(context, "Could not get image", Toast.LENGTH_SHORT).show()
+
+                Toast.makeText(
+                    context,
+                    "Could not get image",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
@@ -189,35 +298,72 @@ fun UserprofileBody(
     val galleryLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
+
         uri?.let {
-            val bitmap = if (Build.VERSION.SDK_INT < 28) {
-                @Suppress("DEPRECATION")
-                MediaStore.Images.Media.getBitmap(context.contentResolver, it)
-            } else {
-                val source = ImageDecoder.createSource(context.contentResolver, it)
-                ImageDecoder.decodeBitmap(source)
-            }
+            val bitmap =
+                if (Build.VERSION.SDK_INT < 28) {
+                    @Suppress("DEPRECATION")
+                    MediaStore.Images.Media.getBitmap(
+                        context.contentResolver,
+                        it
+                    )
+                } else {
+                    val source = ImageDecoder.createSource(
+                        context.contentResolver,
+                        it
+                    )
+
+                    ImageDecoder.decodeBitmap(source)
+                }
+
             profileBitmap = bitmap
-            imageViewModel.uploadImage(context, it) { url ->
-                Log.d("GalleryDebug", "Callback fired. url=$url, authViewModel null? ${authViewModel == null}")
+
+            imageViewModel.uploadImage(
+                context,
+                it
+            ) { url ->
+
+                Log.d(
+                    "GalleryDebug",
+                    "Callback fired. url=$url, " +
+                            "authViewModel null? ${authViewModel == null}"
+                )
+
                 if (url != null) {
-                    Log.d("GalleryDebug", "About to call updateProfilePicture")
+                    Log.d(
+                        "GalleryDebug",
+                        "About to call updateProfilePicture"
+                    )
+
                     authViewModel?.updateProfilePicture(url)
                     profileBitmap = null
-                    Toast.makeText(context, "Profile Updated", Toast.LENGTH_SHORT).show()
+
+                    Toast.makeText(
+                        context,
+                        "Profile Updated",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 } else {
                     profileBitmap = null
-                    Toast.makeText(context, "Upload failed, try again", Toast.LENGTH_SHORT).show()
+
+                    Toast.makeText(
+                        context,
+                        "Upload failed, try again",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
     }
 
-    Scaffold(containerColor = backgroundColor) { innerPadding ->
+    Scaffold(
+        containerColor = backgroundColor
+    ) { innerPadding ->
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(color = backgroundColor)
+                .background(backgroundColor)
                 .verticalScroll(scrollState)
                 .padding(
                     top = innerPadding.calculateTopPadding(),
@@ -230,8 +376,10 @@ fun UserprofileBody(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 24.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement =
+                    Arrangement.SpaceBetween,
+                verticalAlignment =
+                    Alignment.CenterVertically
             ) {
                 Text(
                     text = "SmartCity",
@@ -241,59 +389,100 @@ fun UserprofileBody(
                         fontWeight = FontWeight.Bold
                     )
                 )
+
                 Icon(
-                    painter = painterResource(R.drawable.baseline_notifications_24),
+                    painter = painterResource(
+                        R.drawable.baseline_notifications_24
+                    ),
                     contentDescription = "Notifications",
                     tint = Color(0xFF1A237E),
                     modifier = Modifier.size(24.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(
+                modifier = Modifier.height(16.dp)
+            )
 
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment =
+                    Alignment.CenterHorizontally
             ) {
-                Box(contentAlignment = Alignment.BottomEnd) {
+                Box(
+                    contentAlignment = Alignment.BottomEnd
+                ) {
                     Box(
                         modifier = Modifier
                             .size(115.dp)
-                            .border(width = 3.dp, color = Color(0xFF00B8D4), shape = CircleShape)
+                            .border(
+                                width = 3.dp,
+                                color = Color(0xFF00B8D4),
+                                shape = CircleShape
+                            )
                             .padding(6.dp)
-                            .clickable { showImageSourceDialog = true }
+                            .clickable {
+                                showImageSourceDialog = true
+                            }
                     ) {
                         when {
                             profileBitmap != null -> {
                                 Image(
-                                    bitmap = profileBitmap!!.asImageBitmap(),
-                                    contentDescription = "Profile Picture",
+                                    bitmap =
+                                        profileBitmap!!.asImageBitmap(),
+                                    contentDescription =
+                                        "Profile Picture",
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .clip(CircleShape),
-                                    contentScale = ContentScale.Crop
+                                    contentScale =
+                                        ContentScale.Crop
                                 )
                             }
-                            !currentUser?.profilePicture.isNullOrEmpty() -> {
+
+                            !currentUser
+                                ?.profilePicture
+                                .isNullOrEmpty() -> {
+
                                 AsyncImage(
-                                    model = ImageRequest.Builder(context)
-                                        .data(currentUser?.profilePicture)
-                                        .diskCachePolicy(CachePolicy.DISABLED)
-                                        .memoryCachePolicy(CachePolicy.DISABLED)
+                                    model = ImageRequest
+                                        .Builder(context)
+                                        .data(
+                                            currentUser?.profilePicture
+                                        )
+                                        .diskCachePolicy(
+                                            CachePolicy.DISABLED
+                                        )
+                                        .memoryCachePolicy(
+                                            CachePolicy.DISABLED
+                                        )
                                         .build(),
-                                    contentDescription = "Profile Picture",
+                                    contentDescription =
+                                        "Profile Picture",
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .clip(CircleShape),
-                                    contentScale = ContentScale.Crop,
-                                    placeholder = painterResource(R.drawable.user),
-                                    error = painterResource(R.drawable.user)
+                                    contentScale =
+                                        ContentScale.Crop,
+                                    placeholder =
+                                        painterResource(
+                                            R.drawable.user
+                                        ),
+                                    error =
+                                        painterResource(
+                                            R.drawable.user
+                                        )
                                 )
                             }
+
                             else -> {
                                 Image(
-                                    painter = painterResource(R.drawable.user),
-                                    contentDescription = "Profile Picture",
+                                    painter =
+                                        painterResource(
+                                            R.drawable.user
+                                        ),
+                                    contentDescription =
+                                        "Profile Picture",
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .clip(CircleShape)
@@ -305,12 +494,20 @@ fun UserprofileBody(
                     Box(
                         modifier = Modifier
                             .size(30.dp)
-                            .background(Color(0xFF4CAF50), CircleShape)
-                            .border(width = 3.dp, color = Color.White, shape = CircleShape),
+                            .background(
+                                Color(0xFF4CAF50),
+                                CircleShape
+                            )
+                            .border(
+                                width = 3.dp,
+                                color = Color.White,
+                                shape = CircleShape
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Check,
+                            imageVector =
+                                Icons.Default.Check,
                             contentDescription = null,
                             tint = Color.White,
                             modifier = Modifier.size(16.dp)
@@ -318,7 +515,9 @@ fun UserprofileBody(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(
+                    modifier = Modifier.height(16.dp)
+                )
 
                 Text(
                     text = currentUser?.name ?: "User",
@@ -329,17 +528,27 @@ fun UserprofileBody(
                     )
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(
+                    modifier = Modifier.height(8.dp)
+                )
 
                 Card(
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = if (isDarkMode) Color(0xFF2C3E50) else Color(0xFFE8EAF6)
+                        containerColor =
+                            if (isDarkMode) {
+                                Color(0xFF2C3E50)
+                            } else {
+                                Color(0xFFE8EAF6)
+                            }
                     )
                 ) {
                     Text(
                         text = "Top Contributor",
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                        modifier = Modifier.padding(
+                            horizontal = 12.dp,
+                            vertical = 4.dp
+                        ),
                         style = TextStyle(
                             fontSize = 12.sp,
                             color = Color(0xFF3F51B5),
@@ -349,184 +558,363 @@ fun UserprofileBody(
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(
+                modifier = Modifier.height(20.dp)
+            )
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement =
+                    Arrangement.SpaceEvenly,
+                verticalAlignment =
+                    Alignment.CenterVertically
             ) {
-                StatItem(totalReports.toString(), "REPORTS", Color.Blue)
-                StatItem(totalUpvotes.toString(), "UPVOTES", Color.Blue)
-                StatItem(resolvedReports.toString(), "RESOLVED", Color(0xFF4CAF50))
+                StatItem(
+                    totalReports.toString(),
+                    "REPORTS",
+                    Color.Blue
+                )
+
+                StatItem(
+                    totalUpvotes.toString(),
+                    "UPVOTES",
+                    Color.Blue
+                )
+
+                StatItem(
+                    resolvedReports.toString(),
+                    "RESOLVED",
+                    Color(0xFF4CAF50)
+                )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(
+                modifier = Modifier.height(20.dp)
+            )
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = cardColor),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                colors = CardDefaults.cardColors(
+                    containerColor = cardColor
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 2.dp
+                )
             ) {
                 Column {
                     MenuRowNavigate(
-                        icon = painterResource(R.drawable.baseline_report_24),
+                        icon = painterResource(
+                            R.drawable.baseline_report_24
+                        ),
                         title = "My Complaints",
-                        iconContainerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color(0xFFF5F5F5),
+                        iconContainerColor =
+                            if (isDarkMode) {
+                                Color(0xFF2C2C2C)
+                            } else {
+                                Color(0xFFF5F5F5)
+                            },
                         iconColor = secondaryTextColor,
                         textColor = textColor,
                         onClick = {
-                            val intent = Intent(context, AllUserComplain::class.java)
+                            val intent = Intent(
+                                context,
+                                AllUserComplain::class.java
+                            )
+
                             context.startActivity(intent)
                         }
                     )
+
                     HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp),
+                        modifier = Modifier.padding(
+                            horizontal = 16.dp
+                        ),
                         thickness = 1.dp,
-                        color = if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE)
+                        color =
+                            if (isDarkMode) {
+                                Color(0xFF333333)
+                            } else {
+                                Color(0xFFEEEEEE)
+                            }
                     )
 
                     MenuRowNavigate(
-                        icon = painterResource(R.drawable.baseline_settings_24),
+                        icon = painterResource(
+                            R.drawable.baseline_settings_24
+                        ),
                         title = "Settings & Privacy",
-                        iconContainerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color(0xFFF5F5F5),
+                        iconContainerColor =
+                            if (isDarkMode) {
+                                Color(0xFF2C2C2C)
+                            } else {
+                                Color(0xFFF5F5F5)
+                            },
                         iconColor = secondaryTextColor,
                         textColor = textColor,
                         onClick = {
-                            val intent = Intent(context, SettingPrivacyActivity::class.java)
+                            val intent = Intent(
+                                context,
+                                SettingPrivacyActivity::class.java
+                            )
+
                             context.startActivity(intent)
                         }
                     )
+
                     HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp),
+                        modifier = Modifier.padding(
+                            horizontal = 16.dp
+                        ),
                         thickness = 1.dp,
-                        color = if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE)
+                        color =
+                            if (isDarkMode) {
+                                Color(0xFF333333)
+                            } else {
+                                Color(0xFFEEEEEE)
+                            }
                     )
 
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment =
+                            Alignment.CenterVertically
                     ) {
                         Box(
                             modifier = Modifier
                                 .size(40.dp)
                                 .background(
-                                    if (isDarkMode) Color(0xFF2C2C2C) else Color(0xFFF5F5F5),
-                                    RoundedCornerShape(10.dp)
+                                    color =
+                                        if (isDarkMode) {
+                                            Color(0xFF2C2C2C)
+                                        } else {
+                                            Color(0xFFF5F5F5)
+                                        },
+                                    shape =
+                                        RoundedCornerShape(10.dp)
                                 ),
-                            contentAlignment = Alignment.Center
+                            contentAlignment =
+                                Alignment.Center
                         ) {
                             Icon(
-                                painter = painterResource(R.drawable.outline_dark_mode_24),
-                                contentDescription = "Dark Mode",
+                                painter = painterResource(
+                                    R.drawable
+                                        .outline_dark_mode_24
+                                ),
+                                contentDescription =
+                                    "Dark Mode",
                                 tint = secondaryTextColor,
-                                modifier = Modifier.size(20.dp)
+                                modifier =
+                                    Modifier.size(20.dp)
                             )
                         }
-                        Spacer(modifier = Modifier.width(16.dp))
+
+                        Spacer(
+                            modifier = Modifier.width(16.dp)
+                        )
+
                         Text(
                             text = "Dark Mode",
                             modifier = Modifier.weight(1f),
                             fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
+                            fontWeight =
+                                FontWeight.Medium,
                             color = textColor
                         )
+
                         Switch(
                             checked = isDarkMode,
-                            onCheckedChange = { onDarkModeToggle(it) }
+                            onCheckedChange = {
+                                onDarkModeToggle(it)
+                            }
                         )
                     }
+
                     HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp),
+                        modifier = Modifier.padding(
+                            horizontal = 16.dp
+                        ),
                         thickness = 0.5.dp,
-                        color = if (isDarkMode) Color(0xFF333333) else Color(0xFFEEEEEE)
+                        color =
+                            if (isDarkMode) {
+                                Color(0xFF333333)
+                            } else {
+                                Color(0xFFEEEEEE)
+                            }
                     )
 
                     MenuRowNavigate(
-                        icon = painterResource(R.drawable.baseline_help_24),
+                        icon = painterResource(
+                            R.drawable.baseline_help_24
+                        ),
                         title = "Help & Support",
-                        iconContainerColor = if (isDarkMode) Color(0xFF2C2C2C) else Color(0xFFF5F5F5),
+                        iconContainerColor =
+                            if (isDarkMode) {
+                                Color(0xFF2C2C2C)
+                            } else {
+                                Color(0xFFF5F5F5)
+                            },
                         iconColor = secondaryTextColor,
                         textColor = textColor,
                         onClick = {
-                            val intent = Intent(context, HelpSupportActivity::class.java)
+                            val intent = Intent(
+                                context,
+                                HelpSupportActivity::class.java
+                            )
+
                             context.startActivity(intent)
                         }
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
 
-            Card(
+            Button(
+                onClick = {
+                    showLogoutDialog = true
+                },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable {
-                        authViewModel?.logout()
-                        val intent = Intent(context, LoginActivity::class.java)
-                        context.startActivity(intent)
-                        (context as? Activity)?.finish()
-                    },
+                    .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = cardColor),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = cardColor
+                ),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 2.dp
+                )
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = null,
-                        tint = Color.Red,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Logout",
-                        color = Color.Red,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
-                }
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = "Logout",
+                    tint = Color.Red,
+                    modifier = Modifier.size(20.dp)
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Text(
+                    text = "Logout",
+                    color = Color.Red,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(
+                modifier = Modifier.height(20.dp)
+            )
         }
 
         if (showImageSourceDialog) {
             AlertDialog(
-                onDismissRequest = { showImageSourceDialog = false },
-                title = { Text("Choose Profile Picture") },
+                onDismissRequest = {
+                    showImageSourceDialog = false
+                },
+                title = {
+                    Text("Choose Profile Picture")
+                },
                 text = {
                     Column {
                         ListItem(
-                            headlineContent = { Text("Camera") },
-                            leadingContent = { Icon(Icons.Default.PhotoCamera, null) },
+                            headlineContent = {
+                                Text("Camera")
+                            },
+                            leadingContent = {
+                                Icon(
+                                    Icons.Default.PhotoCamera,
+                                    contentDescription = null
+                                )
+                            },
                             modifier = Modifier.clickable {
                                 showImageSourceDialog = false
                                 cameraLauncher.launch()
                             }
                         )
+
                         ListItem(
-                            headlineContent = { Text("Gallery") },
-                            leadingContent = { Icon(Icons.Default.PhotoLibrary, null) },
+                            headlineContent = {
+                                Text("Gallery")
+                            },
+                            leadingContent = {
+                                Icon(
+                                    Icons.Default.PhotoLibrary,
+                                    contentDescription = null
+                                )
+                            },
                             modifier = Modifier.clickable {
                                 showImageSourceDialog = false
-                                galleryLauncher.launch("image/*")
+                                galleryLauncher.launch(
+                                    "image/*"
+                                )
                             }
                         )
                     }
                 },
                 confirmButton = {
-                    TextButton(onClick = { showImageSourceDialog = false }) {
+                    TextButton(
+                        onClick = {
+                            showImageSourceDialog = false
+                        }
+                    ) {
                         Text("Cancel")
+                    }
+                }
+            )
+        }
+        if (showLogoutDialog) {
+            AlertDialog(
+                onDismissRequest = {
+                    showLogoutDialog = false
+                },
+                title = {
+                    Text(text = "Logout")
+                },
+                text = {
+                    Text(text = "Do you want to logout?")
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showLogoutDialog = false
+
+                            authViewModel?.logout()
+
+                            val intent = Intent(
+                                context,
+                                LoginActivity::class.java
+                            ).apply {
+
+                                 flags =
+                                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                                            Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            }
+
+                            context.startActivity(intent)
+                            (context as? Activity)?.finishAffinity()
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFD32F2F)
+                        )
+                    ) {
+                        Text(
+                            text = "Yes",
+                            color = Color.White
+                        )
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            showLogoutDialog = false
+                        }
+                    ) {
+                        Text(text = "Cancel")
                     }
                 }
             )
@@ -535,8 +923,14 @@ fun UserprofileBody(
 }
 
 @Composable
-fun StatItem(count: String, label: String, countColor: Color) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+fun StatItem(
+    count: String,
+    label: String,
+    countColor: Color
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         Text(
             text = count,
             style = TextStyle(
@@ -545,6 +939,7 @@ fun StatItem(count: String, label: String, countColor: Color) {
                 fontWeight = FontWeight.ExtraBold
             )
         )
+
         Text(
             text = label,
             style = TextStyle(
@@ -568,14 +963,20 @@ fun MenuRowNavigate(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
+            .clickable {
+                onClick()
+            }
             .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment =
+            Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .background(iconContainerColor, RoundedCornerShape(10.dp)),
+                .background(
+                    iconContainerColor,
+                    RoundedCornerShape(10.dp)
+                ),
             contentAlignment = Alignment.Center
         ) {
             Icon(
@@ -585,7 +986,11 @@ fun MenuRowNavigate(
                 modifier = Modifier.size(20.dp)
             )
         }
-        Spacer(modifier = Modifier.width(16.dp))
+
+        Spacer(
+            modifier = Modifier.width(16.dp)
+        )
+
         Text(
             text = title,
             modifier = Modifier.weight(1f),
@@ -593,8 +998,12 @@ fun MenuRowNavigate(
             fontWeight = FontWeight.Medium,
             color = textColor
         )
+
         Icon(
-            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            imageVector =
+                Icons.AutoMirrored
+                    .Filled
+                    .KeyboardArrowRight,
             contentDescription = null,
             tint = Color.LightGray
         )
@@ -604,9 +1013,14 @@ fun MenuRowNavigate(
 @Preview(showBackground = true)
 @Composable
 fun UserprofilePreview() {
-    var isDarkMode by remember { mutableStateOf(false) }
+    var isDarkMode by remember {
+        mutableStateOf(false)
+    }
+
     UserprofileBody(
         isDarkMode = isDarkMode,
-        onDarkModeToggle = { isDarkMode = it }
+        onDarkModeToggle = {
+            isDarkMode = it
+        }
     )
 }

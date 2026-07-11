@@ -45,7 +45,6 @@ import com.example.smart_city.repo.AuthRepository
 import com.example.smart_city.ui.theme.SmartCityTheme
 import com.example.smart_city.utils.ThemePreference
 import com.example.smart_city.viewmodel.AuthViewModel
-import com.example.smart_city.viewmodel.AuthViewModelFactory
 import com.example.smart_city.viewmodel.ComplaintsViewModel
 import com.example.smart_city.viewmodel.NotificationViewModel
 import com.google.firebase.auth.FirebaseAuth
@@ -53,7 +52,6 @@ import kotlinx.coroutines.delay
 
 import java.text.SimpleDateFormat
 import java.util.Date
-import androidx.compose.ui.platform.LocalContext
 import coil3.compose.AsyncImage
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
@@ -65,8 +63,8 @@ val BackgroundGray = Color(0xFFF8F9FA)
 
 class HomeScreen : ComponentActivity() {
 
-    private val authViewModel: AuthViewModel by viewModels {
-        AuthViewModelFactory(application)
+    private val authViewModel: AuthViewModel by lazy {
+        (application as SmartCityApplication).authViewModel
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
