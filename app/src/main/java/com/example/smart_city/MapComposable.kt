@@ -2,7 +2,6 @@ package com.example.smart_city
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,21 +14,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.smart_city.model.ReportModel
+import com.example.smart_city.model.TrafficModel
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 
-
 @Composable
 fun MapScreen(
-    complaints: List<ReportModel> = emptyList()
+    complaints: List<ReportModel> = emptyList(),
+    trafficList: List<TrafficModel> = emptyList()
 ) {
     if (LocalInspectionMode.current) {
         Box(
@@ -76,34 +76,51 @@ fun MapScreen(
     AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = { mapView },
-
         update = {
-
             mapView.getMapAsync { map ->
-
                 val styleUrl =
                     "https://map-init.gallimap.com/styles/light/style.json?accessToken=6f2ce10e-f8e7-4008-8a03-384ff6f87d26"
 
                 map.setStyle(
                     Style.Builder().fromUri(styleUrl)
                 ) {
-
                     map.clear()
+                        
+                    val firstTraffic = trafficList.firstOrNull()
+
+                    if (firstTraffic != null) {
+                        map.cameraPosition =
+                            CameraPosition.Builder()
+                                .target(
+                                    LatLng(
+                                        firstTraffic.latitude,
+                                        firstTraffic.longitude
+                                    )
+                                )
+                                .zoom(14.0)
+                                .build()
+                    } else {
+                        map.cameraPosition =
+                            CameraPosition.Builder()
+                                .target(
+                                    LatLng(
+                                        27.7172,
+                                        85.3240
+                                    )
+                                )
+                                .zoom(11.0)
+                                .build()
+                    }
 
                     complaints.forEach { complaint ->
-
                         if (
                             complaint.latitude != 0.0 &&
                             complaint.longitude != 0.0
                         ) {
                             val iconRes = when (complaint.category.lowercase()) {
-
                                 "road" -> R.drawable.baseline_location_on_24
-
                                 "garbage" -> R.drawable.baseline_locationgarbage_on_24
-
                                 "traffic" -> R.drawable.baseline_locationtraffic_on_24
-
                                 else -> R.drawable.baseline_locationothers_on_24
                             }
 
@@ -113,7 +130,7 @@ fun MapScreen(
                                 val scale = 1.5f
                                 val bitmap = Bitmap.createBitmap(
                                     (it.intrinsicWidth * scale).toInt(),
-                                    (it.intrinsicHeight *scale).toInt(),
+                                    (it.intrinsicHeight * scale).toInt(),
                                     Bitmap.Config.ARGB_8888
                                 )
                                 val canvas = Canvas(bitmap)
@@ -128,19 +145,15 @@ fun MapScreen(
                                 var lng = complaint.longitude
 
                                 when (complaint.category.lowercase()) {
-
                                     "road" -> {
                                         lat += 0.00008
                                     }
-
                                     "traffic" -> {
                                         lng += 0.00008
                                     }
-
                                     "garbage" -> {
                                         lat -= 0.00008
                                     }
-
                                     else -> {
                                         lng -= 0.00008
                                     }
@@ -160,42 +173,38 @@ fun MapScreen(
                             }
                         }
                     }
-
-                    val firstComplaint =
-                        complaints.firstOrNull {
-                            it.latitude != 0.0 &&
-                                    it.longitude != 0.0
-                        }
-
-                    if (firstComplaint != null) {
-
-                        map.cameraPosition =
-                            CameraPosition.Builder()
-                                .target(
-                                    LatLng(
-                                        firstComplaint.latitude,
-                                        firstComplaint.longitude
-                                    )
-                                )
-                                .zoom(15.0)
-                                .build()
-
-                    } else {
-
-                        map.cameraPosition =
-                            CameraPosition.Builder()
-                                .target(
-                                    LatLng(
-                                        27.7172,
-                                        85.3240
-                                    )
-                                )
-                                .zoom(11.0)
-                                .build()
+                }
+                
+                val firstComplaint =
+                    complaints.firstOrNull {
+                        it.latitude != 0.0 &&
+                                it.longitude != 0.0
                     }
+
+                if (firstComplaint != null) {
+                    map.cameraPosition =
+                        CameraPosition.Builder()
+                            .target(
+                                LatLng(
+                                    firstComplaint.latitude,
+                                    firstComplaint.longitude
+                                )
+                            )
+                            .zoom(15.0)
+                            .build()
+                } else {
+                    map.cameraPosition =
+                        CameraPosition.Builder()
+                            .target(
+                                LatLng(
+                                    27.7172,
+                                    85.3240
+                                )
+                            )
+                            .zoom(11.0)
+                            .build()
                 }
             }
         }
     )
-
 }
