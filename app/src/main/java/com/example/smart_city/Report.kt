@@ -543,6 +543,15 @@ fun Reported(
             item {
                 Button(
                     onClick = {
+                        if (viewModel.capturedImage != null && viewModel.imageUrl.isEmpty()) {
+                            Toast.makeText(
+                                context,
+                                "Please wait for the image to finish uploading before submitting",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            return@Button
+                        }
+
                         viewModel.submit(category) { msg ->
                             successMessage = msg
                             showSuccessPopup = true

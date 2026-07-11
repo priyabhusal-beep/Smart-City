@@ -45,7 +45,6 @@ import com.example.smart_city.repo.AuthRepository
 import com.example.smart_city.ui.theme.SmartCityTheme
 import com.example.smart_city.utils.ThemePreference
 import com.example.smart_city.viewmodel.AuthViewModel
-import com.example.smart_city.viewmodel.AuthViewModelFactory
 import com.example.smart_city.viewmodel.ComplaintsViewModel
 import com.example.smart_city.viewmodel.NotificationViewModel
 import com.google.firebase.auth.FirebaseAuth
@@ -53,6 +52,9 @@ import kotlinx.coroutines.delay
 
 import java.text.SimpleDateFormat
 import java.util.Date
+import coil3.compose.AsyncImage
+import coil3.request.CachePolicy
+import coil3.request.ImageRequest
 
 val PrimaryBlue = Color(0xFF0046B1)
 val AccentTeal = Color(0xFF00A389)
@@ -61,8 +63,8 @@ val BackgroundGray = Color(0xFFF8F9FA)
 
 class HomeScreen : ComponentActivity() {
 
-    private val authViewModel: AuthViewModel by viewModels {
-        AuthViewModelFactory(application)
+    private val authViewModel: AuthViewModel by lazy {
+        (application as SmartCityApplication).authViewModel
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -475,6 +477,22 @@ fun ComplaintItemCard(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
+
+            // NEW: complaint image
+            AsyncImage(
+                model = complaint.imageUrl.ifEmpty { null },
+                contentDescription = "Complaint Image",
+                placeholder = painterResource(id = R.drawable.smartcity),
+                error = painterResource(id = R.drawable.smartcity),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(160.dp)
+                    .clip(RoundedCornerShape(10.dp)),
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             Text(text = "Location: ${complaint.area}, ${complaint.ward}", fontSize = 12.sp, color = secondaryTextColor)
             Spacer(modifier = Modifier.height(6.dp))
             Text(text = "Description: ${complaint.description}", fontSize = 12.sp, color = textColor, maxLines = 2)
@@ -581,33 +599,27 @@ fun DashboardContents(
     ) {
         item {
             Spacer(modifier = Modifier.height(20.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.lana),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(50.dp))
-                )
-
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                if (!currentUser?.profilePicture.isNullOrEmpty()) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(currentUser?.profilePicture)
+                            .diskCachePolicy(CachePolicy.DISABLED)
+                            .memoryCachePolicy(CachePolicy.DISABLED)
+                            .build(),
+                        contentDescription = "Profile Picture",
+                        modifier = Modifier.size(48.dp).clip(RoundedCornerShape(50.dp)),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                        placeholder = painterResource(R.drawable.user),
+                        error = painterResource(R.drawable.user)
+                    )
+                } else {
+                    Image(painter = painterResource(R.drawable.user), contentDescription = null, modifier = Modifier.size(48.dp).clip(RoundedCornerShape(50.dp)))
+                }
                 Spacer(modifier = Modifier.width(12.dp))
-
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Hello",
-                        color = secondaryTextColor
-                    )
-
-                    Text(
-                        text = currentUser?.name ?: "Guest",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = PrimaryBlue
-                    )
+                    Text(text = "Hello", color = secondaryTextColor)
+                    Text(text = currentUser?.name ?: "Guest", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = PrimaryBlue)
                 }
 
                 BadgedBox(
