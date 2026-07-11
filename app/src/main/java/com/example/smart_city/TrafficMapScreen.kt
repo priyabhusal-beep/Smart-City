@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -50,8 +51,10 @@ class TrafficMapActivity : ComponentActivity() {
                     trafficViewModel.fetchTraffic()
                 }
 
+
                 TrafficMapScreen(
-                    trafficList = trafficViewModel.trafficList
+                    trafficList = trafficViewModel.trafficList,
+
                 )
             }
 
@@ -121,13 +124,15 @@ fun TrafficMapScreen(
                     Style.Builder().fromUri(styleUrl)
                 ) {
 
-                    map.clear()
 
+                    map.clear()
+                    Log.d("TRAFFIC_SIZE", "Size = ${trafficList.size}")
                     trafficList.forEach { traffic ->
-                            android.util.Log.d(
-                                "TRAFFIC_MARKER",
-                                "${traffic.locationName} ${traffic.latitude} ${traffic.longitude}"
-                            )
+
+                        Log.d(
+                            "TRAFFIC_DATA",
+                            "${traffic.locationName} ${traffic.latitude}, ${traffic.longitude}"
+                        )
 
 
                         val hour =
