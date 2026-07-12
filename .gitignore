@@ -42,4 +42,4 @@ local.properties
 Thumbs.db
 
 #---Log files --
-*.log
+*.log.idea/androidTestResultsUserPreferences.xml
