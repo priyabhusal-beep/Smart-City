@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -27,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -34,6 +36,9 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.smart_city.model.ReportModel
 import com.example.smart_city.ui.theme.SmartCityTheme
 import com.example.smart_city.viewmodel.ComplaintsViewModel
@@ -67,52 +72,57 @@ class AdminDashboard : ComponentActivity() {
 
 @Composable
 fun AdminDashboardScreen(
-    viewModel: ComplaintsViewModel =
-        androidx.lifecycle.viewmodel.compose.viewModel()
+    viewModel: ComplaintsViewModel = viewModel()
 ) {
-    /*
-     These values must exist inside ComplaintsViewModel.
-
-     var complaints by mutableStateOf<List<ReportModel>>(emptyList())
-     var isLoading by mutableStateOf(false)
-     var adminWardNo by mutableStateOf(0)
-     var errorMessage by mutableStateOf<String?>(null)
-
-     fun loadAdminWardAndComplaints()
-    */
-
     val complaints = viewModel.complaints
     val isLoading = viewModel.isLoading
-    val wardNo = viewModel.adminWardNo
     val errorMessage = viewModel.errorMessage
+    val wardNo = viewModel.adminWardNo
 
     /*
-     Load the logged-in admin's ward number first.
-
-     After loading the admin ward, the ViewModel should call:
-
-     fetchComplaintsByWard(adminWardNo)
+     Load all complaints because Manage Complaints also uses
+     fetchAllComplaints().
     */
     LaunchedEffect(Unit) {
-        viewModel.loadAdminWardAndComplaints()
+        viewModel.fetchAllComplaints()
     }
 
     /*
-     These values are calculated from the actual complaints fetched
-     from Firebase for the logged-in admin's ward.
+     Refresh the dashboard whenever the user returns from
+     Manage Complaints.
+    */
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.fetchAllComplaints()
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    /*
+     Calculate real complaint totals from Firebase data.
     */
     val totalComplaints = complaints.size
 
-    val pendingComplaints = complaints.count {
-        normalizeComplaintStatus(it.status) == "pending"
+    val pendingComplaints = complaints.count { complaint ->
+        normalizeComplaintStatus(complaint.status) == "pending"
     }
 
-    val inProgressComplaints = complaints.count {
-        normalizeComplaintStatus(it.status) == "in_progress"
+    val inProgressComplaints = complaints.count { complaint ->
+        normalizeComplaintStatus(complaint.status) == "in_progress"
     }
 
-    val resolvedComplaints = complaints.count {
-        normalizeComplaintStatus(it.status) == "resolved"
+    val resolvedComplaints = complaints.count { complaint ->
+        normalizeComplaintStatus(complaint.status) == "resolved"
     }
 
     Scaffold(
@@ -139,22 +149,9 @@ fun AdminDashboardScreen(
     }
 }
 
-/*
- Normalizes Firebase status values.
-
- For example:
-
- "In Progress"
- "in progress"
- "IN_PROGRESS"
- "in-progress"
-
- All become "in_progress".
-*/
 private fun normalizeComplaintStatus(
     status: String
 ): String {
-
     val normalizedStatus = status
         .trim()
         .lowercase()
@@ -166,9 +163,9 @@ private fun normalizeComplaintStatus(
 
         "pending" -> "pending"
 
+        "processing",
         "in progress",
         "inprogress",
-        "processing",
         "working" -> "in_progress"
 
         "resolved",
@@ -185,7 +182,7 @@ fun AdminDashboardContent(
     wardNo: Int,
     complaints: List<ReportModel>,
     isLoading: Boolean,
-    errorMessage: String?,
+    errorMessage: String,
     total: Int,
     pending: Int,
     inProgress: Int,
@@ -203,9 +200,6 @@ fun AdminDashboardContent(
         )
     ) {
 
-        /*
-         Dashboard heading and notification button
-        */
         item {
             Row(
                 modifier = Modifier
@@ -213,7 +207,6 @@ fun AdminDashboardContent(
                     .padding(bottom = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
                 Column(
                     modifier = Modifier.weight(1f)
                 ) {
@@ -228,7 +221,7 @@ fun AdminDashboardContent(
                         text = if (wardNo > 0) {
                             "Ward $wardNo infrastructure oversight"
                         } else {
-                            "Loading admin ward..."
+                            "Real-time infrastructure oversight"
                         },
                         color = Color.Gray,
                         fontSize = 14.sp
@@ -242,11 +235,7 @@ fun AdminDashboardContent(
                             AdminNotificationActivity::class.java
                         )
 
-                        intent.putExtra(
-                            "wardNo",
-                            wardNo
-                        )
-
+                        intent.putExtra("wardNo", wardNo)
                         context.startActivity(intent)
                     }
                 ) {
@@ -263,9 +252,9 @@ fun AdminDashboardContent(
         }
 
         /*
-         Error message
+         Only display the error card when the message is not empty.
         */
-        if (errorMessage != null) {
+        if (errorMessage.isNotBlank()) {
             item {
                 Card(
                     modifier = Modifier
@@ -286,9 +275,6 @@ fun AdminDashboardContent(
             }
         }
 
-        /*
-         Total complaints card
-        */
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -332,9 +318,6 @@ fun AdminDashboardContent(
             )
         }
 
-        /*
-         Pending and In Progress boxes
-        */
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -364,9 +347,6 @@ fun AdminDashboardContent(
             )
         }
 
-        /*
-         Resolved complaint card
-        */
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -391,10 +371,6 @@ fun AdminDashboardContent(
                             text = "Resolved",
                             color = Color.Gray,
                             fontSize = 12.sp
-                        )
-
-                        Spacer(
-                            modifier = Modifier.height(2.dp)
                         )
 
                         Text(
@@ -429,9 +405,6 @@ fun AdminDashboardContent(
             )
         }
 
-        /*
-         Complaint heading
-        */
         item {
             Row(
                 modifier = Modifier
@@ -443,7 +416,7 @@ fun AdminDashboardContent(
                     text = if (wardNo > 0) {
                         "Ward $wardNo Complaints"
                     } else {
-                        "Ward Complaints"
+                        "Recent Complaints"
                     },
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF0D236D),
@@ -458,14 +431,9 @@ fun AdminDashboardContent(
                             AdminManageScreen::class.java
                         )
 
-                        intent.putExtra(
-                            "wardNo",
-                            wardNo
-                        )
-
+                        intent.putExtra("wardNo", wardNo)
                         context.startActivity(intent)
-                    },
-                    enabled = wardNo > 0
+                    }
                 ) {
                     Text(
                         text = "View All",
@@ -477,9 +445,6 @@ fun AdminDashboardContent(
             }
         }
 
-        /*
-         Loading complaints
-        */
         if (isLoading) {
             item {
                 Box(
@@ -494,10 +459,6 @@ fun AdminDashboardContent(
                 }
             }
         } else if (complaints.isEmpty()) {
-
-            /*
-             No complaints
-            */
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -527,11 +488,7 @@ fun AdminDashboardContent(
                         )
 
                         Text(
-                            text = if (wardNo > 0) {
-                                "No complaints found for Ward $wardNo"
-                            } else {
-                                "No complaints found"
-                            },
+                            text = "No complaints found",
                             color = Color.Gray,
                             fontSize = 14.sp
                         )
@@ -539,20 +496,14 @@ fun AdminDashboardContent(
                 }
             }
         } else {
-
-            /*
-             Show the newest five complaints
-            */
             items(
                 items = complaints
                     .sortedByDescending { it.timestamp }
                     .take(5),
                 key = { complaint ->
-                    /*
-                     Replace this key with complaint.complaintId
-                     or complaint.reportId when your model contains one.
-                    */
-                    "${complaint.userId}_${complaint.timestamp}"
+                    complaint.id.ifBlank {
+                        "${complaint.userId}_${complaint.timestamp}"
+                    }
                 }
             ) { complaint ->
 
@@ -586,18 +537,17 @@ fun AdminComplaintCard(
         }
     }
 
-    val statusColor = when (
+    val normalizedStatus =
         normalizeComplaintStatus(complaint.status)
-    ) {
+
+    val statusColor = when (normalizedStatus) {
         "pending" -> Color(0xFFEF6C00)
         "in_progress" -> Color(0xFF1976D2)
         "resolved" -> Color(0xFF2E7D32)
         else -> Color.Gray
     }
 
-    val statusBackgroundColor = when (
-        normalizeComplaintStatus(complaint.status)
-    ) {
+    val statusBackgroundColor = when (normalizedStatus) {
         "pending" -> Color(0xFFFFF3E0)
         "in_progress" -> Color(0xFFE3F2FD)
         "resolved" -> Color(0xFFE8F5E9)
@@ -673,7 +623,11 @@ fun AdminComplaintCard(
             )
 
             Text(
-                text = "Ward: ${complaint.ward}",
+                text = if (complaint.wardNo > 0) {
+                    "Ward: ${complaint.wardNo}"
+                } else {
+                    "Ward: ${complaint.ward}"
+                },
                 color = Color.DarkGray,
                 fontSize = 13.sp
             )
@@ -794,15 +748,9 @@ fun CustomBottomNavigation(
                 WindowInsets.navigationBars
             )
         ) {
-
-            /*
-             Admin Home
-            */
             NavigationBarItem(
                 selected = true,
-                onClick = {
-                    // Already on the Admin Dashboard.
-                },
+                onClick = {},
                 icon = {
                     Icon(
                         imageVector = Icons.Default.Home,
@@ -823,25 +771,16 @@ fun CustomBottomNavigation(
                 )
             )
 
-            /*
-             Manage complaints
-            */
             NavigationBarItem(
                 selected = false,
                 onClick = {
-                    if (wardNo > 0) {
-                        val intent = Intent(
-                            context,
-                            AdminManageScreen::class.java
-                        )
+                    val intent = Intent(
+                        context,
+                        AdminManageScreen::class.java
+                    )
 
-                        intent.putExtra(
-                            "wardNo",
-                            wardNo
-                        )
-
-                        context.startActivity(intent)
-                    }
+                    intent.putExtra("wardNo", wardNo)
+                    context.startActivity(intent)
                 },
                 icon = {
                     Icon(
@@ -851,9 +790,7 @@ fun CustomBottomNavigation(
                     )
                 },
                 label = {
-                    Text(
-                        text = "Manage"
-                    )
+                    Text("Manage")
                 },
                 colors = NavigationBarItemDefaults.colors(
                     unselectedIconColor = Color.Gray,
@@ -862,25 +799,16 @@ fun CustomBottomNavigation(
                 )
             )
 
-            /*
-             Analytics
-            */
             NavigationBarItem(
                 selected = false,
                 onClick = {
-                    if (wardNo > 0) {
-                        val intent = Intent(
-                            context,
-                            AdminAnalyticsActivity::class.java
-                        )
+                    val intent = Intent(
+                        context,
+                        AdminAnalyticsActivity::class.java
+                    )
 
-                        intent.putExtra(
-                            "wardNo",
-                            wardNo
-                        )
-
-                        context.startActivity(intent)
-                    }
+                    intent.putExtra("wardNo", wardNo)
+                    context.startActivity(intent)
                 },
                 icon = {
                     Icon(
@@ -890,9 +818,7 @@ fun CustomBottomNavigation(
                     )
                 },
                 label = {
-                    Text(
-                        text = "Analytics"
-                    )
+                    Text("Analytics")
                 },
                 colors = NavigationBarItemDefaults.colors(
                     unselectedIconColor = Color.Gray,

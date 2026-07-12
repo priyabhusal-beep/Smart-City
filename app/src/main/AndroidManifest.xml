@@ -15,7 +15,7 @@
 
     <uses-feature
         android:name="android.hardware.camera"
-        android:required="false" />
+        android:required="true" />
 
     <application
         android:name=".SmartCityApplication"
@@ -32,22 +32,22 @@
         tools:replace="android:allowBackup,android:fullBackupContent,android:dataExtractionRules">
         <activity
             android:name=".AdminAnalyticsActivity"
-            android:exported="false"
+            android:exported="true"
             android:label="@string/title_activity_admin_analytics"
             android:theme="@style/Theme.SmartCity" />
         <activity
             android:name=".UserNotificationActivity"
-            android:exported="false"
+            android:exported="true"
             android:label="@string/title_activity_user_notification"
             android:theme="@style/Theme.SmartCity" />
         <activity
             android:name=".AdminNotificationActivity"
-            android:exported="false"
+            android:exported="true"
             android:label="@string/title_activity_admin_notification"
             android:theme="@style/Theme.SmartCity" />
         <activity
             android:name=".TrafficMapActivity"
-            android:exported="false" />
+            android:exported="true" />
         <activity
             android:name=".HelpSupportActivity"
             android:exported="true"
@@ -108,13 +108,13 @@
             android:exported="true" />
         <activity
             android:name=".ComplaintDetails"
-            android:exported="false" />
+            android:exported="true" />
         <activity
             android:name=".ComplainProgressActivity"
-            android:exported="false" />
+            android:exported="true" />
         <activity
             android:name=".Userprofile"
-            android:exported="false" />
+            android:exported="true" />
     </application>
 
 </manifest>

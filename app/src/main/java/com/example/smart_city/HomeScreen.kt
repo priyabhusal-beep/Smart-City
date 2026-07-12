@@ -119,6 +119,10 @@ fun HomeActivity(
     var selectedIndex by remember { mutableStateOf(0) }
     val innerNavController = rememberNavController()
 
+    // Shared by the dashboard, complaints tab, View All screen and map.
+    val complaintsViewModel: ComplaintsViewModel =
+        androidx.lifecycle.viewmodel.compose.viewModel()
+
     val backgroundColor = if (isDarkMode) Color(0xFF121212) else Color.White
     val cardBackgroundColor = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFF5F5F5)
     val textColor = if (isDarkMode) Color(0xFFE0E0E0) else Color.Black
@@ -173,19 +177,35 @@ fun HomeActivity(
                                 }
                             }
 
-                            TextButton(onClick = { selectedIndex = 2 }) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.complaint),
+                            TextButton(
+                                onClick = {
+                                    selectedIndex = 2
+                                }
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Image(
+                                        painter = painterResource(
+                                            R.drawable.complaintsicon
+                                        ),
                                         contentDescription = "Complaints",
-                                        tint = if (selectedIndex == 2) PrimaryBlue else Color.Gray,
-                                        modifier = Modifier.size(24.dp)
+                                        modifier = Modifier.size(26.dp)
                                     )
+
                                     Text(
                                         text = "Complaints",
                                         fontSize = 10.sp,
-                                        color = if (selectedIndex == 2) PrimaryBlue else Color.Gray,
-                                        fontWeight = if (selectedIndex == 2) FontWeight.Bold else FontWeight.Normal
+                                        color = if (selectedIndex == 2) {
+                                            PrimaryBlue
+                                        } else {
+                                            Color.Gray
+                                        },
+                                        fontWeight = if (selectedIndex == 2) {
+                                            FontWeight.Bold
+                                        } else {
+                                            FontWeight.Normal
+                                        }
                                     )
                                 }
                             }
@@ -224,7 +244,8 @@ fun HomeActivity(
                             cardBackgroundColor = cardBackgroundColor,
                             textColor = textColor,
                             secondaryTextColor = secondaryTextColor,
-                            authViewModel = authViewModel
+                            authViewModel = authViewModel,
+                            viewModel = complaintsViewModel
                         )
 
                         1 -> Reported(
@@ -239,7 +260,8 @@ fun HomeActivity(
                             backgroundColor = backgroundColor,
                             cardBackgroundColor = cardBackgroundColor,
                             textColor = textColor,
-                            secondaryTextColor = secondaryTextColor
+                            secondaryTextColor = secondaryTextColor,
+                            viewModel = complaintsViewModel
                         )
 
                         3 -> UserprofileBody(
@@ -259,7 +281,8 @@ fun HomeActivity(
                 backgroundColor = backgroundColor,
                 cardBackgroundColor = cardBackgroundColor,
                 textColor = textColor,
-                secondaryTextColor = secondaryTextColor
+                secondaryTextColor = secondaryTextColor,
+                viewModel = complaintsViewModel
             )
         }
 
@@ -274,9 +297,6 @@ fun HomeActivity(
         }
 
         composable("FullMap") {
-            val complaintsViewModel: ComplaintsViewModel =
-                androidx.lifecycle.viewmodel.compose.viewModel()
-
             LaunchedEffect(Unit) {
                 complaintsViewModel.fetchAllComplaints()
             }
@@ -297,7 +317,7 @@ fun AllComplaintsScreen(
     cardBackgroundColor: Color,
     textColor: Color,
     secondaryTextColor: Color,
-    viewModel: ComplaintsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    viewModel: ComplaintsViewModel
 ) {
     val complaints = viewModel.complaints
     val isLoading = viewModel.isLoading
@@ -307,6 +327,7 @@ fun AllComplaintsScreen(
     }
 
     Scaffold(
+        containerColor = backgroundColor,
         topBar = {
             TopAppBar(
                 title = {
@@ -331,44 +352,53 @@ fun AllComplaintsScreen(
             )
         }
     ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .background(backgroundColor)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            if (isLoading) {
-                item {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = PrimaryBlue)
-                    }
+        when {
+            isLoading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .background(backgroundColor),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = PrimaryBlue)
                 }
-            } else if (complaints.isEmpty()) {
-                item {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "No complaints yet",
-                            color = secondaryTextColor,
-                            fontSize = 16.sp
+            }
+
+            complaints.isEmpty() -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .background(backgroundColor),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No complaints yet",
+                        color = secondaryTextColor,
+                        fontSize = 16.sp
+                    )
+                }
+            }
+
+            else -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .background(backgroundColor),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(complaints) { complaint ->
+                        ComplaintItemCard(
+                            complaint = complaint,
+                            cardBackgroundColor = cardBackgroundColor,
+                            textColor = textColor,
+                            secondaryTextColor = secondaryTextColor,
+                            viewModel = viewModel
                         )
                     }
-                }
-            } else {
-                items(complaints) { complaint ->
-                    ComplaintItemCard(
-                        complaint = complaint,
-                        cardBackgroundColor = cardBackgroundColor,
-                        textColor = textColor,
-                        secondaryTextColor = secondaryTextColor
-                    )
                 }
             }
         }
@@ -383,7 +413,7 @@ fun ComplaintsListScreen(
     cardBackgroundColor: Color,
     textColor: Color,
     secondaryTextColor: Color,
-    viewModel: ComplaintsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    viewModel: ComplaintsViewModel
 ) {
     val complaints = viewModel.complaints
     val isLoading = viewModel.isLoading
@@ -392,43 +422,50 @@ fun ComplaintsListScreen(
         viewModel.fetchAllComplaints()
     }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(backgroundColor)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        if (isLoading) {
-            item {
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = PrimaryBlue)
-                }
+    when {
+        isLoading -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(backgroundColor),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = PrimaryBlue)
             }
-        } else if (complaints.isEmpty()) {
-            item {
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "No complaints yet",
-                        color = secondaryTextColor,
-                        fontSize = 16.sp
+        }
+
+        complaints.isEmpty() -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(backgroundColor),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "No complaints yet",
+                    color = secondaryTextColor,
+                    fontSize = 16.sp
+                )
+            }
+        }
+
+        else -> {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(backgroundColor),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(complaints) { complaint ->
+                    ComplaintItemCard(
+                        complaint = complaint,
+                        cardBackgroundColor = cardBackgroundColor,
+                        textColor = textColor,
+                        secondaryTextColor = secondaryTextColor,
+                        viewModel = viewModel
                     )
                 }
-            }
-        } else {
-            items(complaints) { complaint ->
-                ComplaintItemCard(
-                    complaint = complaint,
-                    cardBackgroundColor = cardBackgroundColor,
-                    textColor = textColor,
-                    secondaryTextColor = secondaryTextColor
-                )
             }
         }
     }
@@ -440,7 +477,7 @@ fun ComplaintItemCard(
     cardBackgroundColor: Color,
     textColor: Color,
     secondaryTextColor: Color,
-    viewModel: ComplaintsViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    viewModel: ComplaintsViewModel
 ) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
@@ -581,10 +618,38 @@ fun DashboardContents(
         notificationViewModel.loadUnreadCount(currentUser?.wardNo ?: 0)
     }
 
-    val expandedCategories = remember { mutableStateOf(setOf<String>()) }
+    val categoryOrder = listOf(
+        "Garbage",
+        "Road",
+        "Traffic",
+        "Others"
+    )
 
     val complaintsByCategory = remember(complaints) {
-        complaints.groupBy { it.category }.toSortedMap()
+        categoryOrder.mapNotNull { categoryName ->
+
+            val categoryComplaints = complaints.filter { complaint ->
+                val complaintCategory = complaint.category
+                    .trim()
+                    .lowercase()
+
+                when (categoryName) {
+                    "Others" -> complaintCategory !in listOf(
+                        "garbage",
+                        "road",
+                        "traffic"
+                    )
+
+                    else -> complaintCategory == categoryName.lowercase()
+                }
+            }
+
+            if (categoryComplaints.isNotEmpty()) {
+                categoryName to categoryComplaints
+            } else {
+                null
+            }
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -595,7 +660,7 @@ fun DashboardContents(
         modifier = Modifier
             .fillMaxSize()
             .background(backgroundColor)
-            .padding(horizontal = 20.dp)
+            .padding(horizontal = 16.dp)
     ) {
         item {
             Spacer(modifier = Modifier.height(20.dp))
@@ -699,7 +764,9 @@ fun DashboardContents(
                     image = R.drawable.track,
                     label = "Track Issue",
                     onClick = {
-                        navController.navigate("all_complaints")
+                        navController.navigate("all_complaints") {
+                            launchSingleTop = true
+                        }
                     }
                 )
 
@@ -771,19 +838,12 @@ fun DashboardContents(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(190.dp),
+                    .height(145.dp),
                 shape = RoundedCornerShape(18.dp)
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    val complaintsViewModel: ComplaintsViewModel =
-                        androidx.lifecycle.viewmodel.compose.viewModel()
-
-                    LaunchedEffect(Unit) {
-                        complaintsViewModel.fetchAllComplaints()
-                    }
-
                     FullMapscreen(
-                        complaints = complaintsViewModel.complaints
+                        complaints = viewModel.complaints
                     )
 
                     Button(
@@ -809,92 +869,104 @@ fun DashboardContents(
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = "Recent Reports",
-                    fontSize = 22.sp,
+                    fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
                     color = PrimaryBlue
                 )
 
                 TextButton(
                     onClick = {
-                        navController.navigate("all_complaints")
-                    }
+                        navController.navigate("all_complaints") {
+                            launchSingleTop = true
+                        }
+                    },
+                    contentPadding = PaddingValues(
+                        horizontal = 4.dp,
+                        vertical = 0.dp
+                    )
                 ) {
                     Text(
                         text = "View All",
                         color = PrimaryBlue,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(6.dp))
         }
-
         if (isLoading) {
             item {
                 Box(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 20.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = PrimaryBlue)
+                    CircularProgressIndicator(
+                        color = PrimaryBlue,
+                        modifier = Modifier.size(30.dp),
+                        strokeWidth = 3.dp
+                    )
                 }
             }
         } else if (complaintsByCategory.isEmpty()) {
             item {
-                Box(
+                Card(
                     modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "No reports yet",
-                        color = secondaryTextColor
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = cardBackgroundColor
                     )
-                }
-            }
-        } else {
-            complaintsByCategory.forEach { (category, categoryComplaints) ->
-                item {
-                    Row(
+                ) {
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable {
-                                val current = expandedCategories.value
-
-                                expandedCategories.value =
-                                    if (current.contains(category)) {
-                                        current - category
-                                    } else {
-                                        current + category
-                                    }
-                            }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            .padding(22.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        Icon(
+                            painter = painterResource(
+                                R.drawable.baseline_report_24
+                            ),
+                            contentDescription = null,
+                            tint = secondaryTextColor,
+                            modifier = Modifier.size(36.dp)
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
                         Text(
-                            text = "$category (${categoryComplaints.size})",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = PrimaryBlue
+                            text = "No reports available",
+                            fontWeight = FontWeight.SemiBold,
+                            color = textColor
                         )
                     }
                 }
+            }
+        } else {
+            complaintsByCategory.forEach { categoryData ->
 
-                if (expandedCategories.value.contains(category)) {
-                    items(categoryComplaints) { complaint ->
-                        RecentReportCardClickable(
-                            complaint = complaint,
-                            cardBackgroundColor = cardBackgroundColor,
-                            textColor = textColor,
-                            secondaryTextColor = secondaryTextColor
-                        ) {
-                            navController.navigate("all_complaints")
+                val categoryName = categoryData.first
+                val categoryComplaints = categoryData.second
+
+                item(key = categoryName) {
+                    CategoryReportSummaryCard(
+                        category = categoryName,
+                        reportCount = categoryComplaints.size,
+                        isDarkMode = isDarkMode,
+                        onClick = {
+                            navController.navigate("all_complaints") {
+                                launchSingleTop = true
+                            }
                         }
-                    }
+                    )
                 }
             }
         }
@@ -944,6 +1016,174 @@ fun ReportCard(
             color = PrimaryBlue,
             textAlign = TextAlign.Center
         )
+    }
+}
+@Composable
+fun CategoryReportSummaryCard(
+    category: String,
+    reportCount: Int,
+    isDarkMode: Boolean,
+    onClick: () -> Unit
+) {
+    val categoryColor: Color
+    val lightCategoryColor: Color
+    val iconRes: Int
+
+    when (category.trim().lowercase()) {
+        "garbage" -> {
+            categoryColor = Color(0xFF28C76F)
+            lightCategoryColor = Color(0xFFE4F9EC)
+            iconRes = R.drawable.garbage
+        }
+
+        "road" -> {
+            categoryColor = Color(0xFF4C86FF)
+            lightCategoryColor = Color(0xFFE8F0FF)
+            iconRes = R.drawable.road
+        }
+
+        "traffic" -> {
+            categoryColor = Color(0xFFFF7A32)
+            lightCategoryColor = Color(0xFFFFEEE5)
+            iconRes = R.drawable.traffic
+        }
+
+        else -> {
+            categoryColor = Color(0xFF8C62FF)
+            lightCategoryColor = Color(0xFFF0EAFF)
+            iconRes = R.drawable.map
+        }
+    }
+
+    val cardColor = if (isDarkMode) {
+        Color(0xFF1E1E1E)
+    } else {
+        Color(0xFFFAFCFF)
+    }
+
+    val primaryTextColor = if (isDarkMode) {
+        Color.White
+    } else {
+        Color(0xFF172033)
+    }
+
+    val secondaryTextColor = if (isDarkMode) {
+        Color(0xFFB8B8B8)
+    } else {
+        Color(0xFF606A7B)
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp)
+            .height(66.dp),
+        onClick = onClick,
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = cardColor
+        ),
+        border = androidx.compose.foundation.BorderStroke(
+            width = 1.dp,
+            color = if (isDarkMode) {
+                Color.White.copy(alpha = 0.08f)
+            } else {
+                Color(0xFFE8ECF4)
+            }
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 1.dp,
+            pressedElevation = 0.dp
+        )
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Colored line on the left
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(5.dp)
+                    .background(categoryColor)
+            )
+
+            Spacer(modifier = Modifier.width(11.dp))
+
+            // Category icon circle
+            Surface(
+                modifier = Modifier.size(39.dp),
+                shape = RoundedCornerShape(50),
+                color = categoryColor
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(iconRes),
+                        contentDescription = category,
+                        modifier = Modifier.size(23.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(11.dp))
+
+            // Category and report count
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = category,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = primaryTextColor,
+                    maxLines = 1
+                )
+
+                Spacer(modifier = Modifier.height(2.dp))
+
+                Text(
+                    text = if (reportCount == 1) {
+                        "1 Report"
+                    } else {
+                        "$reportCount Reports"
+                    },
+                    fontSize = 10.sp,
+                    color = secondaryTextColor
+                )
+            }
+
+            // Count badge
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = lightCategoryColor
+            ) {
+                Text(
+                    text = reportCount.toString(),
+                    modifier = Modifier.padding(
+                        horizontal = 11.dp,
+                        vertical = 5.dp
+                    ),
+                    color = categoryColor,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.width(10.dp))
+
+            // Arrow
+            Text(
+                text = "›",
+                color = Color(0xFF8490A5),
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Normal
+            )
+
+            Spacer(modifier = Modifier.width(14.dp))
+        }
     }
 }
 

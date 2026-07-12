@@ -39,7 +39,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -385,7 +384,7 @@ fun Reported(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp)
-                            .height(200.dp),
+                            .height(350.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = if (isDarkMode) Color(0xFF242424) else Color(0xFFE0E0E0)
@@ -672,7 +671,7 @@ fun Reported(
                             text = successMessage,
                             fontWeight = FontWeight.Bold,
                             color = textColor,
-                            textAlign = TextAlign.Center
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
